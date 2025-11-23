@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Stack } from 'expo-router';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
@@ -12,10 +13,34 @@ export default function TabLayout() {
       label: 'Home',
     },
     {
-      name: 'profile',
-      route: '/(tabs)/profile',
-      icon: 'person',
-      label: 'Profile',
+      name: 'foundations',
+      route: '/(tabs)/foundations',
+      icon: 'book',
+      label: 'Foundations',
+    },
+    {
+      name: 'civic-literacy',
+      route: '/(tabs)/civic-literacy',
+      icon: 'school',
+      label: 'Civic',
+    },
+    {
+      name: 'political-landscape',
+      route: '/(tabs)/political-landscape',
+      icon: 'flag',
+      label: 'Political',
+    },
+    {
+      name: 'principles-practice',
+      route: '/(tabs)/principles-practice',
+      icon: 'balance',
+      label: 'Principles',
+    },
+    {
+      name: 'land-life',
+      route: '/(tabs)/land-life',
+      icon: 'public',
+      label: 'Land',
     },
   ];
 
@@ -29,7 +54,11 @@ export default function TabLayout() {
         }}
       >
         <Stack.Screen key="home" name="(home)" />
-        <Stack.Screen key="profile" name="profile" />
+        <Stack.Screen key="foundations" name="foundations" />
+        <Stack.Screen key="civic-literacy" name="civic-literacy" />
+        <Stack.Screen key="political-landscape" name="political-landscape" />
+        <Stack.Screen key="principles-practice" name="principles-practice" />
+        <Stack.Screen key="land-life" name="land-life" />
       </Stack>
       <FloatingTabBar tabs={tabs} />
     </>
