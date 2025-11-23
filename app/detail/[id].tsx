@@ -1,10 +1,18 @@
 
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { contentData } from "@/data/contentData";
 import { useTheme } from "@/contexts/ThemeContext";
 import { IconSymbol } from "@/components/IconSymbol";
+import { AppFooter } from "@/components/AppFooter";
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -13,8 +21,8 @@ export default function DetailScreen() {
 
   // Find the item in contentData
   let foundItem: any = null;
-  let foundSection: string = "";
-  let foundMainSection: string = "";
+  let foundSection = "";
+  let foundMainSection = "";
 
   for (const mainSection of contentData) {
     for (const section of mainSection.sections) {
@@ -56,6 +64,8 @@ export default function DetailScreen() {
             <TouchableOpacity
               style={[styles.backButton, { backgroundColor: colors.primary }]}
               onPress={() => router.back()}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Go Back</Text>
             </TouchableOpacity>
@@ -64,6 +74,30 @@ export default function DetailScreen() {
       </>
     );
   }
+
+  // Base content
+  const fullContent: string = foundItem.content ?? "";
+  let summary = fullContent;
+  let details = "";
+
+  const firstPeriodIndex = fullContent.indexOf(".");
+  if (firstPeriodIndex !== -1) {
+    summary = fullContent.slice(0, firstPeriodIndex + 1).trim();
+    details = fullContent.slice(firstPeriodIndex + 1).trim();
+  }
+
+  const hasExtraDetails =
+    details.length > 0 && details.trim() !== summary.trim();
+
+  const hasFullText =
+    typeof foundItem.fullText === "string" &&
+    foundItem.fullText.trim().length > 0;
+
+  const hasContext =
+    typeof foundItem.context === "string" &&
+    foundItem.context.trim().length > 0;
+
+  const isFoundingDoc = hasFullText || hasContext;
 
   return (
     <>
@@ -80,38 +114,170 @@ export default function DetailScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* HEADER */}
         <View style={styles.header}>
           <Text style={[styles.breadcrumb, { color: colors.textSecondary }]}>
             {foundMainSection} › {foundSection}
           </Text>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            accessibilityRole="header"
+          >
             {foundItem.title}
           </Text>
+
+          {isFoundingDoc && (
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: colors.primary + "15",
+                  borderColor: colors.primary + "30",
+                },
+              ]}
+            >
+              <IconSymbol
+                ios_icon_name="doc.text.fill"
+                android_material_icon_name="description"
+                size={12}
+                color={colors.primary}
+              />
+              <Text
+                style={[
+                  styles.badgeText,
+                  { color: colors.primary },
+                ]}
+              >
+                Founding Document
+              </Text>
+            </View>
+          )}
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Description
-          </Text>
-          <Text style={[styles.description, { color: colors.text }]}>
-            {foundItem.content}
-          </Text>
-        </View>
+        {/* HERO IMAGE */}
+        {foundItem.imageUrl && (
+          <View style={styles.heroImageContainer}>
+            <Image
+              source={{ uri: foundItem.imageUrl }}
+              style={[
+                styles.heroImage,
+                {
+                  shadowColor: "#000",
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 4 },
+                },
+              ]}
+              resizeMode="cover"
+            />
+          </View>
+        )}
 
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Additional Information
-          </Text>
-          <Text style={[styles.bodyText, { color: colors.text }]}>
-            This is placeholder body text that provides additional context and information about {foundItem.title}.
-            {"\n\n"}
-            In a complete version of this guide, this section would contain detailed explanations, historical context, practical examples, and relevant connections to other topics.
-            {"\n\n"}
-            The content would be written in clear, accessible language to help readers understand the significance and application of these concepts in American civic life.
-            {"\n\n"}
-            Future updates will replace this placeholder with comprehensive, well-researched content that serves as a valuable educational resource.
-          </Text>
-        </View>
+        {/* FOUNDING DOCUMENT LAYOUT */}
+        {isFoundingDoc ? (
+          <>
+            {/* Overview */}
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
+                Overview
+              </Text>
+              <Text style={[styles.bodyText, { color: colors.text }]}>
+                {fullContent}
+              </Text>
+            </View>
+
+            {/* Divider */}
+            {hasFullText && (
+              <View
+                style={[
+                  styles.divider,
+                  { backgroundColor: colors.textSecondary + "20" },
+                ]}
+              />
+            )}
+
+            {/* Full Text */}
+            {hasFullText && (
+              <View style={[styles.card, { backgroundColor: colors.card }]}>
+                <Text
+                  style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                >
+                  Full Document Text
+                </Text>
+                <Text style={[styles.bodyText, { color: colors.text }]}>
+                  {foundItem.fullText}
+                </Text>
+              </View>
+            )}
+
+            {/* Divider */}
+            {hasContext && (
+              <View
+                style={[
+                  styles.divider,
+                  { backgroundColor: colors.textSecondary + "20" },
+                ]}
+              />
+            )}
+
+            {/* Historical Context */}
+            {hasContext && (
+              <View style={[styles.card, { backgroundColor: colors.card }]}>
+                <Text
+                  style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                >
+                  Historical Context
+                </Text>
+                <Text style={[styles.bodyText, { color: colors.text }]}>
+                  {foundItem.context}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Description */}
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
+                Description
+              </Text>
+              <Text style={[styles.description, { color: colors.text }]}>
+                {summary}
+              </Text>
+            </View>
+
+            {/* Divider */}
+            {hasExtraDetails && (
+              <View
+                style={[
+                  styles.divider,
+                  { backgroundColor: colors.textSecondary + "20" },
+                ]}
+              />
+            )}
+
+            {/* Additional Information */}
+            {hasExtraDetails && (
+              <View style={[styles.card, { backgroundColor: colors.card }]}>
+                <Text
+                  style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                >
+                  Additional Information
+                </Text>
+                <Text style={[styles.bodyText, { color: colors.text }]}>
+                  {details}
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+
+        {/* FOOTER */}
+        <AppFooter />
       </ScrollView>
     </>
   );
@@ -122,43 +288,79 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 24,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   breadcrumb: {
-    fontSize: 14,
+    fontSize: 13,
     marginBottom: 8,
+    lineHeight: 18.85,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    lineHeight: 36,
+    lineHeight: 40.6,
   },
+
+  heroImageContainer: {
+    marginBottom: 20,
+  },
+  heroImage: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 12,
+    alignSelf: "center",
+  },
+
   card: {
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 16,
   },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 12,
+    letterSpacing: 1.2,
+    marginBottom: 16,
   },
   description: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 23.2,
   },
   bodyText: {
     fontSize: 16,
-    lineHeight: 26,
+    lineHeight: 23.2,
+  },
+  badge: {
+    marginTop: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    gap: 6,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   errorContainer: {
     flex: 1,
@@ -171,15 +373,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 16,
     marginBottom: 24,
+    lineHeight: 29,
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   backButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+    lineHeight: 23.2,
   },
 });

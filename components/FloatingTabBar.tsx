@@ -13,7 +13,7 @@ import { useRouter, usePathname } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
 import { BlurView } from 'expo-blur';
-import { useTheme } from '@react-navigation/native';
+import { useTheme } from '@/contexts/ThemeContext';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -47,7 +47,7 @@ export default function FloatingTabBar({
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const theme = useTheme();
+  const { colors, isDark } = useTheme();
   const animatedValue = useSharedValue(0);
   const scrollViewRef = React.useRef<ScrollView>(null);
 
@@ -131,20 +131,20 @@ export default function FloatingTabBar({
     blurContainer: {
       ...styles.blurContainer,
       borderWidth: 1.2,
-      borderColor: 'rgba(255, 255, 255, 1)',
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
       ...Platform.select({
         ios: {
-          backgroundColor: theme.dark
+          backgroundColor: isDark
             ? 'rgba(28, 28, 30, 0.8)'
             : 'rgba(255, 255, 255, 0.6)',
         },
         android: {
-          backgroundColor: theme.dark
+          backgroundColor: isDark
             ? 'rgba(28, 28, 30, 0.95)'
             : 'rgba(255, 255, 255, 0.6)',
         },
         web: {
-          backgroundColor: theme.dark
+          backgroundColor: isDark
             ? 'rgba(28, 28, 30, 0.95)'
             : 'rgba(255, 255, 255, 0.6)',
           backdropFilter: 'blur(10px)',
@@ -156,9 +156,9 @@ export default function FloatingTabBar({
     },
     indicator: {
       ...styles.indicator,
-      backgroundColor: theme.dark
-        ? 'rgba(255, 255, 255, 0.08)' // Subtle white overlay in dark mode
-        : 'rgba(0, 0, 0, 0.04)', // Subtle black overlay in light mode
+      backgroundColor: isDark
+        ? 'rgba(255, 255, 255, 0.08)'
+        : 'rgba(0, 0, 0, 0.04)',
       width: tabWidth - 4,
     },
   };
@@ -177,19 +177,22 @@ export default function FloatingTabBar({
                 style={[styles.tab, { width: tabWidth }]}
                 onPress={() => handleTabPress(tab.route)}
                 activeOpacity={0.7}
+                accessibilityLabel={`Navigate to ${tab.label}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
               >
                 <View style={styles.tabContent}>
                   <IconSymbol
                     android_material_icon_name={tab.icon}
                     ios_icon_name={tab.icon}
                     size={24}
-                    color={isActive ? theme.colors.primary : (theme.dark ? '#98989D' : '#000000')}
+                    color={isActive ? colors.primary : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.tabLabel,
-                      { color: theme.dark ? '#98989D' : '#8E8E93' },
-                      isActive && { color: theme.colors.primary, fontWeight: '600' },
+                      { color: colors.textSecondary },
+                      isActive && { color: colors.primary, fontWeight: '600' },
                     ]}
                   >
                     {tab.label}
@@ -236,19 +239,22 @@ export default function FloatingTabBar({
                         style={[styles.tab, { width: tabWidth }]}
                         onPress={() => handleTabPress(tab.route)}
                         activeOpacity={0.7}
+                        accessibilityLabel={`Navigate to ${tab.label}`}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isActive }}
                       >
                         <View style={styles.tabContent}>
                           <IconSymbol
                             android_material_icon_name={tab.icon}
                             ios_icon_name={tab.icon}
                             size={24}
-                            color={isActive ? theme.colors.primary : (theme.dark ? '#98989D' : '#000000')}
+                            color={isActive ? colors.primary : colors.textSecondary}
                           />
                           <Text
                             style={[
                               styles.tabLabel,
-                              { color: theme.dark ? '#98989D' : '#8E8E93' },
-                              isActive && { color: theme.colors.primary, fontWeight: '600' },
+                              { color: colors.textSecondary },
+                              isActive && { color: colors.primary, fontWeight: '600' },
                             ]}
                           >
                             {tab.label}
@@ -276,20 +282,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-    alignItems: 'center', // Center the content
+    alignItems: 'center',
   },
   container: {
     marginHorizontal: 20,
     alignSelf: 'center',
-    // width and marginBottom handled dynamically via props
   },
   blurContainer: {
     overflow: 'hidden',
-    // borderRadius and other styling applied dynamically
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    // Dynamic styling applied in component
   },
   indicator: {
     position: 'absolute',
@@ -297,7 +300,6 @@ const styles = StyleSheet.create({
     left: 2,
     bottom: 4,
     borderRadius: 27,
-    // Dynamic styling applied in component
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -319,6 +321,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
+    minHeight: 44,
   },
   tabContent: {
     alignItems: 'center',
@@ -329,6 +332,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '500',
     marginTop: 2,
-    // Dynamic styling applied in component
+    lineHeight: 13.05,
   },
 });

@@ -7,6 +7,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { contentData } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
 import { HeaderRightButton, HeaderLeftButton } from "@/components/HeaderButtons";
+import { AppFooter } from "@/components/AppFooter";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -42,7 +43,10 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>
+            <Text
+              style={[styles.title, { color: colors.text }]}
+              accessibilityRole="header"
+            >
               Ultimate Pocket Guide to America
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -56,15 +60,23 @@ export default function HomeScreen() {
               return (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.sectionCard, { backgroundColor: colors.card }]}
+                  style={[
+                    styles.sectionCard,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: "rgba(255, 255, 255, 0.06)",
+                    },
+                  ]}
                   onPress={() => navigateToSection(section.id)}
                   activeOpacity={0.7}
+                  accessibilityLabel={`Navigate to ${section.title}`}
+                  accessibilityRole="button"
                 >
                   <View style={[styles.iconContainer, { backgroundColor: colors.highlight }]}>
                     <IconSymbol
                       ios_icon_name={icons.ios}
                       android_material_icon_name={icons.android}
-                      size={32}
+                      size={28}
                       color={colors.primary}
                     />
                   </View>
@@ -80,6 +92,8 @@ export default function HomeScreen() {
               );
             })}
           </View>
+
+          <AppFooter />
         </ScrollView>
       </View>
     </>
@@ -91,55 +105,61 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingVertical: 16,
+    paddingTop: 16,
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 28,
     alignItems: "center",
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 12,
+    lineHeight: 37.7,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: 21.75,
     paddingHorizontal: 20,
   },
   sectionsContainer: {
-    gap: 16,
+    gap: 12,
   },
   sectionCard: {
     flexDirection: "row",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
-    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
+    marginRight: 14,
   },
   cardContent: {
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "600",
     marginBottom: 4,
+    lineHeight: 24.65,
   },
   sectionDescription: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18.85,
   },
 });

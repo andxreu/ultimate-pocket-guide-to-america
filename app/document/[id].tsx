@@ -1,10 +1,17 @@
 
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { contentData } from "@/data/contentData";
 import { useTheme } from "@/contexts/ThemeContext";
 import { IconSymbol } from "@/components/IconSymbol";
+import { AppFooter } from "@/components/AppFooter";
 
 // Define which subsections are founding documents
 const FOUNDING_DOCUMENTS = [
@@ -22,13 +29,16 @@ export default function DocumentScreen() {
 
   // Find the document in contentData
   let foundDocument: any = null;
-  let foundSection: string = "";
-  let foundMainSection: string = "";
+  let foundSection = "";
+  let foundMainSection = "";
 
   for (const mainSection of contentData) {
     for (const section of mainSection.sections) {
       for (const subsection of section.subsections) {
-        if (subsection.id === id && FOUNDING_DOCUMENTS.includes(subsection.id)) {
+        if (
+          subsection.id === id &&
+          FOUNDING_DOCUMENTS.includes(subsection.id)
+        ) {
           foundDocument = subsection;
           foundSection = section.title;
           foundMainSection = mainSection.title;
@@ -65,6 +75,8 @@ export default function DocumentScreen() {
             <TouchableOpacity
               style={[styles.backButton, { backgroundColor: colors.primary }]}
               onPress={() => router.back()}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Go Back</Text>
             </TouchableOpacity>
@@ -74,8 +86,14 @@ export default function DocumentScreen() {
     );
   }
 
-  // Special handling for Constitution to show Articles and Amendments structure
   const isConstitution = id === "constitution";
+
+  const hasFullText =
+    typeof foundDocument.fullText === "string" &&
+    foundDocument.fullText.trim().length > 0;
+  const hasContext =
+    typeof foundDocument.context === "string" &&
+    foundDocument.context.trim().length > 0;
 
   return (
     <>
@@ -92,19 +110,31 @@ export default function DocumentScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* HEADER */}
         <View style={styles.header}>
-          <View style={[styles.badge, { backgroundColor: colors.primary + "20" }]}>
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor: colors.primary + "15",
+                borderColor: colors.primary + "30",
+              },
+            ]}
+          >
             <IconSymbol
               ios_icon_name="doc.text.fill"
               android_material_icon_name="description"
-              size={16}
+              size={12}
               color={colors.primary}
             />
             <Text style={[styles.badgeText, { color: colors.primary }]}>
               Founding Document
             </Text>
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            accessibilityRole="header"
+          >
             {foundDocument.title}
           </Text>
           <Text style={[styles.breadcrumb, { color: colors.textSecondary }]}>
@@ -112,8 +142,11 @@ export default function DocumentScreen() {
           </Text>
         </View>
 
+        {/* OVERVIEW */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          <Text
+            style={[styles.sectionLabel, { color: colors.textSecondary }]}
+          >
             Overview
           </Text>
           <Text style={[styles.description, { color: colors.text }]}>
@@ -121,64 +154,98 @@ export default function DocumentScreen() {
           </Text>
         </View>
 
+        {/* CONSTITUTION STRUCTURE */}
         {isConstitution && (
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-              Document Structure
-            </Text>
-            <View style={styles.structureSection}>
-              <Text style={[styles.structureTitle, { color: colors.text }]}>
-                Articles
+          <>
+            <View
+              style={[
+                styles.divider,
+                { backgroundColor: colors.textSecondary + "20" },
+              ]}
+            />
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
+                Document Structure
               </Text>
-              <Text style={[styles.structureText, { color: colors.textSecondary }]}>
-                • Article I - Legislative Branch{"\n"}
-                • Article II - Executive Branch{"\n"}
-                • Article III - Judicial Branch{"\n"}
-                • Article IV - States' Relations{"\n"}
-                • Article V - Amendment Process{"\n"}
-                • Article VI - Federal Power{"\n"}
-                • Article VII - Ratification
-              </Text>
+              <View style={styles.structureSection}>
+                <Text style={[styles.structureTitle, { color: colors.text }]}>
+                  Articles
+                </Text>
+                <Text
+                  style={[styles.structureText, { color: colors.textSecondary }]}
+                >
+                  • Article I - Legislative Branch{"\n"}
+                  • Article II - Executive Branch{"\n"}
+                  • Article III - Judicial Branch{"\n"}
+                  • Article IV - States&apos; Relations{"\n"}
+                  • Article V - Amendment Process{"\n"}
+                  • Article VI - Federal Power{"\n"}
+                  • Article VII - Ratification
+                </Text>
+              </View>
+              <View style={styles.structureSection}>
+                <Text style={[styles.structureTitle, { color: colors.text }]}>
+                  Amendments
+                </Text>
+                <Text
+                  style={[styles.structureText, { color: colors.textSecondary }]}
+                >
+                  • Amendments 1–10: Bill of Rights{"\n"}
+                  • Amendments 11–27: Additional Amendments
+                </Text>
+              </View>
             </View>
-            <View style={styles.structureSection}>
-              <Text style={[styles.structureTitle, { color: colors.text }]}>
-                Amendments
-              </Text>
-              <Text style={[styles.structureText, { color: colors.textSecondary }]}>
-                • Amendments 1-10: Bill of Rights{"\n"}
-                • Amendments 11-27: Additional Amendments
-              </Text>
-            </View>
-          </View>
+          </>
         )}
 
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Full Document Text
-          </Text>
-          <Text style={[styles.documentText, { color: colors.text }]}>
-            [Placeholder for full document text]
-            {"\n\n"}
-            This section will contain the complete, original text of {foundDocument.title}.
-            {"\n\n"}
-            The full document will be formatted for easy reading, with proper sections, paragraphs, and annotations to help modern readers understand the historical language and context.
-            {"\n\n"}
-            Key passages will be highlighted, and important terms will be explained to make these foundational documents accessible to all Americans.
-            {"\n\n"}
-            Future updates will include the complete, authentic text along with helpful commentary and historical notes.
-          </Text>
-        </View>
+        {/* FULL TEXT (IF PRESENT) */}
+        {hasFullText && (
+          <>
+            <View
+              style={[
+                styles.divider,
+                { backgroundColor: colors.textSecondary + "20" },
+              ]}
+            />
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
+                Full Document Text
+              </Text>
+              <Text style={[styles.documentText, { color: colors.text }]}>
+                {foundDocument.fullText}
+              </Text>
+            </View>
+          </>
+        )}
 
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Historical Context
-          </Text>
-          <Text style={[styles.bodyText, { color: colors.text }]}>
-            This section will provide historical background about when and why {foundDocument.title} was created, the key figures involved in its drafting, and its lasting impact on American government and society.
-            {"\n\n"}
-            Understanding the historical context helps readers appreciate the significance of these documents and their continued relevance to American civic life.
-          </Text>
-        </View>
+        {/* HISTORICAL CONTEXT (IF PRESENT) */}
+        {hasContext && (
+          <>
+            <View
+              style={[
+                styles.divider,
+                { backgroundColor: colors.textSecondary + "20" },
+              ]}
+            />
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
+                Historical Context
+              </Text>
+              <Text style={[styles.bodyText, { color: colors.text }]}>
+                {foundDocument.context}
+              </Text>
+            </View>
+          </>
+        )}
+
+        {/* FOOTER */}
+        <AppFooter />
       </ScrollView>
     </>
   );
@@ -189,53 +256,64 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 24,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   badge: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 999,
     marginBottom: 12,
     gap: 6,
+    borderWidth: 1,
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    lineHeight: 36,
+    lineHeight: 40.6,
     marginBottom: 8,
   },
   breadcrumb: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18.85,
   },
   card: {
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 16,
   },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 12,
+    letterSpacing: 1.2,
+    marginBottom: 16,
   },
   description: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 23.2,
   },
   structureSection: {
     marginBottom: 16,
@@ -244,19 +322,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
+    lineHeight: 23.2,
   },
   structureText: {
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 20.3,
   },
   documentText: {
     fontSize: 15,
-    lineHeight: 26,
+    lineHeight: 21.75,
     fontFamily: "SpaceMono",
   },
   bodyText: {
     fontSize: 16,
-    lineHeight: 26,
+    lineHeight: 23.2,
   },
   errorContainer: {
     flex: 1,
@@ -269,15 +348,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 16,
     marginBottom: 24,
+    lineHeight: 29,
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   backButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+    lineHeight: 23.2,
   },
 });

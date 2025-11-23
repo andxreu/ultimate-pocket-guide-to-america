@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { MainSection } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
+import { AppFooter } from "@/components/AppFooter";
 
 interface SectionListProps {
   mainSection: MainSection;
@@ -39,7 +40,10 @@ export function SectionList({ mainSection }: SectionListProps) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            accessibilityRole="header"
+          >
             {mainSection.title}
           </Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>
@@ -65,13 +69,26 @@ export function SectionList({ mainSection }: SectionListProps) {
                   return (
                     <TouchableOpacity
                       key={subsectionIndex}
-                      style={[styles.subsectionCard, { backgroundColor: colors.card }]}
+                      style={[
+                        styles.subsectionCard,
+                        {
+                          backgroundColor: colors.card,
+                          borderColor: "rgba(255, 255, 255, 0.06)",
+                        },
+                      ]}
                       onPress={() => navigateToItem(subsection.id)}
                       activeOpacity={0.7}
+                      accessibilityLabel={`Navigate to ${subsection.title}`}
+                      accessibilityRole="button"
                     >
                       <View style={styles.subsectionContent}>
                         {isDocument && (
-                          <View style={[styles.documentBadge, { backgroundColor: colors.primary + "20" }]}>
+                          <View
+                            style={[
+                              styles.documentBadge,
+                              { backgroundColor: colors.primary + "20" },
+                            ]}
+                          >
                             <IconSymbol
                               ios_icon_name="doc.text.fill"
                               android_material_icon_name="description"
@@ -97,6 +114,9 @@ export function SectionList({ mainSection }: SectionListProps) {
             </View>
           ))}
         </View>
+
+        {/* FOOTER */}
+        <AppFooter />
       </ScrollView>
     </View>
   );
@@ -107,56 +127,63 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 48,
+    paddingTop: 32,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   title: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "bold",
     marginBottom: 8,
+    lineHeight: 43.5,
   },
   description: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 21.75,
   },
   sectionsContainer: {
-    gap: 24,
+    gap: 28,
   },
   sectionGroup: {
     marginBottom: 8,
   },
   sectionHeader: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: "600",
-    marginBottom: 4,
+    marginBottom: 6,
+    lineHeight: 27.55,
   },
   sectionDescription: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18.85,
   },
   subsectionsContainer: {
-    gap: 8,
+    gap: 12,
   },
   subsectionCard: {
     flexDirection: "row",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
-    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    minHeight: 44,
   },
   subsectionContent: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   documentBadge: {
     width: 24,
@@ -169,5 +196,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     flex: 1,
+    lineHeight: 23.2,
   },
 });
