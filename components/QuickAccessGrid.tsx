@@ -77,9 +77,9 @@ export default function QuickAccessGrid() {
     },
     {
       id: 'theme',
-      label: isDark ? 'Light' : 'Dark',
-      iosIcon: isDark ? 'sun.max.fill' : 'moon.fill',
-      androidIcon: isDark ? 'light_mode' : 'dark_mode',
+      label: 'Light / Dark',
+      iosIcon: 'lightbulb',
+      androidIcon: 'lightbulb_outline',
     },
   ];
 

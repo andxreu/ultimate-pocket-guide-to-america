@@ -37,6 +37,12 @@ export default function StateDetailScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.errorContainer}>
+          <IconSymbol
+            ios_icon_name="exclamationmark.triangle.fill"
+            android_material_icon_name="error"
+            size={64}
+            color={colors.textSecondary}
+          />
           <Text style={[styles.errorText, { color: colors.text }]}>
             State not found
           </Text>
@@ -210,6 +216,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
+    marginTop: 16,
     marginBottom: 20,
     lineHeight: 26.1,
   },

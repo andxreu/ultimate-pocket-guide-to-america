@@ -85,7 +85,6 @@ export default function TabLayout() {
     },
   ];
 
-  // For Android and Web, use Stack navigation with custom floating tab bar
   return (
     <>
       <Stack

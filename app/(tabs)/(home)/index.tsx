@@ -218,9 +218,6 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* QUICK ACCESS GRID */}
-        <QuickAccessGrid />
-
         {/* SECTIONS */}
         <View style={styles.sectionsContainer}>
           {contentData.map((section, index) => {
@@ -265,6 +262,9 @@ export default function HomeScreen() {
             );
           })}
         </View>
+
+        {/* QUICK ACCESS GRID - MOVED BELOW SECTIONS */}
+        <QuickAccessGrid />
 
         <AppFooter />
       </ScrollView>
@@ -368,6 +368,7 @@ const styles = StyleSheet.create({
   },
   sectionsContainer: {
     gap: 12,
+    marginBottom: 20,
   },
   sectionCard: {
     flexDirection: "row",

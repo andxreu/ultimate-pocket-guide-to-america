@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -7,23 +7,18 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { contentData } from "@/data/contentData";
 import { useTheme } from "@/contexts/ThemeContext";
 import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "expo-haptics";
-
-const FAVORITES_KEY = 'favorites';
+import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const [isFavorite, setIsFavorite] = useState(false);
 
   // Find the item in contentData
   let foundItem: any = null;
@@ -44,45 +39,6 @@ export default function DetailScreen() {
     }
     if (foundItem) break;
   }
-
-  useEffect(() => {
-    checkFavoriteStatus();
-  }, [id]);
-
-  const checkFavoriteStatus = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        const favorites: string[] = JSON.parse(stored);
-        setIsFavorite(favorites.includes(id));
-      }
-    } catch (error) {
-      console.log('Error checking favorite status:', error);
-    }
-  };
-
-  const toggleFavorite = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(FAVORITES_KEY);
-      let favorites: string[] = stored ? JSON.parse(stored) : [];
-
-      if (isFavorite) {
-        favorites = favorites.filter((fid) => fid !== id);
-      } else {
-        favorites = [...new Set([...favorites, id])];
-      }
-
-      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
-      setIsFavorite(!isFavorite);
-
-      // Haptic feedback
-      if (Platform.OS === 'ios') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    } catch (error) {
-      console.log('Error toggling favorite:', error);
-    }
-  };
 
   if (!foundItem) {
     return (
@@ -154,21 +110,7 @@ export default function DetailScreen() {
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
           headerBackTitle: "Back",
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={toggleFavorite}
-              style={styles.favoriteButton}
-              accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
-              accessibilityRole="button"
-            >
-              <IconSymbol
-                ios_icon_name={isFavorite ? "star.fill" : "star"}
-                android_material_icon_name={isFavorite ? "star" : "star_border"}
-                size={26}
-                color={isFavorite ? colors.primary : colors.text}
-              />
-            </TouchableOpacity>
-          ),
+          headerRight: () => <FavoriteToggle itemId={id} />,
         }}
       />
       <ScrollView
@@ -365,14 +307,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     lineHeight: 40.6,
-  },
-  favoriteButton: {
-    padding: 8,
-    marginRight: 8,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   heroImageContainer: {
     marginBottom: 20,
