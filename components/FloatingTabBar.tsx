@@ -185,7 +185,7 @@ export default function FloatingTabBar({
                   <IconSymbol
                     android_material_icon_name={tab.icon}
                     ios_icon_name={tab.icon}
-                    size={26}
+                    size={28}
                     color={isActive ? colors.primary : colors.textSecondary}
                   />
                   <Text
@@ -247,7 +247,7 @@ export default function FloatingTabBar({
                           <IconSymbol
                             android_material_icon_name={tab.icon}
                             ios_icon_name={tab.icon}
-                            size={26}
+                            size={28}
                             color={isActive ? colors.primary : colors.textSecondary}
                           />
                           <Text
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    height: 64,
+    height: 68,
     alignItems: 'center',
     paddingHorizontal: 4,
   },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   scrollView: {
-    height: 64,
+    height: 68,
   },
   scrollContent: {
     alignItems: 'center',
@@ -326,12 +326,12 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: 4,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
-    lineHeight: 14.5,
+    lineHeight: 15.95,
   },
 });

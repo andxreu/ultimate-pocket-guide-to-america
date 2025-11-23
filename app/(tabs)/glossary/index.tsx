@@ -14,7 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { AppFooter } from '@/components/AppFooter';
 import { glossaryData, GlossaryTerm } from '@/data/glossaryData';
-import { getItemRoute } from '@/utils/findItemById';
+import { findItemById } from '@/utils/findItemById';
 
 export default function GlossaryScreen() {
   const { colors } = useTheme();
@@ -47,14 +47,39 @@ export default function GlossaryScreen() {
     setSelectedTerm(term);
   };
 
-  const handleRelatedPress = (id: string) => {
+  const handleRelatedPress = (id: string, title: string) => {
     setSelectedTerm(null);
-    const route = getItemRoute(id);
-    router.push(route as any);
+    const result = findItemById(id);
+    if (result) {
+      const route = result.item.id.match(/^(declaration|articles|constitution|bill-of-rights|federalist-papers)$/)
+        ? `/document/${id}`
+        : `/detail/${id}`;
+      router.push(route as any);
+    } else {
+      console.log('Item not found:', id);
+    }
   };
 
   const handleCloseModal = () => {
     setSelectedTerm(null);
+  };
+
+  // Get related topics with their titles
+  const getRelatedTopics = (relatedIds?: string[]) => {
+    if (!relatedIds || relatedIds.length === 0) return [];
+    
+    return relatedIds
+      .map(id => {
+        const result = findItemById(id);
+        if (result) {
+          return {
+            id,
+            title: result.item.title,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as { id: string; title: string }[];
   };
 
   return (
@@ -69,7 +94,7 @@ export default function GlossaryScreen() {
       />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Search Bar */}
-        <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.primary + "20" }]}>
           <IconSymbol
             ios_icon_name="magnifyingglass"
             android_material_icon_name="search"
@@ -120,32 +145,37 @@ export default function GlossaryScreen() {
               </Text>
             </View>
           ) : (
-            letters.map((letter) => (
-              <View key={letter} style={styles.letterSection}>
-                <Text style={[styles.letterHeader, { color: colors.primary }]}>
-                  {letter}
-                </Text>
-                {groupedTerms[letter].map((term, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.termCard, { backgroundColor: colors.card }]}
-                    onPress={() => handleTermPress(term)}
-                    accessibilityLabel={`View definition of ${term.term}`}
-                    accessibilityRole="button"
-                  >
-                    <Text style={[styles.termTitle, { color: colors.text }]}>
-                      {term.term}
+            <>
+              {letters.map((letter) => (
+                <React.Fragment key={letter}>
+                  <View style={styles.letterSection}>
+                    <Text style={[styles.letterHeader, { color: colors.primary }]}>
+                      {letter}
                     </Text>
-                    <Text
-                      style={[styles.termDefinition, { color: colors.textSecondary }]}
-                      numberOfLines={2}
-                    >
-                      {term.definition}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ))
+                    {groupedTerms[letter].map((term, index) => (
+                      <React.Fragment key={index}>
+                        <TouchableOpacity
+                          style={[styles.termCard, { backgroundColor: colors.card, borderColor: colors.primary + "10" }]}
+                          onPress={() => handleTermPress(term)}
+                          accessibilityLabel={`View definition of ${term.term}`}
+                          accessibilityRole="button"
+                        >
+                          <Text style={[styles.termTitle, { color: colors.text }]}>
+                            {term.term}
+                          </Text>
+                          <Text
+                            style={[styles.termDefinition, { color: colors.textSecondary }]}
+                            numberOfLines={2}
+                          >
+                            {term.definition}
+                          </Text>
+                        </TouchableOpacity>
+                      </React.Fragment>
+                    ))}
+                  </View>
+                </React.Fragment>
+              ))}
+            </>
           )}
 
           <AppFooter />
@@ -179,32 +209,39 @@ export default function GlossaryScreen() {
                   {selectedTerm.definition}
                 </Text>
 
-                {selectedTerm.relatedIds && selectedTerm.relatedIds.length > 0 && (
-                  <View style={styles.relatedSection}>
-                    <Text style={[styles.relatedTitle, { color: colors.textSecondary }]}>
-                      Related Topics
-                    </Text>
-                    {selectedTerm.relatedIds.map((id, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={[styles.relatedButton, { borderColor: colors.primary }]}
-                        onPress={() => handleRelatedPress(id)}
-                        accessibilityLabel={`View related topic ${id}`}
-                        accessibilityRole="button"
-                      >
-                        <Text style={[styles.relatedButtonText, { color: colors.primary }]}>
-                          View in Guide
+                {(() => {
+                  const relatedTopics = getRelatedTopics(selectedTerm.relatedIds);
+                  if (relatedTopics.length > 0) {
+                    return (
+                      <View style={styles.relatedSection}>
+                        <Text style={[styles.relatedTitle, { color: colors.textSecondary }]}>
+                          Related Topics
                         </Text>
-                        <IconSymbol
-                          ios_icon_name="arrow.right"
-                          android_material_icon_name="arrow_forward"
-                          size={16}
-                          color={colors.primary}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                        {relatedTopics.map((topic, index) => (
+                          <React.Fragment key={index}>
+                            <TouchableOpacity
+                              style={[styles.relatedButton, { borderColor: colors.primary, backgroundColor: colors.highlight }]}
+                              onPress={() => handleRelatedPress(topic.id, topic.title)}
+                              accessibilityLabel={`View ${topic.title}`}
+                              accessibilityRole="button"
+                            >
+                              <Text style={[styles.relatedButtonText, { color: colors.primary }]}>
+                                {topic.title}
+                              </Text>
+                              <IconSymbol
+                                ios_icon_name="arrow.right"
+                                android_material_icon_name="arrow_forward"
+                                size={16}
+                                color={colors.primary}
+                              />
+                            </TouchableOpacity>
+                          </React.Fragment>
+                        ))}
+                      </View>
+                    );
+                  }
+                  return null;
+                })()}
               </ScrollView>
             </View>
           </View>
@@ -226,6 +263,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
+    borderWidth: 1,
     gap: 12,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -264,6 +302,7 @@ const styles = StyleSheet.create({
   termCard: {
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -357,15 +396,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 8,
     minHeight: 44,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   relatedButtonText: {
     fontSize: 15,
     fontWeight: '600',
     lineHeight: 21.75,
+    flex: 1,
   },
 });

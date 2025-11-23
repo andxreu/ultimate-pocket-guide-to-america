@@ -160,7 +160,7 @@ export default function DocumentScreen() {
                 ios_icon_name={isFavorite ? "star.fill" : "star"}
                 android_material_icon_name={isFavorite ? "star" : "star_border"}
                 size={24}
-                color={isFavorite ? colors.primary : colors.textSecondary}
+                color={isFavorite ? colors.primary : colors.text}
               />
             </TouchableOpacity>
           ),
@@ -203,7 +203,7 @@ export default function DocumentScreen() {
         </View>
 
         {/* OVERVIEW */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}>
           <Text
             style={[styles.sectionLabel, { color: colors.textSecondary }]}
           >
@@ -223,7 +223,7 @@ export default function DocumentScreen() {
                 { backgroundColor: colors.textSecondary + "20" },
               ]}
             />
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}>
               <Text
                 style={[styles.sectionLabel, { color: colors.textSecondary }]}
               >
@@ -269,7 +269,7 @@ export default function DocumentScreen() {
                 { backgroundColor: colors.textSecondary + "20" },
               ]}
             />
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}>
               <Text
                 style={[styles.sectionLabel, { color: colors.textSecondary }]}
               >
@@ -291,7 +291,7 @@ export default function DocumentScreen() {
                 { backgroundColor: colors.textSecondary + "20" },
               ]}
             />
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}>
               <Text
                 style={[styles.sectionLabel, { color: colors.textSecondary }]}
               >
@@ -339,6 +339,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.6,
+    lineHeight: 14.5,
   },
   title: {
     fontSize: 28,
@@ -361,6 +362,7 @@ const styles = StyleSheet.create({
   card: {
     padding: 20,
     borderRadius: 12,
+    borderWidth: 1,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOpacity: 0.08,
@@ -378,6 +380,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1.2,
     marginBottom: 16,
+    lineHeight: 15.95,
   },
   description: {
     fontSize: 16,

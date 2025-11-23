@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -36,6 +37,8 @@ export default function RegionDetailScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.primary }]}
             onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
@@ -58,7 +61,7 @@ export default function RegionDetailScreen() {
         >
           <IconSymbol
             ios_icon_name="chevron.left"
-            android_material_icon_name="arrow_back"
+            android_material_icon_name="chevron_left"
             size={24}
             color={colors.primary}
           />
@@ -87,14 +90,15 @@ export default function RegionDetailScreen() {
 
         <View style={styles.statesContainer}>
           {region.states.map((state, index) => (
-            <StateCard
-              key={index}
-              state={state}
-              colors={colors}
-              onPress={() =>
-                router.push(`/map/state/${state.code.toLowerCase()}` as any)
-              }
-            />
+            <React.Fragment key={index}>
+              <StateCard
+                state={state}
+                colors={colors}
+                onPress={() =>
+                  router.push(`/map/state/${state.code.toLowerCase()}` as any)
+                }
+              />
+            </React.Fragment>
           ))}
         </View>
 
@@ -144,7 +148,7 @@ function StateCard({
           styles.stateCard,
           {
             backgroundColor: colors.card,
-            borderColor: "rgba(255, 255, 255, 0.06)",
+            borderColor: colors.primary + "10",
           },
           animatedStyle,
         ]}
@@ -177,7 +181,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 32,
+    paddingTop: Platform.OS === 'android' ? 48 : 32,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
@@ -186,10 +190,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
     gap: 4,
+    minHeight: 44,
   },
   backButtonTopText: {
     fontSize: 16,
     fontWeight: "500",
+    lineHeight: 23.2,
   },
   header: {
     marginBottom: 28,
@@ -258,15 +264,18 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     marginBottom: 20,
+    lineHeight: 26.1,
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
+    minHeight: 44,
   },
   backButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+    lineHeight: 23.2,
   },
 });

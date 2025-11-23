@@ -5,137 +5,131 @@ import {
   StyleSheet,
   View,
   Text,
-  Pressable,
+  TouchableOpacity,
   ImageBackground,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { contentData } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-} from "react-native-reanimated";
 
 const HERO_FLAG_URL =
   "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image.png?w=1024&ssl=1";
 
-// 100+ Random American Facts
-const americanFacts = [
-  "The United States has no official language at the federal level.",
-  "Alaska has more coastline than all other U.S. states combined.",
-  "The Library of Congress is the largest library in the world.",
-  "The U.S. Interstate Highway System was inspired by Germany's Autobahn.",
-  "The American flag has been redesigned 27 times.",
-  "The Statue of Liberty was a gift from France in 1886.",
+// Expanded pool of 100+ American facts
+const AMERICAN_FACTS: string[] = [
+  "The United States Constitution is the oldest written national constitution still in use.",
+  "Yellowstone, established in 1872, is widely considered the first national park in the world.",
+  "The Library of Congress is the largest library on Earth, with millions of books, recordings, and maps.",
+  "In 1903, the Wright brothers flew the first powered airplane at Kitty Hawk, North Carolina.",
+  "The Interstate Highway System spans over 46,000 miles, connecting nearly every major U.S. city.",
+  "NASA, founded in 1958, has sent humans to the Moon and robotic probes to every planet in the solar system.",
+  "The U.S. has 63 national parks, protecting landscapes from the Everglades to Denali.",
+  "Thomas Edison held over 1,000 patents, including the phonograph and a practical electric light bulb.",
+  "The U.S. has more than 95,000 miles of shoreline along oceans, gulfs, and the Great Lakes.",
+  "American women secured the constitutional right to vote in 1920 with the 19th Amendment.",
+  "The Statue of Liberty was a gift from France in 1886, symbolizing freedom and democracy.",
+  "The Bill of Rights was ratified in 1791, guaranteeing fundamental freedoms to all Americans.",
+  "The U.S. dollar is the world's primary reserve currency, used in international trade.",
+  "Mount Rushmore features the carved faces of four presidents: Washington, Jefferson, Roosevelt, and Lincoln.",
+  "The Golden Gate Bridge in San Francisco was completed in 1937 and was the longest suspension bridge at the time.",
+  "The first American satellite, Explorer 1, was launched in 1958, marking the U.S. entry into the Space Race.",
+  "The Smithsonian Institution is the world's largest museum, education, and research complex.",
   "The U.S. has the world's largest economy by nominal GDP.",
-  "Mount Rushmore took 14 years to complete.",
-  "The first American newspaper was published in 1690.",
-  "The U.S. Postal Service delivers to every address in the country.",
-  "The bald eagle was chosen as the national bird in 1782.",
-  "The U.S. has more than 400 areas in the National Park System.",
-  "The first U.S. census was conducted in 1790.",
-  "The Pentagon is the world's largest office building.",
-  "The U.S. has the third-largest population in the world.",
-  "The first American cookbook was published in 1796.",
-  "The U.S. produces about 18% of the world's electricity.",
-  "The Golden Gate Bridge was once the longest suspension bridge.",
-  "The U.S. has more than 45,000 airports.",
-  "The first American satellite was launched in 1958.",
-  "The U.S. dollar is the world's primary reserve currency.",
-  "The Mississippi River is the second-longest river in North America.",
-  "The U.S. has won more Olympic medals than any other country.",
-  "The first American university was Harvard, founded in 1636.",
-  "The U.S. has the world's largest air force.",
-  "The Great Lakes contain 21% of the world's surface fresh water.",
-  "The U.S. invented the internet.",
-  "The first American woman in space was Sally Ride in 1983.",
-  "The U.S. has more than 100,000 public schools.",
-  "The first American novel was published in 1789.",
-  "The U.S. has the world's largest railway network.",
+  "Benjamin Franklin helped draft the Declaration of Independence and invented bifocal glasses and the lightning rod.",
+  "The Grand Canyon is over 277 miles long and up to 18 miles wide, carved by the Colorado River.",
+  "The U.S. Postal Service delivers to every address in the nation, over 160 million locations.",
+  "The first public library in America was founded in 1731 by Benjamin Franklin in Philadelphia.",
+  "The U.S. has more Nobel Prize winners than any other country.",
+  "The American flag has had 27 different versions since 1777, with the current 50-star design adopted in 1960.",
+  "The Liberty Bell in Philadelphia is an iconic symbol of American independence.",
+  "The U.S. military is the most powerful in the world, with bases in over 70 countries.",
+  "The first American newspaper was published in Boston in 1690.",
+  "The U.S. has the world's third-largest population, after China and India.",
+  "The Mississippi River is the second-longest river in North America, flowing 2,340 miles.",
+  "The U.S. invented the internet, originally developed as ARPANET in the 1960s.",
+  "The first American college, Harvard University, was founded in 1636.",
+  "The U.S. has won more Olympic medals than any other country in history.",
+  "The Hoover Dam, completed in 1936, provides power to Nevada, Arizona, and California.",
+  "The U.S. has the world's largest air force and navy.",
+  "The first American astronaut in space was Alan Shepard in 1961.",
+  "The U.S. has the most airports in the world, with over 13,000.",
   "The first American zoo opened in Philadelphia in 1874.",
-  "The U.S. has more than 5,000 colleges and universities.",
-  "The first American patent was issued in 1790.",
-  "The U.S. has the world's largest number of Nobel Prize winners.",
-  "The first American lighthouse was built in 1716.",
-  "The U.S. has more than 300 million registered vehicles.",
-  "The first American public library opened in 1833.",
-  "The U.S. has the world's largest music industry.",
+  "The U.S. has the world's largest railway network, spanning over 140,000 miles.",
+  "The first American patent was issued in 1790 for a new method of making potash.",
+  "The U.S. has the most billionaires of any country in the world.",
+  "The first American public school was established in Boston in 1635.",
+  "The U.S. has the world's largest coal reserves.",
+  "The first American lighthouse was built in Boston Harbor in 1716.",
+  "The U.S. has the most universities ranked in the global top 100.",
+  "The first American stock exchange was established in Philadelphia in 1790.",
+  "The U.S. has the world's largest oil reserves outside the Middle East.",
+  "The first American fire department was established in New York City in 1648.",
+  "The U.S. has the most diverse geography of any country, from deserts to rainforests.",
+  "The first American hospital was founded in Philadelphia in 1751.",
+  "The U.S. has the world's largest entertainment industry, centered in Hollywood.",
+  "The first American telegraph line was completed in 1844, connecting Washington, D.C., and Baltimore.",
+  "The U.S. has the most UNESCO World Heritage Sites in the Americas.",
+  "The first American railroad was the Baltimore and Ohio Railroad, chartered in 1827.",
+  "The U.S. has the world's largest technology sector, with Silicon Valley as its hub.",
+  "The first American skyscraper was the Home Insurance Building in Chicago, built in 1885.",
+  "The U.S. has the most diverse immigrant population in the world.",
   "The first American subway system opened in Boston in 1897.",
-  "The U.S. has more than 1,000 military bases worldwide.",
-  "The first American skyscraper was built in Chicago in 1885.",
-  "The U.S. has the world's largest film industry.",
-  "The first American radio broadcast was in 1920.",
-  "The U.S. has more than 200,000 miles of coastline.",
-  "The first American television broadcast was in 1928.",
-  "The U.S. has the world's largest number of billionaires.",
-  "The first American credit card was issued in 1950.",
-  "The U.S. has more than 100 million acres of wilderness.",
-  "The first American computer was built in 1946.",
-  "The U.S. has the world's largest consumer market.",
-  "The first American jet airliner flew in 1958.",
-  "The U.S. has more than 50,000 community water systems.",
-  "The first American heart transplant was performed in 1968.",
-  "The U.S. has the world's largest number of airports.",
-  "The first American space shuttle launched in 1981.",
-  "The U.S. has more than 20,000 incorporated cities and towns.",
-  "The first American ATM was installed in 1969.",
-  "The U.S. has the world's largest gold reserves.",
-  "The first American cell phone call was made in 1973.",
-  "The U.S. has more than 600,000 bridges.",
-  "The first American GPS satellite was launched in 1978.",
-  "The U.S. has the world's largest number of immigrants.",
-  "The first American test-tube baby was born in 1981.",
-  "The U.S. has more than 4 million miles of roads.",
-  "The first American website went online in 1991.",
+  "The U.S. has the world's largest agricultural output.",
+  "The first American radio broadcast was made in 1920 from Pittsburgh.",
+  "The U.S. has the most Fortune 500 companies of any country.",
+  "The first American television broadcast was made in 1928.",
   "The U.S. has the world's largest pharmaceutical industry.",
-  "The first American cloned mammal was a sheep in 1996.",
-  "The U.S. has more than 100,000 gas stations.",
-  "The first American hybrid car was sold in 1999.",
-  "The U.S. has the world's largest number of patents filed annually.",
-  "The first American social media site launched in 1997.",
-  "The U.S. has more than 15,000 museums.",
-  "The first American electric car was built in 1890.",
-  "The U.S. has the world's largest number of research universities.",
-  "The first American transcontinental railroad was completed in 1869.",
-  "The U.S. has more than 200,000 restaurants.",
-  "The first American woman to vote did so in 1920.",
-  "The U.S. has the world's largest number of shopping malls.",
-  "The first American minimum wage was set in 1938.",
-  "The U.S. has more than 50,000 public libraries.",
-  "The first American Social Security check was issued in 1940.",
-  "The U.S. has the world's largest number of theme parks.",
-  "The first American credit bureau was established in 1899.",
-  "The U.S. has more than 100,000 farms.",
-  "The first American national park was Yellowstone in 1872.",
-  "The U.S. has the world's largest number of golf courses.",
-  "The first American blood bank opened in 1937.",
-  "The U.S. has more than 300,000 churches.",
-  "The first American supermarket opened in 1930.",
-  "The U.S. has the world's largest number of lawyers.",
-  "The first American parking meter was installed in 1935.",
-  "The U.S. has more than 5,000 hospitals.",
-  "The first American drive-in movie theater opened in 1933.",
-  "The U.S. has the world's largest number of fast-food restaurants.",
-  "The first American shopping cart was invented in 1937.",
-  "The U.S. has more than 1 million nonprofit organizations.",
-  "The first American frozen food was sold in 1930.",
-  "The U.S. has the world's largest number of swimming pools.",
-  "The first American instant coffee was invented in 1901.",
-  "The U.S. has more than 10,000 radio stations.",
-  "The first American zipper was patented in 1893.",
-  "The U.S. has the world's largest number of television stations.",
+  "The first American jet aircraft flew in 1942.",
+  "The U.S. has the most national monuments and historic sites.",
+  "The first American nuclear power plant began operation in 1957.",
+  "The U.S. has the world's largest financial services industry.",
+  "The first American credit card was introduced in 1950.",
+  "The U.S. has the most patents filed annually of any country.",
+  "The first American artificial satellite was Explorer 1, launched in 1958.",
+  "The U.S. has the world's largest music industry.",
+  "The first American computer was ENIAC, completed in 1945.",
+  "The U.S. has the most professional sports leagues in the world.",
+  "The first American microprocessor was the Intel 4004, released in 1971.",
+  "The U.S. has the world's largest defense budget.",
+  "The first American personal computer was the Altair 8800, released in 1975.",
+  "The U.S. has the most international students studying in its universities.",
+  "The first American mobile phone call was made in 1973.",
+  "The U.S. has the world's largest aerospace industry.",
+  "The first American space shuttle, Columbia, launched in 1981.",
+  "The U.S. has the most venture capital investment of any country.",
+  "The first American GPS satellite was launched in 1978.",
+  "The U.S. has the world's largest biotechnology industry.",
+  "The first American electric car was built in 1891.",
+  "The U.S. has the most startup companies of any country.",
+  "The first American wind farm was built in New Hampshire in 1980.",
+  "The U.S. has the world's largest renewable energy capacity.",
+  "The first American solar power plant was built in California in 1982.",
+  "The U.S. has the most research and development spending of any country.",
+  "The first American hybrid car was the Toyota Prius, sold in the U.S. in 2000.",
+  "The U.S. has the world's largest automotive industry.",
+  "The first American commercial jet airliner was the Boeing 707, introduced in 1958.",
+  "The U.S. has the most airports with international flights.",
+  "The first American communications satellite was Telstar, launched in 1962.",
+  "The U.S. has the world's largest telecommunications network.",
+  "The first American weather satellite was TIROS-1, launched in 1960.",
+  "The U.S. has the most advanced military technology in the world.",
+  "The first American spy satellite was Corona, launched in 1960.",
+  "The U.S. has the world's largest intelligence community.",
+  "The first American Mars rover was Sojourner, which landed in 1997.",
+  "The U.S. has the most space launches of any country.",
+  "The first American space station was Skylab, launched in 1973.",
+  "The U.S. has the world's largest commercial space industry.",
+  "The first American reusable spacecraft was the Space Shuttle, first launched in 1981.",
+  "The U.S. has the most astronauts who have traveled to space.",
+  "The first American lunar landing was Apollo 11 in 1969, with Neil Armstrong and Buzz Aldrin.",
 ];
 
 export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-
-  // Select a random fact
-  const [randomFact] = React.useState(() => 
-    americanFacts[Math.floor(Math.random() * americanFacts.length)]
-  );
 
   const getIconName = (icon: string) => {
     const iconMap: { [key: string]: { ios: string; android: string } } = {
@@ -152,6 +146,17 @@ export default function HomeScreen() {
     router.push(`/(tabs)/${sectionId}` as any);
   };
 
+  // Pick a random fact once per mount
+  const [fact, setFact] = React.useState(() => {
+    const idx = Math.floor(Math.random() * AMERICAN_FACTS.length);
+    return AMERICAN_FACTS[idx];
+  });
+
+  const shuffleFact = () => {
+    const idx = Math.floor(Math.random() * AMERICAN_FACTS.length);
+    setFact(AMERICAN_FACTS[idx]);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -166,11 +171,7 @@ export default function HomeScreen() {
             imageStyle={styles.heroImage}
           >
             <View style={styles.heroOverlay}>
-              <Text
-                style={[styles.title, { color: "#FFFFFF" }]}
-                accessibilityLabel="Ultimate Pocket Guide to America"
-                accessibilityRole="header"
-              >
+              <Text style={[styles.title, { color: "#FFFFFF" }]}>
                 Ultimate Pocket Guide to America
               </Text>
               <Text style={[styles.subtitle, { color: "#E5E7EB" }]}>
@@ -181,130 +182,88 @@ export default function HomeScreen() {
           </ImageBackground>
         </View>
 
-        {/* RANDOM AMERICAN FACT */}
-        <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.primary + "30" }]}>
+        {/* RANDOM FACT CARD */}
+        <View
+          style={[
+            styles.factCard,
+            { backgroundColor: colors.card, borderColor: colors.primary + "20" },
+          ]}
+        >
           <View style={styles.factHeader}>
-            <IconSymbol
-              ios_icon_name="lightbulb.fill"
-              android_material_icon_name="lightbulb"
-              size={24}
-              color={colors.primary}
-            />
-            <Text style={[styles.factTitle, { color: colors.primary }]}>
-              Random American Fact
+            <Text style={[styles.factLabel, { color: colors.textSecondary }]}>
+              Did you know?
             </Text>
+            <TouchableOpacity
+              onPress={shuffleFact}
+              style={styles.shuffleButton}
+              accessibilityLabel="Get a new fact"
+              accessibilityRole="button"
+            >
+              <IconSymbol
+                ios_icon_name="arrow.clockwise"
+                android_material_icon_name="refresh"
+                size={16}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
           </View>
-          <Text style={[styles.factText, { color: colors.text }]}>
-            {randomFact}
-          </Text>
+          <Text style={[styles.factText, { color: colors.text }]}>{fact}</Text>
         </View>
 
-        {/* SECTIONS HEADER */}
+        {/* SECTIONS */}
         <View style={styles.sectionsHeaderRow}>
           <Text style={[styles.sectionsHeaderText, { color: colors.textSecondary }]}>
             Explore the guide
           </Text>
         </View>
 
-        {/* SECTIONS LIST */}
         <View style={styles.sectionsContainer}>
           {contentData.map((section, index) => {
             const icons = getIconName(section.icon);
             return (
-              <SectionCard
-                key={index}
-                section={section}
-                icons={icons}
-                colors={colors}
-                onPress={() => navigateToSection(section.id)}
-              />
+              <React.Fragment key={index}>
+                <TouchableOpacity
+                  style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.primary + "10" }]}
+                  onPress={() => navigateToSection(section.id)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={`Navigate to ${section.title}`}
+                  accessibilityRole="button"
+                >
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      { backgroundColor: colors.highlight },
+                    ]}
+                  >
+                    <IconSymbol
+                      ios_icon_name={icons.ios}
+                      android_material_icon_name={icons.android}
+                      size={32}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.cardContent}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                      {section.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.sectionDescription,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {section.description}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </React.Fragment>
             );
           })}
         </View>
 
-        {/* FOOTER */}
         <AppFooter />
       </ScrollView>
     </View>
-  );
-}
-
-function SectionCard({
-  section,
-  icons,
-  colors,
-  onPress,
-}: {
-  section: any;
-  icons: any;
-  colors: any;
-  onPress: () => void;
-}) {
-  const scale = React.useRef(new Animated.Value(1)).current;
-  const opacity = React.useRef(new Animated.Value(1)).current;
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: withSpring(scale.value) }],
-    opacity: withSpring(opacity.value),
-  }));
-
-  const handlePressIn = () => {
-    scale.value = 0.97;
-    opacity.value = 0.8;
-  };
-
-  const handlePressOut = () => {
-    scale.value = 1;
-    opacity.value = 1;
-  };
-
-  return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      accessibilityLabel={`Navigate to ${section.title}`}
-      accessibilityRole="button"
-    >
-      <Animated.View
-        style={[
-          styles.sectionCard,
-          {
-            backgroundColor: colors.card,
-            borderColor: colors.primary + "15",
-          },
-          animatedStyle,
-        ]}
-      >
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: colors.highlight },
-          ]}
-        >
-          <IconSymbol
-            ios_icon_name={icons.ios}
-            android_material_icon_name={icons.android}
-            size={28}
-            color={colors.primary}
-          />
-        </View>
-
-        <View style={styles.cardContent}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {section.title}
-          </Text>
-          <Text
-            style={[
-              styles.sectionDescription,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {section.description}
-          </Text>
-        </View>
-      </Animated.View>
-    </Pressable>
   );
 }
 
@@ -313,24 +272,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 24,
+    paddingTop: Platform.OS === 'android' ? 48 : 32,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
 
   /* HERO */
   header: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   heroCard: {
     width: "100%",
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   heroImage: {
     resizeMode: "cover",
@@ -338,53 +297,59 @@ const styles = StyleSheet.create({
   heroOverlay: {
     paddingHorizontal: 20,
     paddingVertical: 24,
-    backgroundColor: "rgba(0, 32, 96, 0.75)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
     textAlign: "left",
-    lineHeight: 34.8,
-    marginBottom: 10,
+    marginBottom: 8,
+    lineHeight: 31.9,
   },
   subtitle: {
     fontSize: 14,
     lineHeight: 20.3,
     textAlign: "left",
-    fontWeight: "400",
   },
 
-  /* RANDOM FACT CARD */
+  /* FACT CARD */
   factCard: {
+    marginBottom: 20,
     padding: 16,
     borderRadius: 12,
-    marginBottom: 20,
     borderWidth: 1,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.08,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   factHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  factTitle: {
-    fontSize: 15,
-    fontWeight: "700",
+  factLabel: {
+    fontSize: 12,
+    fontWeight: "600",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
-    lineHeight: 21.75,
+    letterSpacing: 1,
+    lineHeight: 17.4,
+  },
+  shuffleButton: {
+    padding: 4,
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: "center",
+    alignItems: "center",
   },
   factText: {
     fontSize: 14,
     lineHeight: 20.3,
   },
 
-  /* SECTION HEADERS */
+  /* SECTIONS */
   sectionsHeaderRow: {
     marginBottom: 12,
     paddingHorizontal: 4,
@@ -393,11 +358,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     textTransform: "uppercase",
-    letterSpacing: 1.2,
-    opacity: 0.7,
+    letterSpacing: 1,
+    lineHeight: 17.4,
   },
-
-  /* SECTION CARDS */
   sectionsContainer: {
     gap: 12,
   },
@@ -409,14 +372,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     shadowColor: "#000",
     shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   iconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 14,

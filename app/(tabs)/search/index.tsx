@@ -99,7 +99,7 @@ export default function SearchScreen() {
 
   const performSearch = useCallback((query: string) => {
     setIsSearching(true);
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase().trim();
     const foundResults: SearchResult[] = [];
     const seenIds = new Set<string>();
 
@@ -110,35 +110,51 @@ export default function SearchScreen() {
           if (seenIds.has(subsection.id)) continue;
 
           const title = subsection.title.toLowerCase();
+          const sectionName = section.title.toLowerCase();
+          const mainSectionName = mainSection.title.toLowerCase();
           const content = subsection.content.toLowerCase();
           const fullText = subsection.fullText?.toLowerCase() || '';
 
-          // Calculate relevance score
+          // Calculate relevance score with improved ordering
           let relevanceScore = 0;
 
-          // Exact title match gets highest score
+          // PRIORITY 1: Title matches (highest priority)
           if (title === lowerQuery) {
-            relevanceScore = 1000;
+            // Exact title match
+            relevanceScore = 10000;
+          } else if (title.startsWith(lowerQuery)) {
+            // Title starts with query
+            relevanceScore = 5000;
+          } else if (title.includes(` ${lowerQuery}`) || title.includes(`${lowerQuery} `)) {
+            // Title contains query as a whole word
+            relevanceScore = 3000;
+          } else if (title.includes(lowerQuery)) {
+            // Title contains query as substring
+            relevanceScore = 1500;
           }
-          // Title starts with query
-          else if (title.startsWith(lowerQuery)) {
+          
+          // PRIORITY 2: Section/Main section matches
+          else if (sectionName === lowerQuery || mainSectionName === lowerQuery) {
+            // Exact section match
+            relevanceScore = 1000;
+          } else if (sectionName.includes(lowerQuery) || mainSectionName.includes(lowerQuery)) {
+            // Section contains query
             relevanceScore = 500;
           }
-          // Title contains query
-          else if (title.includes(lowerQuery)) {
-            relevanceScore = 300;
-          }
-          // Content starts with query
+          
+          // PRIORITY 3: Body text matches (lowest priority)
           else if (content.startsWith(lowerQuery)) {
+            // Content starts with query
             relevanceScore = 200;
-          }
-          // Content contains query
-          else if (content.includes(lowerQuery)) {
+          } else if (content.includes(` ${lowerQuery}`) || content.includes(`${lowerQuery} `)) {
+            // Content contains query as whole word
             relevanceScore = 100;
-          }
-          // Full text contains query
-          else if (fullText.includes(lowerQuery)) {
+          } else if (content.includes(lowerQuery)) {
+            // Content contains query as substring
             relevanceScore = 50;
+          } else if (fullText.includes(lowerQuery)) {
+            // Full text contains query
+            relevanceScore = 25;
           }
 
           if (relevanceScore > 0) {
@@ -264,23 +280,24 @@ export default function SearchScreen() {
                 </TouchableOpacity>
               </View>
               {recentSearches.map((query, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.recentItem, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}
-                  onPress={() => handleRecentSearchPress(query)}
-                  accessibilityLabel={`Search for ${query}`}
-                  accessibilityRole="button"
-                >
-                  <IconSymbol
-                    ios_icon_name="clock"
-                    android_material_icon_name="history"
-                    size={18}
-                    color={colors.textSecondary}
-                  />
-                  <Text style={[styles.recentText, { color: colors.text }]}>
-                    {query}
-                  </Text>
-                </TouchableOpacity>
+                <React.Fragment key={index}>
+                  <TouchableOpacity
+                    style={[styles.recentItem, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}
+                    onPress={() => handleRecentSearchPress(query)}
+                    accessibilityLabel={`Search for ${query}`}
+                    accessibilityRole="button"
+                  >
+                    <IconSymbol
+                      ios_icon_name="clock"
+                      android_material_icon_name="history"
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                    <Text style={[styles.recentText, { color: colors.text }]}>
+                      {query}
+                    </Text>
+                  </TouchableOpacity>
+                </React.Fragment>
               ))}
             </View>
           )}
@@ -328,23 +345,24 @@ export default function SearchScreen() {
                 {results.length} {results.length === 1 ? 'result' : 'results'}
               </Text>
               {results.map((result, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}
-                  onPress={() => handleResultPress(result.id)}
-                  accessibilityLabel={`Open ${result.title}`}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.resultTitle, { color: colors.text }]}>
-                    {result.title}
-                  </Text>
-                  <Text style={[styles.resultBreadcrumb, { color: colors.textSecondary }]}>
-                    {result.breadcrumb}
-                  </Text>
-                  <Text style={[styles.resultSnippet, { color: colors.textSecondary }]}>
-                    {result.snippet}
-                  </Text>
-                </TouchableOpacity>
+                <React.Fragment key={index}>
+                  <TouchableOpacity
+                    style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}
+                    onPress={() => handleResultPress(result.id)}
+                    accessibilityLabel={`Open ${result.title}`}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.resultTitle, { color: colors.text }]}>
+                      {result.title}
+                    </Text>
+                    <Text style={[styles.resultBreadcrumb, { color: colors.textSecondary }]}>
+                      {result.breadcrumb}
+                    </Text>
+                    <Text style={[styles.resultSnippet, { color: colors.textSecondary }]}>
+                      {result.snippet}
+                    </Text>
+                  </TouchableOpacity>
+                </React.Fragment>
               ))}
             </View>
           )}

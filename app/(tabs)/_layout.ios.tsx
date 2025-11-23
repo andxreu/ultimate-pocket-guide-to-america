@@ -41,6 +41,14 @@ export default function TabLayout() {
         <Icon sf="star.fill" />
         <Label>Favorites</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger key="map" name="map">
+        <Icon sf="map.fill" />
+        <Label>Map</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger key="quiz" name="quiz">
+        <Icon sf="questionmark.circle.fill" />
+        <Label>Quiz</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
