@@ -5,7 +5,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ImageBackground,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -19,8 +19,8 @@ import Animated, {
   withRepeat,
   withTiming,
   interpolate,
+  withSpring,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 
 const HERO_FLAG_URL =
   "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image.png?w=1024&ssl=1";
@@ -34,14 +34,18 @@ export default function HomeScreen() {
     shimmerValue.value = withRepeat(
       withTiming(1, { duration: 3000 }),
       -1,
-      true
+      false
     );
   }, []);
 
   const shimmerStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(shimmerValue.value, [0, 0.5, 1], [0.95, 1, 0.95]);
+    const translateX = interpolate(
+      shimmerValue.value,
+      [0, 1],
+      [-200, 400]
+    );
     return {
-      opacity,
+      transform: [{ translateX }],
     };
   });
 
@@ -74,7 +78,7 @@ export default function HomeScreen() {
             imageStyle={styles.heroImage}
           >
             <View style={styles.heroOverlay}>
-              <Animated.View style={shimmerStyle}>
+              <View style={styles.titleContainer}>
                 <Text
                   style={[styles.title, { color: "#FFFFFF" }]}
                   accessibilityLabel="Ultimate Pocket Guide to America"
@@ -82,7 +86,8 @@ export default function HomeScreen() {
                 >
                   Ultimate Pocket Guide to America
                 </Text>
-              </Animated.View>
+                <Animated.View style={[styles.shimmer, shimmerStyle]} />
+              </View>
               <Text style={[styles.subtitle, { color: "#E5E7EB" }]}>
                 Your pocket guide to the principles, foundations, and story of
                 the American Republic.
@@ -103,48 +108,13 @@ export default function HomeScreen() {
           {contentData.map((section, index) => {
             const icons = getIconName(section.icon);
             return (
-              <TouchableOpacity
+              <SectionCard
                 key={index}
-                style={[
-                  styles.sectionCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: "rgba(255, 255, 255, 0.06)",
-                  },
-                ]}
+                section={section}
+                icons={icons}
+                colors={colors}
                 onPress={() => navigateToSection(section.id)}
-                activeOpacity={0.7}
-                accessibilityLabel={`Navigate to ${section.title}`}
-                accessibilityRole="button"
-              >
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: colors.highlight },
-                  ]}
-                >
-                  <IconSymbol
-                    ios_icon_name={icons.ios}
-                    android_material_icon_name={icons.android}
-                    size={28}
-                    color={colors.primary}
-                  />
-                </View>
-
-                <View style={styles.cardContent}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    {section.title}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.sectionDescription,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {section.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              />
             );
           })}
         </View>
@@ -153,6 +123,85 @@ export default function HomeScreen() {
         <AppFooter />
       </ScrollView>
     </View>
+  );
+}
+
+function SectionCard({
+  section,
+  icons,
+  colors,
+  onPress,
+}: {
+  section: any;
+  icons: any;
+  colors: any;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    opacity.value = withSpring(0.8, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    opacity.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel={`Navigate to ${section.title}`}
+      accessibilityRole="button"
+    >
+      <Animated.View
+        style={[
+          styles.sectionCard,
+          {
+            backgroundColor: colors.card,
+            borderColor: "rgba(255, 255, 255, 0.06)",
+          },
+          animatedStyle,
+        ]}
+      >
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: colors.highlight },
+          ]}
+        >
+          <IconSymbol
+            ios_icon_name={icons.ios}
+            android_material_icon_name={icons.android}
+            size={28}
+            color={colors.primary}
+          />
+        </View>
+
+        <View style={styles.cardContent}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {section.title}
+          </Text>
+          <Text
+            style={[
+              styles.sectionDescription,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {section.description}
+          </Text>
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -185,20 +234,35 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    paddingVertical: 24,
+    backgroundColor: "rgba(0, 32, 96, 0.75)",
+  },
+  titleContainer: {
+    position: "relative",
+    overflow: "hidden",
+    marginBottom: 10,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     textAlign: "left",
-    marginBottom: 8,
-    lineHeight: 31.9,
+    lineHeight: 34.8,
+  },
+  shimmer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 100,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    transform: [{ skewX: "-20deg" }],
   },
   subtitle: {
     fontSize: 14,
     lineHeight: 20.3,
     textAlign: "left",
+    fontWeight: "400",
   },
 
   /* SECTION HEADERS */

@@ -43,6 +43,18 @@ export default function TabLayout() {
       label: 'Land',
     },
     {
+      name: 'map',
+      route: '/(tabs)/map/',
+      icon: 'map',
+      label: 'Map',
+    },
+    {
+      name: 'quiz',
+      route: '/(tabs)/quiz/',
+      icon: 'help',
+      label: 'Quiz',
+    },
+    {
       name: 'search',
       route: '/(tabs)/search/',
       icon: 'search',
@@ -77,6 +89,8 @@ export default function TabLayout() {
         <Stack.Screen key="political-landscape" name="political-landscape" />
         <Stack.Screen key="principles-practice" name="principles-practice" />
         <Stack.Screen key="land-life" name="land-life" />
+        <Stack.Screen key="map" name="map" />
+        <Stack.Screen key="quiz" name="quiz" />
         <Stack.Screen key="search" name="search" />
         <Stack.Screen key="glossary" name="glossary" />
         <Stack.Screen key="favorites" name="favorites" />

@@ -1,11 +1,16 @@
 
 import React from "react";
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { ScrollView, StyleSheet, View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { MainSection } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 
 interface SectionListProps {
   mainSection: MainSection;
@@ -67,47 +72,13 @@ export function SectionList({ mainSection }: SectionListProps) {
                 {section.subsections.map((subsection, subsectionIndex) => {
                   const isDocument = FOUNDING_DOCUMENTS.includes(subsection.id);
                   return (
-                    <TouchableOpacity
+                    <SubsectionCard
                       key={subsectionIndex}
-                      style={[
-                        styles.subsectionCard,
-                        {
-                          backgroundColor: colors.card,
-                          borderColor: "rgba(255, 255, 255, 0.06)",
-                        },
-                      ]}
+                      subsection={subsection}
+                      isDocument={isDocument}
+                      colors={colors}
                       onPress={() => navigateToItem(subsection.id)}
-                      activeOpacity={0.7}
-                      accessibilityLabel={`Navigate to ${subsection.title}`}
-                      accessibilityRole="button"
-                    >
-                      <View style={styles.subsectionContent}>
-                        {isDocument && (
-                          <View
-                            style={[
-                              styles.documentBadge,
-                              { backgroundColor: colors.primary + "20" },
-                            ]}
-                          >
-                            <IconSymbol
-                              ios_icon_name="doc.text.fill"
-                              android_material_icon_name="description"
-                              size={12}
-                              color={colors.primary}
-                            />
-                          </View>
-                        )}
-                        <Text style={[styles.subsectionTitle, { color: colors.text }]}>
-                          {subsection.title}
-                        </Text>
-                      </View>
-                      <IconSymbol
-                        ios_icon_name="chevron.right"
-                        android_material_icon_name="chevron_right"
-                        size={20}
-                        color={colors.textSecondary}
-                      />
-                    </TouchableOpacity>
+                    />
                   );
                 })}
               </View>
@@ -119,6 +90,84 @@ export function SectionList({ mainSection }: SectionListProps) {
         <AppFooter />
       </ScrollView>
     </View>
+  );
+}
+
+function SubsectionCard({
+  subsection,
+  isDocument,
+  colors,
+  onPress,
+}: {
+  subsection: any;
+  isDocument: boolean;
+  colors: any;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    opacity.value = withSpring(0.8, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    opacity.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel={`Navigate to ${subsection.title}`}
+      accessibilityRole="button"
+    >
+      <Animated.View
+        style={[
+          styles.subsectionCard,
+          {
+            backgroundColor: colors.card,
+            borderColor: "rgba(255, 255, 255, 0.06)",
+          },
+          animatedStyle,
+        ]}
+      >
+        <View style={styles.subsectionContent}>
+          {isDocument && (
+            <View
+              style={[
+                styles.documentBadge,
+                { backgroundColor: colors.primary + "20" },
+              ]}
+            >
+              <IconSymbol
+                ios_icon_name="doc.text.fill"
+                android_material_icon_name="description"
+                size={12}
+                color={colors.primary}
+              />
+            </View>
+          )}
+          <Text style={[styles.subsectionTitle, { color: colors.text }]}>
+            {subsection.title}
+          </Text>
+        </View>
+        <IconSymbol
+          ios_icon_name="chevron.right"
+          android_material_icon_name="chevron_right"
+          size={20}
+          color={colors.textSecondary}
+        />
+      </Animated.View>
+    </Pressable>
   );
 }
 
