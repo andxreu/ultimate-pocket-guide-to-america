@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Stack } from "expo-router";
 import { getSectionById } from "@/data/contentData";
 import { SectionList } from "@/components/SectionList";
 
@@ -11,15 +10,5 @@ export default function LandLifeScreen() {
     return null;
   }
 
-  return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Land and Life",
-          headerShown: false,
-        }}
-      />
-      <SectionList mainSection={section} />
-    </>
-  );
+  return <SectionList mainSection={section} />;
 }
