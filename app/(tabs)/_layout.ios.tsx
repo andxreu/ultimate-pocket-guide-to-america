@@ -1,54 +1,87 @@
 
 import React from 'react';
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+import { NativeTabs, Icon } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
   return (
     <NativeTabs>
-      <NativeTabs.Trigger key="home" name="(home)">
-        <Icon sf="house.fill" />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="foundations" name="foundations">
-        <Icon sf="book.fill" />
-        <Label>Foundations</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="civic" name="civic-literacy">
-        <Icon sf="graduationcap.fill" />
-        <Label>Civic</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="political" name="political-landscape">
-        <Icon sf="flag.fill" />
-        <Label>Political</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="principles" name="principles-practice">
-        <Icon sf="scale.3d" />
-        <Label>Principles</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="land" name="land-life">
-        <Icon sf="globe.americas.fill" />
-        <Label>Land</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="search" name="search">
-        <Icon sf="magnifyingglass" />
-        <Label>Search</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="glossary" name="glossary">
-        <Icon sf="book.fill" />
-        <Label>Glossary</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="favorites" name="favorites">
-        <Icon sf="star.fill" />
-        <Label>Favorites</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="map" name="map">
-        <Icon sf="map.fill" />
-        <Label>Map</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="quiz" name="quiz">
-        <Icon sf="questionmark.circle.fill" />
-        <Label>Quiz</Label>
-      </NativeTabs.Trigger>
+      {/* Home tab */}
+      <NativeTabs.Screen
+        name="(home)"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <Icon name="house.fill" color={color} size={size} />,
+        }}
+      />
+      
+      {/* Main section pages (not in tab bar, but still need to be defined) */}
+      <NativeTabs.Screen
+        name="foundations"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <NativeTabs.Screen
+        name="civic-literacy"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <NativeTabs.Screen
+        name="political-landscape"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <NativeTabs.Screen
+        name="principles-practice"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      <NativeTabs.Screen
+        name="land-life"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
+      
+      {/* Utility tabs (visible in tab bar) */}
+      <NativeTabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color, size }) => <Icon name="map.fill" color={color} size={size} />,
+        }}
+      />
+      <NativeTabs.Screen
+        name="quiz"
+        options={{
+          title: 'Quiz',
+          tabBarIcon: ({ color, size }) => <Icon name="questionmark.diamond.fill" color={color} size={size} />,
+        }}
+      />
+      <NativeTabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color, size }) => <Icon name="magnifyingglass" color={color} size={size} />,
+        }}
+      />
+      <NativeTabs.Screen
+        name="glossary"
+        options={{
+          title: 'Glossary',
+          tabBarIcon: ({ color, size }) => <Icon name="book.fill" color={color} size={size} />,
+        }}
+      />
+      <NativeTabs.Screen
+        name="favorites"
+        options={{
+          title: 'Favorites',
+          tabBarIcon: ({ color, size }) => <Icon name="star.fill" color={color} size={size} />,
+        }}
+      />
     </NativeTabs>
   );
 }
