@@ -1,6 +1,6 @@
 
 import React from "react";
-import { ScrollView, StyleSheet, View, Text, Pressable } from "react-native";
+import { ScrollView, StyleSheet, View, Text, Pressable, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { MainSection } from "@/data/contentData";
@@ -38,6 +38,27 @@ export function SectionList({ mainSection }: SectionListProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Custom Header with Back Button */}
+      <View style={[styles.customHeader, { backgroundColor: colors.background, borderBottomColor: colors.card }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <IconSymbol
+            ios_icon_name="chevron.left"
+            android_material_icon_name="arrow_back"
+            size={24}
+            color={colors.text}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+          {mainSection.title}
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -171,6 +192,33 @@ function SubsectionCard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  customHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 8,
+  },
+  headerSpacer: {
+    width: 44,
   },
   scrollContent: {
     paddingTop: 32,
