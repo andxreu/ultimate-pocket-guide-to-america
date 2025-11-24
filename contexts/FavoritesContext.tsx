@@ -1,11 +1,14 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const FAVORITES_KEY = 'favorites';
 
 interface FavoritesContextType {
   favorites: string[];
   addFavorite: (id: string) => void;
   removeFavorite: (id: string) => void;
+  toggleFavorite: (id: string) => void;
   isFavorite: (id: string) => boolean;
 }
 
@@ -13,6 +16,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     loadFavorites();
@@ -20,40 +24,69 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   const loadFavorites = async () => {
     try {
-      const savedFavorites = await AsyncStorage.getItem('favorites');
+      const savedFavorites = await AsyncStorage.getItem(FAVORITES_KEY);
       if (savedFavorites) {
-        setFavorites(JSON.parse(savedFavorites));
+        const parsed = JSON.parse(savedFavorites);
+        setFavorites(Array.isArray(parsed) ? parsed : []);
       }
+      setIsLoaded(true);
     } catch (error) {
       console.log('Error loading favorites:', error);
+      setFavorites([]);
+      setIsLoaded(true);
     }
   };
 
   const saveFavorites = async (newFavorites: string[]) => {
     try {
-      await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites));
+      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites));
       setFavorites(newFavorites);
     } catch (error) {
       console.log('Error saving favorites:', error);
     }
   };
 
-  const addFavorite = (id: string) => {
-    const newFavorites = [...favorites, id];
-    saveFavorites(newFavorites);
-  };
+  const addFavorite = useCallback((id: string) => {
+    setFavorites((current) => {
+      if (current.includes(id)) {
+        return current;
+      }
+      const newFavorites = [...current, id];
+      AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites)).catch((error) => {
+        console.log('Error saving favorites:', error);
+      });
+      return newFavorites;
+    });
+  }, []);
 
-  const removeFavorite = (id: string) => {
-    const newFavorites = favorites.filter(fav => fav !== id);
-    saveFavorites(newFavorites);
-  };
+  const removeFavorite = useCallback((id: string) => {
+    setFavorites((current) => {
+      const newFavorites = current.filter((fav) => fav !== id);
+      AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites)).catch((error) => {
+        console.log('Error saving favorites:', error);
+      });
+      return newFavorites;
+    });
+  }, []);
 
-  const isFavorite = (id: string) => {
+  const toggleFavorite = useCallback((id: string) => {
+    setFavorites((current) => {
+      const newFavorites = current.includes(id)
+        ? current.filter((fav) => fav !== id)
+        : [...current, id];
+      AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites)).catch((error) => {
+        console.log('Error saving favorites:', error);
+      });
+      return newFavorites;
+    });
+  }, []);
+
+  const isFavorite = useCallback((id: string) => {
     return favorites.includes(id);
-  };
+  }, [favorites]);
 
   return (
-    <FavoritesContext.Provider value={{ favorites, addFavorite, removeFavorite, isFavorite }}>
+    <FavoritesContext.Provider value={{ favorites, addFavorite, removeFavorite, toggleFavorite, isFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );

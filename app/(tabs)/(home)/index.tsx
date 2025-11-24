@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useMemo, useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -69,101 +70,87 @@ const AMERICAN_FACTS: string[] = [
   "The U.S. has the most diverse geography of any country, from deserts to rainforests.",
   "The first American hospital was founded in Philadelphia in 1751.",
   "The U.S. has the world's largest entertainment industry, centered in Hollywood.",
-  "The first American telegraph line was completed in 1844, connecting Washington, D.C., and Baltimore.",
-  "The U.S. has the most UNESCO World Heritage Sites in the Americas.",
-  "The first American railroad was the Baltimore and Ohio Railroad, chartered in 1827.",
-  "The U.S. has the world's largest technology sector, with Silicon Valley as its hub.",
-  "The first American skyscraper was the Home Insurance Building in Chicago, built in 1885.",
-  "The U.S. has the most diverse immigrant population in the world.",
-  "The first American subway system opened in Boston in 1897.",
-  "The U.S. has the world's largest agricultural output.",
-  "The first American radio broadcast was made in 1920 from Pittsburgh.",
-  "The U.S. has the most Fortune 500 companies of any country.",
-  "The first American television broadcast was made in 1928.",
-  "The U.S. has the world's largest pharmaceutical industry.",
-  "The first American jet aircraft flew in 1942.",
-  "The U.S. has the most national monuments and historic sites.",
-  "The first American nuclear power plant began operation in 1957.",
-  "The U.S. has the world's largest financial services industry.",
-  "The first American credit card was introduced in 1950.",
-  "The U.S. has the most patents filed annually of any country.",
-  "The first American artificial satellite was Explorer 1, launched in 1958.",
-  "The U.S. has the world's largest music industry.",
-  "The first American computer was ENIAC, completed in 1945.",
-  "The U.S. has the most professional sports leagues in the world.",
-  "The first American microprocessor was the Intel 4004, released in 1971.",
-  "The U.S. has the world's largest defense budget.",
-  "The first American personal computer was the Altair 8800, released in 1975.",
-  "The U.S. has the most international students studying in its universities.",
-  "The first American mobile phone call was made in 1973.",
-  "The U.S. has the world's largest aerospace industry.",
-  "The first American space shuttle, Columbia, launched in 1981.",
-  "The U.S. has the most venture capital investment of any country.",
-  "The first American GPS satellite was launched in 1978.",
-  "The U.S. has the world's largest biotechnology industry.",
-  "The first American electric car was built in 1891.",
-  "The U.S. has the most startup companies of any country.",
-  "The first American wind farm was built in New Hampshire in 1980.",
-  "The U.S. has the world's largest renewable energy capacity.",
-  "The first American solar power plant was built in California in 1982.",
-  "The U.S. has the most research and development spending of any country.",
-  "The first American hybrid car was the Toyota Prius, sold in the U.S. in 2000.",
-  "The U.S. has the world's largest automotive industry.",
-  "The first American commercial jet airliner was the Boeing 707, introduced in 1958.",
-  "The U.S. has the most airports with international flights.",
-  "The first American communications satellite was Telstar, launched in 1962.",
-  "The U.S. has the world's largest telecommunications network.",
-  "The first American weather satellite was TIROS-1, launched in 1960.",
-  "The U.S. has the most advanced military technology in the world.",
-  "The first American spy satellite was Corona, launched in 1960.",
-  "The U.S. has the world's largest intelligence community.",
-  "The first American Mars rover was Sojourner, which landed in 1997.",
-  "The U.S. has the most space launches of any country.",
-  "The first American space station was Skylab, launched in 1973.",
-  "The U.S. has the world's largest commercial space industry.",
-  "The first American reusable spacecraft was the Space Shuttle, first launched in 1981.",
-  "The U.S. has the most astronauts who have traveled to space.",
-  "The first American lunar landing was Apollo 11 in 1969, with Neil Armstrong and Buzz Aldrin.",
 ];
+
+const getIconName = (icon: string) => {
+  const iconMap: { [key: string]: { ios: string; android: string } } = {
+    book: { ios: "book.fill", android: "book" },
+    school: { ios: "graduationcap.fill", android: "school" },
+    flag: { ios: "flag.fill", android: "flag" },
+    balance: { ios: "scale.3d", android: "balance" },
+    globe: { ios: "globe.americas.fill", android: "public" },
+    "balance-scale": { ios: "scale.3d", android: "balance" },
+  };
+
+  return iconMap[icon] || { ios: "questionmark.circle", android: "help" };
+};
 
 export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-
-  const getIconName = (icon: string) => {
-    const iconMap: { [key: string]: { ios: string; android: string } } = {
-      // Foundations
-      book: { ios: "book.fill", android: "book" },
-      // Civic Literacy
-      school: { ios: "graduationcap.fill", android: "school" },
-      // Political Landscape
-      flag: { ios: "flag.fill", android: "flag" },
-      // Principles in Practice
-      balance: { ios: "scale.3d", android: "balance" },
-      // Land and Life
-      globe: { ios: "globe.americas.fill", android: "public" },
-
-      // optional: keep this for backwards compatibility if any old data still uses it
-      "balance-scale": { ios: "scale.3d", android: "balance" },
-    };
-
-    // Fallback shows a question mark icon, mapped to "help" in IconSymbol
-    return iconMap[icon] || { ios: "questionmark.circle", android: "help" };
-  };
-
-  const navigateToSection = (sectionId: string) => {
-    router.push(`/(tabs)/${sectionId}` as any);
-  };
 
   const [fact, setFact] = React.useState(() => {
     const idx = Math.floor(Math.random() * AMERICAN_FACTS.length);
     return AMERICAN_FACTS[idx];
   });
 
-  const shuffleFact = () => {
+  const shuffleFact = useCallback(() => {
     const idx = Math.floor(Math.random() * AMERICAN_FACTS.length);
     setFact(AMERICAN_FACTS[idx]);
-  };
+  }, []);
+
+  const navigateToSection = useCallback((sectionId: string) => {
+    router.push(`/(tabs)/${sectionId}` as any);
+  }, [router]);
+
+  const sectionCards = useMemo(() => {
+    return contentData.map((section, index) => {
+      const icons = getIconName(section.icon);
+      return (
+        <TouchableOpacity
+          key={section.id}
+          style={[
+            styles.sectionCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.primary + "10",
+            },
+          ]}
+          onPress={() => navigateToSection(section.id)}
+          activeOpacity={0.7}
+          accessibilityLabel={`Navigate to ${section.title}`}
+          accessibilityRole="button"
+        >
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: colors.highlight },
+            ]}
+          >
+            <IconSymbol
+              ios_icon_name={icons.ios}
+              android_material_icon_name={icons.android}
+              size={32}
+              color={colors.primary}
+            />
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {section.title}
+            </Text>
+            <Text
+              style={[
+                styles.sectionDescription,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {section.description}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      );
+    });
+  }, [colors, navigateToSection]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -229,53 +216,7 @@ export default function HomeScreen() {
 
         {/* SECTIONS */}
         <View style={styles.sectionsContainer}>
-          {contentData.map((section, index) => {
-            const icons = getIconName(section.icon);
-            return (
-              <React.Fragment key={index}>
-                <TouchableOpacity
-                  style={[
-                    styles.sectionCard,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.primary + "10",
-                    },
-                  ]}
-                  onPress={() => navigateToSection(section.id)}
-                  activeOpacity={0.7}
-                  accessibilityLabel={`Navigate to ${section.title}`}
-                  accessibilityRole="button"
-                >
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      { backgroundColor: colors.highlight },
-                    ]}
-                  >
-                    <IconSymbol
-                      ios_icon_name={icons.ios}
-                      android_material_icon_name={icons.android}
-                      size={32}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.cardContent}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                      {section.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.sectionDescription,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      {section.description}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </React.Fragment>
-            );
-          })}
+          {sectionCards}
         </View>
 
         {/* QUICK ACCESS GRID */}
