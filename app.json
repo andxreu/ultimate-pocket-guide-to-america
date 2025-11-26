@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.ultimatepocketguidetoamerica",
+      "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "This app does not use the camera.",
@@ -30,7 +30,7 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.ultimatepocketguidetoamerica",
+      "package": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "permissions": []
     },
     "web": {
