@@ -1,5 +1,6 @@
+
 import React from "react";
-import { Pressable, Platform } from "react-native";
+import { View, Platform, StyleSheet } from "react-native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -10,7 +11,7 @@ interface FavoriteToggleProps {
   size?: number; // icon size, not button size
 }
 
-export function FavoriteToggle({ itemId, size = 22 }: FavoriteToggleProps) {
+export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
   const { colors } = useTheme();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const isCurrentlyFavorite = isFavorite(itemId);
@@ -28,14 +29,7 @@ export function FavoriteToggle({ itemId, size = 22 }: FavoriteToggleProps) {
   };
 
   return (
-    <Pressable
-      onPress={toggleFavorite}
-      hitSlop={10}
-      accessibilityLabel={
-        isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"
-      }
-      accessibilityRole="button"
-    >
+    <View style={styles.container}>
       <IconSymbol
         ios_icon_name={isCurrentlyFavorite ? "star.fill" : "star"}
         android_material_icon_name={
@@ -43,7 +37,14 @@ export function FavoriteToggle({ itemId, size = 22 }: FavoriteToggleProps) {
         }
         size={size}
         color={isCurrentlyFavorite ? colors.primary : colors.text}
+        onPress={toggleFavorite}
       />
-    </Pressable>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 4,
+  },
+});

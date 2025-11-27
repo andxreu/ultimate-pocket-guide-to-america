@@ -10,6 +10,7 @@ import {
   StyleProp,
   ViewStyle,
   OpaqueColorValue,
+  TouchableOpacity,
 } from "react-native";
 
 type IconSymbolProps = {
@@ -19,6 +20,7 @@ type IconSymbolProps = {
   size?: number;
   color?: string | OpaqueColorValue;      // color prop (currently ignored for image icons)
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;                   // optional press handler
 };
 
 // All icons live here.
@@ -76,6 +78,10 @@ const ICON_IMAGE_URLS: Record<string, string> = {
   
   // Additional icon mappings for trash
   trash: "https://thehumanconservative.com/wp-content/uploads/2025/11/Delete1.png",
+  
+  // Additional icons
+  add: "https://thehumanconservative.com/wp-content/uploads/2025/11/settings1.png",
+  plus: "https://thehumanconservative.com/wp-content/uploads/2025/11/settings1.png",
 };
 
 export function IconSymbol(props: IconSymbolProps) {
@@ -86,6 +92,7 @@ export function IconSymbol(props: IconSymbolProps) {
     size = 24,
     style,
     color, // Accept color prop but don't use it for now (images are pre-colored)
+    onPress,
   } = props;
 
   // Priority: android_material_icon_name → name → ios_icon_name
@@ -103,7 +110,7 @@ export function IconSymbol(props: IconSymbolProps) {
     return <View style={[{ width: size, height: size }, style]} />;
   }
 
-  return (
+  const imageElement = (
     <Image
       source={{ uri: src }}
       style={[
@@ -116,4 +123,20 @@ export function IconSymbol(props: IconSymbolProps) {
       ]}
     />
   );
+
+  // If onPress is provided, wrap in TouchableOpacity
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        hitSlop={10}
+        accessibilityRole="button"
+      >
+        {imageElement}
+      </TouchableOpacity>
+    );
+  }
+
+  return imageElement;
 }

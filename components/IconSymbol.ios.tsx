@@ -1,5 +1,6 @@
+
 import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols";
-import { StyleProp, ViewStyle } from "react-native";
+import { StyleProp, ViewStyle, TouchableOpacity } from "react-native";
 
 export function IconSymbol({
   ios_icon_name,
@@ -8,6 +9,7 @@ export function IconSymbol({
   color,
   style,
   weight = "regular",
+  onPress,
 }: {
   ios_icon_name: SymbolViewProps["name"];
   android_material_icon_name: any;
@@ -15,8 +17,9 @@ export function IconSymbol({
   color: string;
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
+  onPress?: () => void;
 }) {
-  return (
+  const symbolElement = (
     <SymbolView
       weight={weight}
       tintColor={color}
@@ -31,4 +34,20 @@ export function IconSymbol({
       ]}
     />
   );
+
+  // If onPress is provided, wrap in TouchableOpacity
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        hitSlop={10}
+        accessibilityRole="button"
+      >
+        {symbolElement}
+      </TouchableOpacity>
+    );
+  }
+
+  return symbolElement;
 }
