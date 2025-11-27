@@ -1,17 +1,16 @@
-
-import React from 'react';
-import { TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { IconSymbol } from '@/components/IconSymbol';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useFavorites } from '@/contexts/FavoritesContext';
-import * as Haptics from 'expo-haptics';
+import React from "react";
+import { TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { IconSymbol } from "@/components/IconSymbol";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import * as Haptics from "expo-haptics";
 
 interface FavoriteToggleProps {
   itemId: string;
-  size?: number;
+  size?: number; // icon size, not button size
 }
 
-export function FavoriteToggle({ itemId, size = 26 }: FavoriteToggleProps) {
+export function FavoriteToggle({ itemId, size = 22 }: FavoriteToggleProps) {
   const { colors } = useTheme();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const isCurrentlyFavorite = isFavorite(itemId);
@@ -23,7 +22,7 @@ export function FavoriteToggle({ itemId, size = 26 }: FavoriteToggleProps) {
       addFavorite(itemId);
     }
 
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -31,13 +30,16 @@ export function FavoriteToggle({ itemId, size = 26 }: FavoriteToggleProps) {
   return (
     <TouchableOpacity
       onPress={toggleFavorite}
+      hitSlop={8}
       style={styles.button}
-      accessibilityLabel={isCurrentlyFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      accessibilityLabel={
+        isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"
+      }
       accessibilityRole="button"
     >
       <IconSymbol
-        ios_icon_name={isCurrentlyFavorite ? 'star.fill' : 'star'}
-        android_material_icon_name={isCurrentlyFavorite ? 'star' : 'star_border'}
+        ios_icon_name={isCurrentlyFavorite ? "star.fill" : "star"}
+        android_material_icon_name={isCurrentlyFavorite ? "star" : "star_border"}
         size={size}
         color={isCurrentlyFavorite ? colors.primary : colors.text}
       />
@@ -47,11 +49,13 @@ export function FavoriteToggle({ itemId, size = 26 }: FavoriteToggleProps) {
 
 const styles = StyleSheet.create({
   button: {
-    padding: 8,
-    marginRight: 8,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 32,              // fixed square touch target
+    height: 32,
+    borderRadius: 16,       // perfect circle
+    alignItems: "center",
+    justifyContent: "center",
+    // IMPORTANT:
+    // no padding, no marginRight here
+    // spacing from the screen edge will be handled by headerRight wrapper
   },
 });

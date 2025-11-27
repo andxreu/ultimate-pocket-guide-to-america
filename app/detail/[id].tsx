@@ -96,15 +96,19 @@ export default function DetailScreen() {
   return (
     <>
       <Stack.Screen
-        options={{
-          headerShown: true,
-          title: foundItem.title,
-          headerBackTitle: "Back",
-          headerTintColor: colors.text,
-          headerStyle: { backgroundColor: colors.card },
-          headerRight: () => <FavoriteToggle itemId={id} />,
-        }}
-      />
+  options={{
+    headerShown: true,
+    title: foundItem.title,
+    headerBackTitle: "Back",
+    headerTintColor: colors.text,
+    headerStyle: { backgroundColor: colors.card },
+    headerRight: () => (
+      <View style={{ marginRight: 8 }}>
+        <FavoriteToggle itemId={id} size={22} />
+      </View>
+    ),
+  }}
+/>
 
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
