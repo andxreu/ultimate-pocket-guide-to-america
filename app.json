@@ -18,17 +18,16 @@
       "backgroundColor": "#000000"
     },
 
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "This app does not use the camera.",
-        "NSPhotoLibraryUsageDescription": "This app does not access your photo library.",
-        "NSLocationWhenInUseUsageDescription": "This app does not use your location.",
-        "NSMicrophoneUsageDescription": "This app does not use the microphone."
-      }
-    },
+   "ios": {
+  "supportsTablet": true,
+  "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
+  "infoPlist": {
+    "ITSAppUsesNonExemptEncryption": false,
+
+    // 🚫 Explicitly say: “no special hardware required”
+    "UIRequiredDeviceCapabilities": []
+  }
+},
 
     "android": {
       "adaptiveIcon": {
