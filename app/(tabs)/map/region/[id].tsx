@@ -9,7 +9,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { mapData } from "@/data/mapData";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -29,88 +29,93 @@ export default function RegionDetailScreen() {
 
   if (!region) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.errorContainer}>
-          <IconSymbol
-            ios_icon_name="exclamationmark.triangle.fill"
-            android_material_icon_name="error"
-            size={64}
-            color={colors.textSecondary}
-          />
-          <Text style={[styles.errorText, { color: colors.text }]}>
-            Region not found
-          </Text>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.back()}
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
+      <>
+        <Stack.Screen
+          options={{
+            title: "Region",
+            headerShown: true,
+            headerBackTitle: "Back",
+            headerTintColor: colors.text,
+            headerStyle: { backgroundColor: colors.card },
+          }}
+        />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <View style={styles.errorContainer}>
+            <IconSymbol
+              ios_icon_name="exclamationmark.triangle.fill"
+              android_material_icon_name="error"
+              size={64}
+              color={colors.textSecondary}
+            />
+            <Text style={[styles.errorText, { color: colors.text }]}>
+              Region not found
+            </Text>
+            <TouchableOpacity
+              style={[styles.backButton, { backgroundColor: colors.primary }]}
+              onPress={() => router.back()}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <Text style={styles.backButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <TouchableOpacity
-          style={styles.backButtonTop}
-          onPress={() => router.back()}
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
+    <>
+      <Stack.Screen
+        options={{
+          title: region.name,
+          headerShown: true,
+          headerBackTitle: "Map",
+          headerTintColor: colors.text,
+          headerStyle: { backgroundColor: colors.card },
+        }}
+      />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="chevron_left"
-            size={24}
-            color={colors.primary}
-          />
-          <Text style={[styles.backButtonTopText, { color: colors.primary }]}>
-            Back
-          </Text>
-        </TouchableOpacity>
+          <View style={styles.header}>
+            <Text
+              style={[styles.title, { color: colors.text }]}
+              accessibilityRole="header"
+            >
+              {region.name}
+            </Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              {region.description}
+            </Text>
+          </View>
 
-        <View style={styles.header}>
-          <Text
-            style={[styles.title, { color: colors.text }]}
-            accessibilityRole="header"
-          >
-            {region.name}
-          </Text>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>
-            {region.description}
-          </Text>
-        </View>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              States in this region
+            </Text>
+          </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            States in this region
-          </Text>
-        </View>
+          <View style={styles.statesContainer}>
+            {region.states.map((state, index) => (
+              <React.Fragment key={index}>
+                <StateCard
+                  state={state}
+                  colors={colors}
+                  onPress={() =>
+                    router.push(`/map/state/${state.code.toLowerCase()}` as any)
+                  }
+                />
+              </React.Fragment>
+            ))}
+          </View>
 
-        <View style={styles.statesContainer}>
-          {region.states.map((state, index) => (
-            <React.Fragment key={index}>
-              <StateCard
-                state={state}
-                colors={colors}
-                onPress={() =>
-                  router.push(`/map/state/${state.code.toLowerCase()}` as any)
-                }
-              />
-            </React.Fragment>
-          ))}
-        </View>
-
-        <AppFooter />
-      </ScrollView>
-    </View>
+          <AppFooter />
+        </ScrollView>
+      </View>
+    </>
   );
 }
 
@@ -187,23 +192,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: Platform.OS === 'android' ? 48 : 32,
+    paddingTop: Platform.OS === 'android' ? 16 : 0,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
-  backButtonTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 4,
-    minHeight: 44,
-  },
-  backButtonTopText: {
-    fontSize: 16,
-    fontWeight: "500",
-    lineHeight: 23.2,
-  },
   header: {
+    marginTop: 16,
     marginBottom: 28,
   },
   title: {
