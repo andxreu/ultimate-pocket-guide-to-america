@@ -869,31 +869,53 @@ Federalist No. 10 explains how a large republic can control the dangers of facti
           },
         ],
       },
-      {
-        id: "national-symbols",
-        title: "National Symbols",
-        description: "Important symbols that reflect American identity",
-        subsections: [
-          {
-            id: "flag",
-            title: "United States Flag",
-            content:
-              "The flag of the United States symbolizes the shared history, sacrifice, and ideals that have shaped the nation. Each star represents a state, and each stripe represents one of the original thirteen colonies that declared independence. The colors red, white, and blue carry their own meaning, representing valor, purity, and justice. Over time the flag has become a powerful emblem of unity in moments of both triumph and struggle.\n\nThe flag has flown in distant battles, across oceans, and above places where Americans have worked, served, and sacrificed. It has been raised in celebration and lowered in mourning. In every setting it reminds citizens of the long chain of generations who protected freedom and carried the nation forward.\n\nRespect for the flag is not simply about ceremony. It reflects gratitude for the liberties that define American life. The traditions surrounding the flag encourage people to remember the principles that bind the nation together, even when opinions differ sharply.\n\nWhen citizens honor the flag, they honor the shared story of a country built on ideals rather than ancestry. The flag calls the nation to live in a way that is worthy of the sacrifices that shaped it.",
-          },
-          {
-            id: "eagle",
-            title: "Bald Eagle",
-            content:
-              "The bald eagle has been the national bird of the United States since 1782 and represents strength, freedom, and resilience. Its broad wings, sharp vision, and commanding presence made it a natural symbol for a nation determined to rise above hardship and protect its independence. The eagle appears on official seals, military insignia, currency, and government emblems, reminding Americans of the endurance required to preserve liberty.\n\nThe bird's association with high places and open skies reflects the spirit of aspiration that runs through American culture. It suggests a people who value courage, possibility, and the will to soar beyond limitations. Many early Americans admired the eagle's fierce independence and believed it embodied the character of a new republic.\n\nThe bald eagle also represents renewal. Once endangered, it recovered through conservation efforts and now thrives across much of the country. Its comeback mirrors the nation's belief that what is damaged can be restored and what is threatened can be protected through collective effort.\n\nAs a national symbol, the eagle reminds citizens that freedom requires strength and vigilance. Its enduring presence calls each generation to safeguard the ideals that give the nation its character.",
-          },
-          {
-            id: "liberty-bell",
-            title: "Liberty Bell",
-            content:
-              "The Liberty Bell is one of the most enduring symbols of American independence and the desire for freedom. Cast in the eighteenth century and located in Philadelphia, the bell is famous for its distinctive crack and the inscription proclaiming liberty throughout all the land. It has become a powerful reminder of the nation's commitment to justice, equality, and self determination.\n\nOriginally used to call lawmakers to session, the bell later became associated with abolitionists who saw its inscription as a declaration that all people deserve freedom. Over time it evolved into a national icon visited by millions who seek to connect with the legacy of the founding era.\n\nThe crack in the Liberty Bell adds to its symbolic power. Instead of being hidden or repaired, it stands visible as a reminder that freedom itself carries scars. The imperfections tell a story of struggle, endurance, and the ongoing effort to improve the nation.\n\nToday the Liberty Bell continues to inspire reflection on the work still required to fulfill the promise of liberty. It calls citizens to remember that freedom must be both celebrated and defended.",
-          },
-        ],
-      },
+{
+  id: "national-symbols",
+  title: "National Symbols",
+  description: "Important symbols that reflect American identity",
+  subsections: [
+    {
+      id: "flag",
+      title: "United States Flag",
+      imageUrl:
+        "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image.png?w=1024&ssl=1",
+      content:
+        "The flag of the United States symbolizes the shared history, sacrifice, and ideals that have shaped the nation. Each star represents a state, and each stripe represents one of the original thirteen colonies that declared independence. The colors red, white, and blue carry their own meaning, representing valor, purity, and justice. Over time the flag has become a powerful emblem of unity in moments of both triumph and struggle.\n\nThe flag has flown in distant battles, across oceans, and above places where Americans have worked, served, and sacrificed. It has been raised in celebration and lowered in mourning. In every setting it reminds citizens of the long chain of generations who protected freedom and carried the nation forward.\n\nRespect for the flag is not simply about ceremony. It reflects gratitude for the liberties that define American life. The traditions surrounding the flag encourage people to remember the principles that bind the nation together, even when opinions differ sharply.\n\nWhen citizens honor the flag, they honor the shared story of a country built on ideals rather than ancestry. The flag calls the nation to live in a way that is worthy of the sacrifices that shaped it.",
+    },
+    {
+      id: "eagle",
+      title: "Bald Eagle",
+      imageUrl:
+        "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image-1.png?w=1024&ssl=1",
+      content:
+        "The bald eagle has been the national bird of the United States since 1782 and represents strength, freedom, and resilience. Its broad wings, sharp vision, and commanding presence made it a natural symbol for a nation determined to rise above hardship and protect its independence. The eagle appears on official seals, military insignia, currency, and government emblems, reminding Americans of the endurance required to preserve liberty.\n\nThe bird's association with high places and open skies reflects the spirit of aspiration that runs through American culture. It suggests a people who value courage, possibility, and the will to soar beyond limitations. Many early Americans admired the eagle's fierce independence and believed it embodied the character of a new republic.\n\nThe bald eagle also represents renewal. Once endangered, it recovered through conservation efforts and now thrives across much of the country. Its comeback mirrors the nation's belief that what is damaged can be restored and what is threatened can be protected through collective effort.\n\nAs a national symbol, the eagle reminds citizens that freedom requires strength and vigilance. Its enduring presence calls each generation to safeguard the ideals that give the nation its character.",
+    },
+    {
+      id: "great-seal",
+      title: "Great Seal of the United States",
+      imageUrl:
+        "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image-2.png?resize=300%2C300&ssl=1",
+      content:
+        "The Great Seal of the United States is the official emblem used to authenticate important national documents and to represent the authority of the federal government. On the front of the seal, a bald eagle holds an olive branch in one talon and arrows in the other, symbolizing the nation's desire for peace and its readiness to defend itself when necessary. Across the eagle's chest is a shield with thirteen stripes, representing the original states joined together under a common purpose.\n\nAbove the eagle appears a cluster of thirteen stars, forming a new constellation. This reflects the belief that the United States was something new among the nations of the world, guided by providence and built on principles rather than royalty or bloodlines. In the eagle's beak is a banner bearing the motto \"E Pluribus Unum,\" meaning \"Out of many, one\"—a reminder that a diverse people can unite under shared ideals.\n\nThe reverse side of the Great Seal, used less often but rich in symbolism, shows an unfinished pyramid with an eye above it. The unfinished structure suggests that the work of building a just and stable republic is ongoing, while the eye reflects the founders' belief that a higher power watches over human efforts.\n\nTogether, the elements of the Great Seal call Americans to balance strength with restraint, power with principle, and national interest with a sense of responsibility before God and history.",
+    },
+    {
+      id: "liberty-bell",
+      title: "Liberty Bell",
+      imageUrl:
+        "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image-3.png?resize=300%2C300&ssl=1",
+      content:
+        "The Liberty Bell is one of the most enduring symbols of American independence and the desire for freedom. Cast in the eighteenth century and located in Philadelphia, the bell is famous for its distinctive crack and the inscription proclaiming liberty throughout all the land. It has become a powerful reminder of the nation's commitment to justice, equality, and self determination.\n\nOriginally used to call lawmakers to session, the bell later became associated with abolitionists who saw its inscription as a declaration that all people deserve freedom. Over time it evolved into a national icon visited by millions who seek to connect with the legacy of the founding era.\n\nThe crack in the Liberty Bell adds to its symbolic power. Instead of being hidden or repaired, it stands visible as a reminder that freedom itself carries scars. The imperfections tell a story of struggle, endurance, and the ongoing effort to improve the nation.\n\nToday the Liberty Bell continues to inspire reflection on the work still required to fulfill the promise of liberty. It calls citizens to remember that freedom must be both celebrated and defended.",
+    },
+    {
+      id: "statue-of-liberty",
+      title: "Statue of Liberty",
+      imageUrl:
+        "https://i0.wp.com/thehumanconservative.com/wp-content/uploads/2025/10/image-4.png?resize=300%2C300&ssl=1",
+      content:
+        "The Statue of Liberty stands in New York Harbor as a powerful symbol of freedom, welcome, and hope. A gift from France dedicated in 1886, the statue depicts a robed figure holding a torch high in her right hand and a tablet in her left marked with the date of American independence. At her feet lie broken chains, representing the end of tyranny and the promise of a new beginning.\n\nFor millions of immigrants arriving by sea, the first sight of the statue signaled that they had reached a land where effort, faith, and responsibility could open the door to a different life. The torch is more than a piece of metal and flame. It represents light breaking into darkness—the idea that liberty can guide people through uncertainty and struggle.\n\nThe Statue of Liberty also calls attention to duty. It does not only celebrate what America has achieved; it challenges each generation to live in a way that matches the promise it symbolizes. The statue asks the nation to remember that freedom is not merely permission to do as one pleases, but the opportunity to build, protect, and serve.\n\nAs a national symbol, the Statue of Liberty joins history with hope. It reminds citizens that the story of America is still being written and that the flame of liberty must be carried forward with courage and gratitude.",
+    },
+  ],
+},
       {
         id: "national-hymns",
         title: "National Hymns",

@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   View,
@@ -7,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { contentData } from "@/data/contentData";
@@ -15,13 +15,19 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 
+const BORDER_WIDTH = 3;
+const HORIZONTAL_PADDING = 16;
+
+const IMAGE_SIZE =
+  Dimensions.get("window").width - HORIZONTAL_PADDING * 2 - BORDER_WIDTH * 2;
+
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
 
   // Locate subsection
-  let foundItem = null;
+  let foundItem: any = null;
   let foundSection = "";
   let foundMainSection = "";
 
@@ -150,10 +156,14 @@ export default function DetailScreen() {
         {isFoundingDoc ? (
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
                 Overview
               </Text>
-              <Text style={[styles.bodyText, { color: colors.text }]}>{fullContent}</Text>
+              <Text style={[styles.bodyText, { color: colors.text }]}>
+                {fullContent}
+              </Text>
             </View>
 
             {hasFullText && (
@@ -161,7 +171,10 @@ export default function DetailScreen() {
                 <View style={[styles.divider]} />
                 <View style={[styles.card, { backgroundColor: colors.card }]}>
                   <Text
-                    style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                    style={[
+                      styles.sectionLabel,
+                      { color: colors.textSecondary },
+                    ]}
                   >
                     Full Text
                   </Text>
@@ -177,7 +190,10 @@ export default function DetailScreen() {
                 <View style={[styles.divider]} />
                 <View style={[styles.card, { backgroundColor: colors.card }]}>
                   <Text
-                    style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                    style={[
+                      styles.sectionLabel,
+                      { color: colors.textSecondary },
+                    ]}
                   >
                     Historical Context
                   </Text>
@@ -191,10 +207,14 @@ export default function DetailScreen() {
         ) : (
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+              >
                 Description
               </Text>
-              <Text style={[styles.bodyText, { color: colors.text }]}>{summary}</Text>
+              <Text style={[styles.bodyText, { color: colors.text }]}>
+                {summary}
+              </Text>
             </View>
 
             {hasExtra && (
@@ -202,7 +222,10 @@ export default function DetailScreen() {
                 <View style={styles.divider} />
                 <View style={[styles.card, { backgroundColor: colors.card }]}>
                   <Text
-                    style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                    style={[
+                      styles.sectionLabel,
+                      { color: colors.textSecondary },
+                    ]}
                   >
                     Additional Information
                   </Text>
@@ -261,15 +284,24 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
+
+  // Square hero image with gold border, flush with cards
   heroImageContainer: {
-    marginBottom: 20,
-    borderRadius: 12,
+    width: IMAGE_SIZE,
+    height: IMAGE_SIZE,
+    alignSelf: "center",
+    borderWidth: 3,
+    borderColor: "#D4AF37",
+    borderRadius: 16,
     overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 20,
   },
   heroImage: {
     width: "100%",
-    height: 200,
+    height: "100%",
   },
+
   card: {
     padding: 16,
     borderRadius: 12,

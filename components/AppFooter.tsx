@@ -13,7 +13,7 @@ export function AppFooter() {
   return (
     <View style={[styles.footer, { borderTopColor: colors.textSecondary + "20" }]}>
       <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-        © 2025 The Human Conservative
+        © 2025 AmateurHuman
       </Text>
       <Text style={[styles.footerText, { color: colors.textSecondary }]}>
         Ultimate Pocket Guide to America • v1.0.0

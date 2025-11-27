@@ -1,8 +1,7 @@
-
 {
   "expo": {
     "name": "Ultimate Pocket Guide to America",
-    "slug": "ultimate-pocket-guide-to-america",
+    "slug": "Ultimate Pocket Guide to America",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -15,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.ultimatepocketguidetoamerica",
+      "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "This app does not use the camera.",
@@ -30,7 +29,7 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.ultimatepocketguidetoamerica",
+      "package": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "permissions": []
     },
     "web": {
@@ -49,5 +48,6 @@
     "extra": {
       "router": {}
     }
-  }
+  },
+  "scheme": "Ultimate Pocket Guide to America"
 }

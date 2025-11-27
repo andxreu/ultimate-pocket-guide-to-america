@@ -1,4 +1,4 @@
-# Ultimate Pocket Guide to America!
+# Ultimate Pocket Guide to America
 
 This app was built using [Natively.dev](https://natively.dev) - a platform for creating mobile apps.
 
