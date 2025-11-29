@@ -8,6 +8,7 @@
     "icon": "./assets/images/final_quest_240x240.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "splash": {
       "image": "./assets/images/final_quest_240x240.png",
       "resizeMode": "contain",
@@ -36,19 +37,24 @@
       "package": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "versionCode": 1
     },
+
     "web": {
       "favicon": "./assets/images/final_quest_240x240.png",
       "bundler": "metro"
     },
+
     "plugins": [
       "expo-font",
       "expo-router",
       "expo-web-browser"
     ],
+
     "scheme": "ultimate-pocket-guide-to-america",
+
     "experiments": {
       "typedRoutes": true
     },
+
     "extra": {
       "router": {}
     }
