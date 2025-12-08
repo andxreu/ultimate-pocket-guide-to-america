@@ -3,44 +3,14 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development",
-      "autoIncrement": true,
-      "ios": {
-        "enterpriseProvisioning": "universal"
-      },
-      "env": {
-        "EXPO_PUBLIC_ENABLE_EDIT_MODE": "TRUE"
-      }
+      "autoIncrement": true
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview",
-      "autoIncrement": true,
-      "android": {
-        "gradleCommand": ":app:assembleRelease"
-      },
-      "ios": {
-        "buildConfiguration": "Release"
-      }
+      "autoIncrement": true
     },
     "production": {
-      "distribution": "store",
-      "channel": "production",
-      "autoIncrement": true,
-      "android": {
-        "gradleCommand": ":app:assembleRelease"
-      },
-      "ios": {
-        "buildConfiguration": "Release",
-        "image": "latest",
-        "enterpriseProvisioning": "universal"
-      },
-      "env": {
-        "EXPO_PUBLIC_ENABLE_EDIT_MODE": "FALSE"
-      },
-      "cache": {
-        "key": "v1"
-      }
+      "autoIncrement": true
     }
   }
 }

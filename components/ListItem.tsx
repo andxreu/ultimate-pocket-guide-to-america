@@ -1,85 +1,63 @@
-// components/ListItem.tsx
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from "react-native";
+import * as Haptics from "expo-haptics";
+import { Pressable, StyleSheet, useColorScheme, View, Text } from "react-native";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Animated, {
-  useAnimatedStyle,
-  SharedValue,
-  withSpring,
+  configureReanimatedLogger,
   FadeIn,
+  SharedValue,
+  useAnimatedStyle,
 } from "react-native-reanimated";
-import * as Haptics from "expo-haptics";
-import { useTheme } from "@/contexts/ThemeContext";
+import Reanimated from "react-native-reanimated";
+import { appleRed, borderColor } from "@/constants/Colors";
+import { IconCircle } from "./IconCircle";
 import { IconSymbol } from "./IconSymbol";
 
-interface ListItemProps {
-  listId: string;
-  onDelete?: () => void;
-  children?: React.ReactNode;
-}
+configureReanimatedLogger({ strict: false });
 
-export default function ListItem({
-  listId,
-  onDelete,
-  children,
-}: ListItemProps) {
-  const { colors, isDark } = useTheme();
+export default function ListItem({ listId }: { listId: string }) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
-  const RightActions = (
-    progress: SharedValue<number>,
-    dragX: SharedValue<number>
+  const RightAction = (
+    prog: SharedValue<number>,
+    drag: SharedValue<number>
   ) => {
-    const style = useAnimatedStyle(() => ({
-      transform: [{ translateX: dragX.value + 100 }],
+    const styleAnimation = useAnimatedStyle(() => ({
+      transform: [{ translateX: drag.value + 200 }],
     }));
 
-    const handleDelete = () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      onDelete?.();
-    };
-
     return (
-      <Animated.View style={[style, styles.rightAction]}>
-        <TouchableOpacity
-          onPress={handleDelete}
-          style={styles.deleteButton}
-          activeOpacity={0.9}
-        >
-          <IconSymbol
-            ios_icon_name="trash.fill"
-            android_material_icon_name="delete_forever"
-            size={28}
-            color="#FFFFFF"
-          />
-          <Text style={styles.deleteText}>Delete</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      <Pressable
+        onPress={() => {
+          if (process.env.EXPO_OS === "ios") {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+          console.log("delete");
+        }}
+      >
+        <Reanimated.View style={[styleAnimation, styles.rightAction]}>
+          <IconSymbol name="trash.fill" size={24} color="white" />
+        </Reanimated.View>
+      </Pressable>
     );
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(300)}>
+    <Animated.View entering={FadeIn}>
       <ReanimatedSwipeable
+        key={listId}
         friction={2}
-        overshootFriction={8}
+        enableTrackpadTwoFingerGesture
         rightThreshold={40}
-        renderRightActions={RightActions}
-        containerStyle={[
-          styles.container,
-          { backgroundColor: colors.card, borderBottomColor: colors.primary + "15" },
-        ]}
+        renderRightActions={RightAction}
+        overshootRight={false}
+        enableContextMenu
       >
-        <View style={styles.content}>
-          {children || (
-            <Text style={[styles.text, { color: colors.text }]}>{listId}</Text>
-          )}
+        <View style={styles.listItemContainer}>
+          <Text style={[styles.listItemText, { color: isDark ? "#FFFFFF" : "#000000" }]}>{listId}</Text>
         </View>
+
       </ReanimatedSwipeable>
     </Animated.View>
   );
@@ -96,79 +74,90 @@ export const NicknameCircle = ({
   index?: number;
   isEllipsis?: boolean;
 }) => {
-  const { colors } = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
-    <View
+    <Text
       style={[
         styles.nicknameCircle,
         isEllipsis && styles.ellipsisCircle,
         {
           backgroundColor: color,
-          borderColor: colors.background,
-          marginLeft: index > 0 ? -8 : 0,
+          borderColor: isDark ? "#000000" : "#ffffff",
+          marginLeft: index > 0 ? -6 : 0,
         },
       ]}
     >
-      <Text style={styles.nicknameText}>
-        {isEllipsis ? "..." : nickname[0].toUpperCase()}
-      </Text>
-    </View>
+      {isEllipsis ? "..." : nickname[0].toUpperCase()}
+    </Text>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    borderBottomWidth: 1,
+  listItemContainer: {
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: borderColor,
+    backgroundColor: "transparent",
   },
-  content: {
-    padding: 18,
-    paddingRight: 24,
-    minHeight: 64,
-    justifyContent: "center",
-  },
-  text: {
-    fontSize: 17,
-    fontWeight: "600",
-    lineHeight: 24,
+  listItemText: {
+    fontSize: 16,
   },
   rightAction: {
+    width: 200,
+    height: 65,
+    backgroundColor: appleRed,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "flex-end",
-    paddingRight: 20,
   },
-  deleteButton: {
-    backgroundColor: "#FF3B30",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 16,
+  swipeable: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    minWidth: 120,
-    justifyContent: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: borderColor,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  deleteText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+  leftContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flexShrink: 1,
+  },
+  textContent: {
+    flexShrink: 1,
+  },
+  productCount: {
+    fontSize: 12,
+    color: "gray",
+  },
+  rightContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  nicknameContainer: {
+    flexDirection: "row",
+    marginRight: 4,
   },
   nicknameCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-  },
-  nicknameText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 0.5,
+    fontSize: 12,
+    color: "white",
+    borderWidth: 1,
+    borderColor: "white",
+    borderRadius: 16,
+    padding: 1,
+    width: 24,
+    height: 24,
+    textAlign: "center",
+    lineHeight: 20,
   },
   ellipsisCircle: {
-    marginLeft: -12,
-    zIndex: -1,
+    lineHeight: 0,
+    marginLeft: -6,
   },
 });

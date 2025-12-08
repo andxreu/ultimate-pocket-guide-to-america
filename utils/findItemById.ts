@@ -1,5 +1,5 @@
-// utils/findItemById.ts
-import { contentData, MainSection, Section, SubSection } from "@/data/contentData";
+
+import { contentData, MainSection, Section, SubSection } from '@/data/contentData';
 
 export interface ItemLookupResult {
   item: SubSection;
@@ -7,17 +7,9 @@ export interface ItemLookupResult {
   mainSection: MainSection;
 }
 
-const FOUNDING_DOCUMENTS = new Set([
-  "declaration",
-  "articles",
-  "constitution",
-  "bill-of-rights",
-  "federalist-papers",
-]);
-
 /**
- * Finds an item by ID across all content data
- Returns the item + its hierarchy for breadcrumbs, headers, etc.
+ * Finds an item by its ID across all content data
+ * Returns the item along with its parent section and main section
  */
 export function findItemById(id: string): ItemLookupResult | null {
   for (const mainSection of contentData) {
@@ -37,24 +29,22 @@ export function findItemById(id: string): ItemLookupResult | null {
 }
 
 /**
- * Fast check if an item is one of the Founding Documents
+ * Determines if an item is a founding document
  */
 export function isFoundingDocument(id: string): boolean {
-  return FOUNDING_DOCUMENTS.has(id);
+  const foundingDocs = [
+    'declaration',
+    'articles',
+    'constitution',
+    'bill-of-rights',
+    'federalist-papers',
+  ];
+  return foundingDocs.includes(id);
 }
 
 /**
- * Returns correct route based on item type
+ * Gets the appropriate route for an item (detail or document)
  */
 export function getItemRoute(id: string): string {
   return isFoundingDocument(id) ? `/document/${id}` : `/detail/${id}`;
-}
-
-/**
- * Bonus: Get breadcrumb trail as array (e.g. ["Foundations", "Principles", "Democracy"])
- */
-export function getBreadcrumb(id: string): string[] | null {
-  const result = findItemById(id);
-  if (!result) return null;
-  return [result.mainSection.title, result.section.title, result.item.title];
 }
