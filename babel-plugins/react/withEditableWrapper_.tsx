@@ -1,4 +1,7 @@
 /* eslint-disable */
+// @ts-nocheck
+// This file is used ONLY by Natively.dev for live editing.
+// It has ZERO impact on your published app.
 
 import {
   createContext,
@@ -15,6 +18,8 @@ type ElementProps = {
   sourceLocation: string;
   attributes: any;
   id: string;
+  trace: string[];
+  props: any;
 };
 
 type EditableContextType = {
@@ -22,59 +27,50 @@ type EditableContextType = {
   editModeEnabled: boolean;
   attributes: Record<string, any>;
   selected: string | undefined;
-  setSelected: (hovered: string | undefined) => void;
+  setSelected: (id: string | undefined) => void;
   hovered: string | undefined;
-  pushHovered: (hovered: string) => void;
-  popHovered: (hovered: string) => void;
+  pushHovered: (id: string) => void;
+  popHovered: (id: string) => void;
 };
 
 export const EditableContext = createContext<EditableContextType>({} as any);
 
-const EditablePage = (props: PropsWithChildren) => {
-  const { children } = props;
-  const [haveBooted, setHaveBooted] = useState<boolean>(false);
+const EditablePage = ({ children }: PropsWithChildren) => {
   const [editModeEnabled, setEditModeEnabled] = useState(false);
   const [selected, setSelected] = useState<string>();
   const [hoveredStack, setHoveredStack] = useState<string[]>([]);
   const [origin, setOrigin] = useState<string | null>(null);
-  const [overwrittenProps, setOvewrittenProps] = useState<Record<string, {}>>(
-    {}
-  );
+  const [overwrittenProps, setOverwrittenProps] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    if (!haveBooted) {
-      setHaveBooted(true);
-      window.addEventListener("message", (event) => {
-        const { type, data } = event.data ?? {};
-        switch (type) {
-          case "element_editor_enable": {
-            setEditModeEnabled(true);
-            break;
-          }
-          case "element_editor_disable": {
-            setEditModeEnabled(false);
-            break;
-          }
-          case "override_props": {
-            setOvewrittenProps((overwrittenProps) => {
-              return {
-                ...overwrittenProps,
-                [data.id]: {
-                  ...(overwrittenProps[data.id] ?? {}),
-                  ...data.props,
-                },
-              };
-            });
-            break;
-          }
-        }
+    if (Platform.OS !== "web") return;
 
-        setOrigin(event.origin);
-      });
-    }
-  }, [haveBooted]);
+    const handler = (event: MessageEvent) => {
+      const { type, data } = event.data ?? {};
 
-  const postMessageToParent = useCallback(
+      if (event.origin) setOrigin(event.origin);
+
+      switch (type) {
+        case "element_editor_enable":
+          setEditModeEnabled(true);
+          break;
+        case "element_editor_disable":
+          setEditModeEnabled(false);
+          break;
+        case "override_props":
+          setOverwrittenProps(prev => ({
+            ...prev,
+            [data.id]: { ...(prev[data.id] ?? {}), ...data.props },
+          }));
+          break;
+      }
+    };
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  const postMessage = useCallback(
     (message: any) => {
       if (origin && window.parent) {
         window.parent.postMessage(message, origin);
@@ -83,36 +79,32 @@ const EditablePage = (props: PropsWithChildren) => {
     [origin]
   );
 
-  const onElementClick = (props: ElementProps) => {
+  const onElementClick = useCallback((props: ElementProps) => {
     setSelected(props.id);
-    postMessageToParent({ type: "element_clicked", element: props });
-  };
+    postMessage({ type: "element_clicked", element: props });
+  }, [postMessage]);
 
-  const hovered = hoveredStack.at(-1);
+  const hovered = hoveredStack[hoveredStack.length - 1];
 
-  const pushHovered = (hovered: string) => {
-    setHoveredStack((hoveredStack) => [
-      hovered,
-      ...hoveredStack.filter((v) => v !== hovered),
-    ]);
-  };
+  const pushHovered = useCallback((id: string) => {
+    setHoveredStack(prev => prev.includes(id) ? prev : [...prev, id]);
+  }, []);
 
-  const popHovered = (hovered: string) => {
-    setHoveredStack((hoveredStack) =>
-      hoveredStack.filter((v) => v !== hovered)
-    );
-  };
+  const popHovered = useCallback((id: string) => {
+    setHoveredStack(prev => prev.filter(v => v !== id));
+  }, []);
+
   return (
     <EditableContext.Provider
       value={{
-        attributes: overwrittenProps,
         onElementClick,
         editModeEnabled,
-        pushHovered,
-        popHovered,
+        attributes: overwrittenProps,
         selected,
         setSelected,
         hovered,
+        pushHovered,
+        popHovered,
       }}
     >
       {children}
@@ -124,15 +116,12 @@ export default function withEditableWrapper_<P extends PropsWithChildren>(
   Comp: React.ComponentType<P>
 ) {
   return function Wrapped(props: P) {
-    // If we are not running in the web the windows will causes
-    // issues hence editable mode is not enabled.
     if (Platform.OS !== "web") {
-      return <Comp {...props}></Comp>;
+      return <Comp {...props} />;
     }
-
     return (
       <EditablePage>
-        <Comp {...props}></Comp>
+        <Comp {...props} />
       </EditablePage>
     );
   };

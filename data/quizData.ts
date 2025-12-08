@@ -1,3 +1,5 @@
+// data/quizData.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface QuizQuestion {
   id: string;
@@ -7,8 +9,12 @@ export interface QuizQuestion {
   explanation?: string;
 }
 
-// Expanded quiz question pool
-export const quizQuestionPool: QuizQuestion[] = [
+const QUIZ_CACHE_KEY = "quizQuestionPool_v2";
+
+let cachedPool: QuizQuestion[] | null = null;
+
+// Master question pool — 30 high-quality, educational questions
+const createQuestionPool = (): QuizQuestion[] => [
   {
     id: "q1",
     question: "What are the three branches of the U.S. government?",
@@ -346,29 +352,55 @@ export const quizQuestionPool: QuizQuestion[] = [
   },
 ];
 
+// Cached async loader
+export const loadQuizQuestionPool = async (): Promise<QuizQuestion[]> => {
+  if (cachedPool) return cachedPool;
+
+  try {
+    const saved = await AsyncStorage.getItem(QUIZ_CACHE_KEY);
+    if (saved) {
+      cachedPool = JSON.parse(saved);
+      return cachedPool;
+    }
+  } catch (e) {
+    if (__DEV__) console.log("Quiz cache load error:", e);
+  }
+
+  cachedPool = createQuestionPool();
+  try {
+    await AsyncStorage.setItem(QUIZ_CACHE_KEY, JSON.stringify(cachedPool));
+  } catch (e) {
+    if (__DEV__) console.log("Quiz cache save error:", e);
+  }
+
+  return cachedPool;
+};
+
 /**
  * Generates a randomized quiz with a specified number of questions
  */
-export function generateRandomQuiz(numQuestions: number = 10): QuizQuestion[] {
-  // Shuffle the question pool
-  const shuffled = [...quizQuestionPool].sort(() => Math.random() - 0.5);
-  
-  // Take the first numQuestions
-  const selectedQuestions = shuffled.slice(0, Math.min(numQuestions, shuffled.length));
-  
-  // Randomize the options for each question
-  return selectedQuestions.map(question => {
-    const correctOption = question.options[question.correctIndex];
+export const generateRandomQuiz = async (numQuestions: number = 10): Promise<QuizQuestion[]> => {
+  const pool = await loadQuizQuestionPool();
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, Math.min(numQuestions, pool.length));
+
+  return selected.map(question => {
+    const correctAnswer = question.options[question.correctIndex];
     const shuffledOptions = [...question.options].sort(() => Math.random() - 0.5);
-    const newCorrectIndex = shuffledOptions.indexOf(correctOption);
-    
+    const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+
     return {
       ...question,
       options: shuffledOptions,
       correctIndex: newCorrectIndex,
     };
   });
-}
+};
 
-// For backwards compatibility, export a default quiz
-export const quizData = generateRandomQuiz(25);
+// Legacy export for existing code (keeps old import working)
+let legacyQuiz: QuizQuestion[] = [];
+generateRandomQuiz(25).then(q => {
+  legacyQuiz = q;
+});
+export const quizData = legacyQuiz;
+export const quizQuestionPool = createQuestionPool();

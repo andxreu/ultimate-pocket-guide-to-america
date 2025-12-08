@@ -1,24 +1,19 @@
-import React, { useMemo, useCallback } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-  Platform,
-} from "react-native";
+
+import React, { useState, useCallback } from "react";
+import { FlatList, StyleSheet, View, Text, TouchableOpacity, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
-import { contentData } from "@/data/contentData";
+import { loadContentData } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
 import QuickAccessGrid from "@/components/QuickAccessGrid";
+import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 
-const HERO_FLAG_URL =
-  "https://thehumanconservative.com/wp-content/uploads/2025/11/App-Logo-Final.png";
+const HERO_FLAG_URL = "https://thehumanconservative.com/wp-content/uploads/2025/11/App-Logo-Final.png";
 
-const AMERICAN_FACTS: string[] = [
+const AMERICAN_FACTS = [
   "The United States Constitution is the oldest written national constitution still in use.",
   "Yellowstone, established in 1872, is widely considered the first national park in the world.",
   "The Library of Congress is the largest library on Earth, with millions of books, recordings, and maps.",
@@ -71,267 +66,114 @@ const AMERICAN_FACTS: string[] = [
   "The U.S. has the world's largest entertainment industry, centered in Hollywood.",
 ];
 
-const getIconName = (icon: string) => {
-  const iconMap: { [key: string]: { ios: string; android: string } } = {
-    book: { ios: "book.fill", android: "book" },
-    school: { ios: "graduationcap.fill", android: "school" },
-    flag: { ios: "flag.fill", android: "flag" },
-    balance: { ios: "scale.3d", android: "balance" },
-    globe: { ios: "globe.americas.fill", android: "public" },
-    "balance-scale": { ios: "scale.3d", android: "balance" },
-  };
-
-  return iconMap[icon] || { ios: "questionmark.circle", android: "help" };
-};
+const getIconName = (icon: string) => ({
+  book: { ios: "book.fill", android: "book" },
+  school: { ios: "graduationcap.fill", android: "school" },
+  flag: { ios: "flag.fill", android: "flag" },
+  balance: { ios: "scale.3d", android: "balance" },
+  globe: { ios: "globe.americas.fill", android: "public" },
+  "balance-scale": { ios: "scale.3d", android: "balance" },
+}[icon] || { ios: "questionmark.circle", android: "help" });
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
+  const [fact, setFact] = useState(AMERICAN_FACTS[Math.floor(Math.random() * AMERICAN_FACTS.length)]);
+  const [content, setContent] = useState<any[]>([]);
 
-  const [fact, setFact] = React.useState(() => {
-    const idx = Math.floor(Math.random() * AMERICAN_FACTS.length);
-    return AMERICAN_FACTS[idx];
-  });
-
-  const shuffleFact = useCallback(() => {
-    const idx = Math.floor(Math.random() * AMERICAN_FACTS.length);
-    setFact(AMERICAN_FACTS[idx]);
+  React.useEffect(() => {
+    loadContentData().then(data => setContent(data)).catch(() => setContent([]));
   }, []);
 
-  const navigateToSection = useCallback(
-    (sectionId: string) => {
-      router.push(`/(tabs)/${sectionId}` as any);
-    },
-    [router]
-  );
+  const shuffleFact = useCallback(() => {
+    setFact(AMERICAN_FACTS[Math.floor(Math.random() * AMERICAN_FACTS.length)]);
+    Haptics.selectionAsync();
+  }, []);
 
-  const sectionCards = useMemo(() => {
-    return contentData.map((section, index) => {
-      const icons = getIconName(section.icon);
-      return (
-        <TouchableOpacity
-          key={section.id}
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.primary + "10",
-            },
-          ]}
-          onPress={() => navigateToSection(section.id)}
-          activeOpacity={0.7}
-          accessibilityLabel={`Navigate to ${section.title}`}
-          accessibilityRole="button"
-        >
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors.highlight },
-            ]}
-          >
-            <IconSymbol
-              ios_icon_name={icons.ios}
-              android_material_icon_name={icons.android}
-              size={32}
-              color={colors.primary}
-            />
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {section.title}
-            </Text>
-            <Text
-              style={[
-                styles.sectionDescription,
-                { color: colors.textSecondary },
-              ]}
-            >
-              {section.description}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      );
-    });
-  }, [colors, navigateToSection]);
+  const navigateToSection = useCallback((id: string) => {
+    router.push(`/(tabs)/${id}` as any);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [router]);
+
+  const renderSection = useCallback(({ item: section }: { item: any }) => {
+    const icons = getIconName(section.icon);
+    return (
+      <TouchableOpacity
+        style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.primary + "10" }]}
+        onPress={() => navigateToSection(section.id)}
+        activeOpacity={0.7}
+      >
+        <BlurView intensity={isDark ? 80 : 100} tint={isDark ? "dark" : "light"} style={styles.iconContainer}>
+          <IconSymbol ios_icon_name={icons.ios} android_material_icon_name={icons.android} size={32} color={colors.primary} />
+        </BlurView>
+        <View style={styles.cardContent}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
+          <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>{section.description}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [colors, navigateToSection, isDark]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
+      <FlatList
+        data={content}
+        renderItem={renderSection}
+        keyExtractor={item => item.id}
+        ListHeaderComponent={
+          <>
+            <View style={styles.header}>
+              <View style={[styles.flagBorder, { borderColor: colors.primary }]}>
+                <Image
+                  source={HERO_FLAG_URL}
+                  style={styles.heroCard}
+                  contentFit="contain"
+                  transition={200}
+                />
+              </View>
+            </View>
+            <BlurView intensity={isDark ? 80 : 100} tint={isDark ? "dark" : "light"} style={[styles.factCard, { borderColor: colors.primary + "20" }]}>
+              <View style={styles.factHeader}>
+                <Text style={[styles.factLabel, { color: colors.textSecondary }]}>Did you know?</Text>
+                <TouchableOpacity onPress={shuffleFact} style={styles.shuffleButton}>
+                  <IconSymbol ios_icon_name="arrow.clockwise" android_material_icon_name="refresh" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+              <Text style={[styles.factText, { color: colors.text }]}>{fact}</Text>
+            </BlurView>
+            <View style={styles.sectionsHeaderRow}>
+              <Text style={[styles.sectionsHeaderText, { color: colors.textSecondary }]}>Explore the guide</Text>
+            </View>
+          </>
+        }
+        ListFooterComponent={<><QuickAccessGrid /><AppFooter /></>}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-      >
-        {/* HERO CARD WITH GOLD BORDER */}
-        <View style={styles.header}>
-          <View style={[styles.flagBorder, { borderColor: colors.primary }]}>
-            <ImageBackground
-              source={{ uri: HERO_FLAG_URL }}
-              style={styles.heroCard}
-              imageStyle={styles.heroImage}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
-
-        {/* RANDOM FACT CARD */}
-        <View
-          style={[
-            styles.factCard,
-            { backgroundColor: colors.card, borderColor: colors.primary + "20" },
-          ]}
-        >
-          <View style={styles.factHeader}>
-            <Text style={[styles.factLabel, { color: colors.textSecondary }]}>
-              Did you know?
-            </Text>
-            <TouchableOpacity
-              onPress={shuffleFact}
-              style={styles.shuffleButton}
-              accessibilityLabel="Get a new fact"
-              accessibilityRole="button"
-            >
-              <IconSymbol
-                ios_icon_name="arrow.clockwise"
-                android_material_icon_name="refresh"
-                size={16}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.factText, { color: colors.text }]}>{fact}</Text>
-        </View>
-
-        {/* SECTIONS HEADER */}
-        <View style={styles.sectionsHeaderRow}>
-          <Text
-            style={[
-              styles.sectionsHeaderText,
-              { color: colors.textSecondary },
-            ]}
-          >
-            Explore the guide
-          </Text>
-        </View>
-
-        {/* SECTIONS */}
-        <View style={styles.sectionsContainer}>{sectionCards}</View>
-
-        {/* QUICK ACCESS GRID */}
-        <QuickAccessGrid />
-
-        <AppFooter />
-      </ScrollView>
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   scrollContent: {
     paddingTop: Platform.OS === "android" ? 48 : 32,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
-  header: {
-    marginBottom: 16,
-  },
-  flagBorder: {
-    borderWidth: 2,
-    borderRadius: 16,
-    padding: 0,
-  },
-  heroCard: {
-    width: "100%",
-    aspectRatio: 1, // square card so the full circular logo is visible
-    borderRadius: 14,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-  },
-  heroImage: {
-    // kept for future tweaks if needed
-  },
-  factCard: {
-    marginBottom: 20,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  factHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  factLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    lineHeight: 17.4,
-  },
-  shuffleButton: {
-    padding: 4,
-    minWidth: 32,
-    minHeight: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  factText: {
-    fontSize: 14,
-    lineHeight: 20.3,
-  },
-  sectionsHeaderRow: {
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  sectionsHeaderText: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    lineHeight: 17.4,
-  },
-  sectionsContainer: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  sectionCard: {
-    flexDirection: "row",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-  },
-  cardContent: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "600",
-    marginBottom: 4,
-    lineHeight: 24.65,
-  },
-  sectionDescription: {
-    fontSize: 13,
-    lineHeight: 18.85,
-  },
+  header: { marginBottom: 16 },
+  flagBorder: { borderWidth: 2, borderRadius: 16, padding: 0 },
+  heroCard: { width: "100%", aspectRatio: 1, borderRadius: 14 },
+  factCard: { marginBottom: 20, padding: 16, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
+  factHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  factLabel: { fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
+  shuffleButton: { padding: 4, minWidth: 32, minHeight: 32, justifyContent: "center", alignItems: "center" },
+  factText: { fontSize: 14, lineHeight: 20.3 },
+  sectionsHeaderRow: { marginBottom: 12, paddingHorizontal: 4 },
+  sectionsHeaderText: { fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
+  sectionCard: { flexDirection: "row", padding: 16, borderRadius: 12, alignItems: "center", borderWidth: 1, marginBottom: 12 },
+  iconContainer: { width: 56, height: 56, borderRadius: 28, justifyContent: "center", alignItems: "center", marginRight: 14, overflow: "hidden" },
+  cardContent: { flex: 1 },
+  sectionTitle: { fontSize: 17, fontWeight: "600", marginBottom: 4 },
+  sectionDescription: { fontSize: 13, lineHeight: 18.85 },
 });

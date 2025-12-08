@@ -1,17 +1,24 @@
-import React from "react";
+// app/document/[id].tsx
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { contentData } from "@/data/contentData";
 import { useTheme } from "@/contexts/ThemeContext";
+import { loadContentData } from "@/data/contentData";
+import { findItemById } from "@/utils/findItemById";
 import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import { BlurView } from "expo-blur";
+import * as Speech from "expo-speech";
+import * as Haptics from "expo-haptics";
+import NetInfo from "@react-native-community/netinfo";
 
 const FOUNDING_DOCUMENTS = [
   "declaration",
@@ -24,52 +31,65 @@ const FOUNDING_DOCUMENTS = [
 export default function DocumentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
-  let foundDocument: any = null;
-  let foundSection = "";
-  let foundMainSection = "";
+  const [doc, setDoc] = useState<any>(null);
+  const [isOffline, setIsOffline] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  for (const main of contentData) {
-    for (const sec of main.sections) {
-      for (const sub of sec.subsections) {
-        if (sub.id === id && FOUNDING_DOCUMENTS.includes(sub.id)) {
-          foundDocument = sub;
-          foundSection = sec.title;
-          foundMainSection = main.title;
-        }
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => setIsOffline(!state.isConnected));
+
+    const loadDoc = async () => {
+      setIsLoading(true);
+      const data = await loadContentData();
+      const result = findItemById(id);
+      if (result && FOUNDING_DOCUMENTS.includes(id)) {
+        setDoc({
+          ...result.item,
+          mainSection: result.mainSection.title,
+          section: result.section.title,
+        });
       }
+      setIsLoading(false);
+    };
+
+    loadDoc();
+    return unsubscribe;
+  }, [id]);
+
+  const speak = useCallback(() => {
+    if (doc) {
+      const text = doc.fullText || doc.content || doc.title;
+      Speech.speak(text, { language: "en-US" });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+  }, [doc]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ title: "Loading Document..." }} />
+        <Text style={{ color: colors.text, fontSize: 18, textAlign: "center", marginTop: 100 }}>
+          Loading historic document...
+        </Text>
+      </View>
+    );
   }
 
-  if (!foundDocument) {
+  if (!doc) {
     return (
       <>
-        <Stack.Screen
-          options={{
-            headerShown: true,
-            title: "Document",
-            headerBackTitle: "Back",
-            headerBackTitleVisible: true,
-            headerTintColor: colors.text,
-            headerStyle: { backgroundColor: colors.card },
-          }}
-        />
+        <Stack.Screen options={{ title: "Not Found" }} />
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <View style={styles.errorContainer}>
-            <IconSymbol
-              android_material_icon_name="error"
-              size={64}
-              color={colors.textSecondary}
-            />
-            <Text style={[styles.errorText, { color: colors.text }]}>
-              Document not found
+          <View style={styles.error}>
+            <IconSymbol ios_icon_name="exclamationmark.triangle.fill" android_material_icon_name="error" size={72} color={colors.accent} />
+            <Text style={[styles.errorTitle, { color: colors.text }]}>Document Not Found</Text>
+            <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+              The founding document you requested could not be located.
             </Text>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={[styles.backButton, { backgroundColor: colors.primary }]}
-            >
-              <Text style={styles.backButtonText}>Go Back</Text>
+            <TouchableOpacity style={[styles.backBtn, { backgroundColor: colors.primary }]} onPress={() => router.back()}>
+              <Text style={styles.backText}>Return</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -77,212 +97,137 @@ export default function DocumentScreen() {
     );
   }
 
-  const hasFullText = foundDocument.fullText?.trim()?.length > 0;
-  const hasContext = foundDocument.context?.trim()?.length > 0;
-  const isConstitution = id === "constitution";
+  const sections = [
+    { type: "title", title: doc.title, breadcrumb: `${doc.mainSection} → ${doc.section}` },
+    { type: "overview", text: doc.content },
+    ...(doc.fullText ? [{ type: "fulltext", text: doc.fullText }] : []),
+    ...(doc.context ? [{ type: "context", text: doc.context }] : []),
+    ...(id === "constitution" ? [{ type: "structure" }] : []),
+  ];
 
   return (
     <>
       <Stack.Screen
         options={{
+          title: doc.title,
           headerShown: true,
-          title: foundDocument.title,
           headerBackTitle: "Back",
-          headerBackTitleVisible: true,
-          headerTintColor: colors.text,
-          headerStyle: { backgroundColor: colors.card },
-          headerRight: () => <FavoriteToggle itemId={id} />,
+          headerTintColor: "#FFFFFF",
+          headerStyle: { backgroundColor: "#1a1a1a" },
+          headerRight: () => (
+            <View style={{ flexDirection: "row", gap: 16, marginRight: 8 }}>
+              <TouchableOpacity onPress={speak}>
+                <IconSymbol ios_icon_name="speaker.wave.3" android_material_icon_name="volume_up" size={26} color="#FFFFFF" />
+              </TouchableOpacity>
+              <FavoriteToggle itemId={id} size={28} />
+            </View>
+          ),
         }}
       />
 
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View
-            style={[
-              styles.badge,
-              {
-                backgroundColor: colors.primary + "15",
-                borderColor: colors.primary + "30",
-              },
-            ]}
-          >
-            <IconSymbol
-              android_material_icon_name="description"
-              size={12}
-              color={colors.primary}
-            />
-            <Text style={[styles.badgeText, { color: colors.primary }]}>
-              Founding Document
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {isOffline && (
+          <View style={styles.offlineBanner}>
+            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: "600" }}>
+              Offline • Viewing cached document
             </Text>
           </View>
-
-          <Text style={[styles.title, { color: colors.text }]}>
-            {foundDocument.title}
-          </Text>
-
-          <Text style={[styles.breadcrumb, { color: colors.textSecondary }]}>
-            {foundMainSection} › {foundSection}
-          </Text>
-        </View>
-
-        {/* OVERVIEW */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Overview
-          </Text>
-          <Text style={[styles.bodyText, { color: colors.text }]}>
-            {foundDocument.content}
-          </Text>
-        </View>
-
-        {/* STRUCTURE (constitution only) */}
-        {isConstitution && (
-          <>
-            <View style={styles.divider} />
-
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text
-                style={[styles.sectionLabel, { color: colors.textSecondary }]}
-              >
-                Document Structure
-              </Text>
-
-              <Text style={[styles.bodyText, { color: colors.textSecondary }]}>
-                • Article I — Legislative{"\n"}
-                • Article II — Executive{"\n"}
-                • Article III — Judicial{"\n"}
-                • Article IV — States{"\n"}
-                • Article V — Amendments{"\n"}
-                • Article VI — Federal Power{"\n"}
-                • Article VII — Ratification{"\n"}
-                {"\n"}
-                Bill of Rights (1–10){"\n"}
-                Amendments 11–27
-              </Text>
-            </View>
-          </>
         )}
 
-        {/* FULL TEXT */}
-        {hasFullText && (
-          <>
-            <View style={styles.divider} />
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-                Full Text
-              </Text>
-              <Text style={[styles.bodyText, { color: colors.text }]}>
-                {foundDocument.fullText}
-              </Text>
-            </View>
-          </>
-        )}
-
-        {/* CONTEXT */}
-        {hasContext && (
-          <>
-            <View style={styles.divider} />
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-                Historical Context
-              </Text>
-              <Text style={[styles.bodyText, { color: colors.text }]}>
-                {foundDocument.context}
-              </Text>
-            </View>
-          </>
-        )}
-
-        <AppFooter />
-      </ScrollView>
+        <FlatList
+          data={sections}
+          keyExtractor={(_, i) => i.toString()}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            if (item.type === "title") {
+              return (
+                <View style={styles.header}>
+                  <View style={[styles.foundingBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary }]}>
+                    <IconSymbol ios_icon_name="doc.text.fill" android_material_icon_name="history_edu" size={16} color={colors.primary} />
+                    <Text style={[styles.badgeText, { color: colors.primary }]}>Founding Document</Text>
+                  </View>
+                  <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[styles.breadcrumb, { color: colors.textSecondary }]}>{item.breadcrumb}</Text>
+                </View>
+              );
+            }
+            if (item.type === "overview") {
+              return (
+                <BlurView intensity={isDark ? 90 : 110} tint={isDark ? "dark" : "light"} style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: colors.primary }]}>Overview</Text>
+                  <Text style={[styles.text, { color: colors.text }]}>{item.text}</Text>
+                </BlurView>
+              );
+            }
+            if (item.type === "structure") {
+              return (
+                <BlurView intensity={isDark ? 90 : 110} tint={isDark ? "dark" : "light"} style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: colors.primary }]}>Document Structure</Text>
+                  <Text style={[styles.structureText, { color: colors.textSecondary }]}>
+                    {"• Article I — Legislative\n"}
+                    {"• Article II — Executive\n"}
+                    {"• Article III — Judicial\n"}
+                    {"• Article IV — States\n"}
+                    {"• Article V — Amendments\n"}
+                    {"• Article VI — Federal Power\n"}
+                    {"• Article VII — Ratification\n\n"}
+                    {"Bill of Rights (1–10)\n"}
+                    {"Amendments 11–27"}
+                  </Text>
+                </BlurView>
+              );
+            }
+            if (item.type === "fulltext") {
+              return (
+                <BlurView intensity={isDark ? 90 : 110} tint={isDark ? "dark" : "light"} style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: colors.primary }]}>Full Text</Text>
+                  <Text style={[styles.fullText, { color: colors.text }]}>{item.text}</Text>
+                </BlurView>
+              );
+            }
+            if (item.type === "context") {
+              return (
+                <BlurView intensity={isDark ? 90 : 110} tint={isDark ? "dark" : "light"} style={styles.section}>
+                  <Text style={[styles.sectionLabel, { color: colors.primary }]}>Historical Context</Text>
+                  <Text style={[styles.text, { color: colors.text }]}>{item.text}</Text>
+                </BlurView>
+              );
+            }
+            return null;
+          }}
+          ListFooterComponent={<AppFooter />}
+        />
+      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 120,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  badge: {
+  container: { flex: 1 },
+  offlineBanner: { padding: 10, alignItems: "center", backgroundColor: "#00000040" },
+  content: { padding: 20, paddingBottom: 140 },
+  header: { marginBottom: 32, alignItems: "center" },
+  foundingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    gap: 6,
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 2,
+    marginBottom: 20,
   },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 8,
-    lineHeight: 36,
-  },
-  breadcrumb: {
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  card: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  bodyText: {
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    marginVertical: 8,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  backButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: "#1F2937",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  badgeText: { fontSize: 13, fontWeight: "800", letterSpacing: 1 },
+  title: { fontSize: 36, fontWeight: "900", textAlign: "center", lineHeight: 46, marginBottom: 12 },
+  breadcrumb: { fontSize: 14, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1.5, opacity: 0.9 },
+  section: { padding: 28, borderRadius: 28, marginBottom: 24, overflow: "hidden", borderWidth: 1.5, borderColor: "#D4AF3730" },
+  sectionLabel: { fontSize: 15, fontWeight: "900", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 },
+  text: { fontSize: 17.5, lineHeight: 30, textAlign: "justify" },
+  structureText: { fontSize: 16.5, lineHeight: 28, opacity: 0.9 },
+  fullText: { fontSize: 16, lineHeight: 28, fontFamily: Platform.OS === "ios" ? "Courier" : "monospace" },
+  error: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
+  errorTitle: { fontSize: 26, fontWeight: "800", marginTop: 24, marginBottom: 12 },
+  backBtn: { paddingHorizontal: 36, paddingVertical: 16, borderRadius: 20, marginTop: 20 },
+  backText: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
 });

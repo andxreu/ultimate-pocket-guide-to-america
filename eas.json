@@ -3,14 +3,44 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "autoIncrement": true
+      "channel": "development",
+      "autoIncrement": true,
+      "ios": {
+        "enterpriseProvisioning": "universal"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENABLE_EDIT_MODE": "TRUE"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "autoIncrement": true
+      "channel": "preview",
+      "autoIncrement": true,
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true,
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "ios": {
+        "buildConfiguration": "Release",
+        "image": "latest",
+        "enterpriseProvisioning": "universal"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENABLE_EDIT_MODE": "FALSE"
+      },
+      "cache": {
+        "key": "v1"
+      }
     }
   }
 }
