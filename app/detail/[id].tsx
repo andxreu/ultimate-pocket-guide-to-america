@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   View,
@@ -30,15 +31,26 @@ export default function DetailScreen() {
   let foundSection = "";
   let foundMainSection = "";
 
-  for (const main of contentData) {
-    for (const sec of main.sections) {
-      for (const sub of sec.subsections) {
-        if (sub.id === id) {
-          foundItem = sub;
-          foundSection = sec.title;
-          foundMainSection = main.title;
+  try {
+    for (const main of contentData) {
+      if (!main || !main.sections) continue;
+      for (const sec of main.sections) {
+        if (!sec || !sec.subsections) continue;
+        for (const sub of sec.subsections) {
+          if (sub && sub.id === id) {
+            foundItem = sub;
+            foundSection = sec.title || "";
+            foundMainSection = main.title || "";
+            break;
+          }
         }
+        if (foundItem) break;
       }
+      if (foundItem) break;
+    }
+  } catch (error) {
+    if (__DEV__) {
+      console.log('Error finding item:', error);
     }
   }
 
@@ -96,7 +108,7 @@ export default function DetailScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          title: foundItem.title,
+          title: foundItem.title || "Details",
           headerBackTitle: "Back",
           headerBackTitleVisible: true,
           headerTintColor: colors.text,

@@ -51,76 +51,95 @@ export default function SearchScreen() {
   }, [searchQuery]);
 
   const performSearch = useCallback((query: string) => {
-    setIsSearching(true);
-    const lowerQuery = query.toLowerCase().trim();
-    const foundResults: SearchResult[] = [];
-    const seenIds = new Set<string>();
+    try {
+      setIsSearching(true);
+      const lowerQuery = query.toLowerCase().trim();
+      
+      if (!lowerQuery) {
+        setResults([]);
+        setIsSearching(false);
+        return;
+      }
 
-    for (const mainSection of contentData) {
-      for (const section of mainSection.sections) {
-        for (const subsection of section.subsections) {
-          if (seenIds.has(subsection.id)) continue;
+      const foundResults: SearchResult[] = [];
+      const seenIds = new Set<string>();
 
-          const title = subsection.title.toLowerCase();
-          const sectionName = section.title.toLowerCase();
-          const mainSectionName = mainSection.title.toLowerCase();
-          const content = subsection.content.toLowerCase();
-          const fullText = subsection.fullText?.toLowerCase() || '';
+      for (const mainSection of contentData) {
+        if (!mainSection || !mainSection.sections) continue;
 
-          let relevanceScore = 0;
+        for (const section of mainSection.sections) {
+          if (!section || !section.subsections) continue;
 
-          if (title === lowerQuery) {
-            relevanceScore = 10000;
-          } else if (title.startsWith(lowerQuery)) {
-            relevanceScore = 5000;
-          } else if (title.includes(` ${lowerQuery}`) || title.includes(`${lowerQuery} `)) {
-            relevanceScore = 3000;
-          } else if (title.includes(lowerQuery)) {
-            relevanceScore = 1500;
-          } else if (sectionName === lowerQuery || mainSectionName === lowerQuery) {
-            relevanceScore = 1000;
-          } else if (sectionName.includes(lowerQuery) || mainSectionName.includes(lowerQuery)) {
-            relevanceScore = 500;
-          } else if (content.startsWith(lowerQuery)) {
-            relevanceScore = 200;
-          } else if (content.includes(` ${lowerQuery}`) || content.includes(`${lowerQuery} `)) {
-            relevanceScore = 100;
-          } else if (content.includes(lowerQuery)) {
-            relevanceScore = 50;
-          } else if (fullText.includes(lowerQuery)) {
-            relevanceScore = 25;
-          }
+          for (const subsection of section.subsections) {
+            if (!subsection || !subsection.id || seenIds.has(subsection.id)) continue;
 
-          if (relevanceScore > 0) {
-            let snippet = '';
-            const matchIndex = content.indexOf(lowerQuery);
+            const title = (subsection.title || '').toLowerCase();
+            const sectionName = (section.title || '').toLowerCase();
+            const mainSectionName = (mainSection.title || '').toLowerCase();
+            const content = (subsection.content || '').toLowerCase();
+            const fullText = (subsection.fullText || '').toLowerCase();
 
-            if (matchIndex !== -1) {
-              const start = Math.max(0, matchIndex - 40);
-              const end = Math.min(subsection.content.length, matchIndex + lowerQuery.length + 40);
-              snippet = (start > 0 ? '...' : '') + subsection.content.slice(start, end) + (end < subsection.content.length ? '...' : '');
-            } else {
-              snippet = subsection.content.slice(0, 100) + (subsection.content.length > 100 ? '...' : '');
+            let relevanceScore = 0;
+
+            if (title === lowerQuery) {
+              relevanceScore = 10000;
+            } else if (title.startsWith(lowerQuery)) {
+              relevanceScore = 5000;
+            } else if (title.includes(` ${lowerQuery}`) || title.includes(`${lowerQuery} `)) {
+              relevanceScore = 3000;
+            } else if (title.includes(lowerQuery)) {
+              relevanceScore = 1500;
+            } else if (sectionName === lowerQuery || mainSectionName === lowerQuery) {
+              relevanceScore = 1000;
+            } else if (sectionName.includes(lowerQuery) || mainSectionName.includes(lowerQuery)) {
+              relevanceScore = 500;
+            } else if (content.startsWith(lowerQuery)) {
+              relevanceScore = 200;
+            } else if (content.includes(` ${lowerQuery}`) || content.includes(`${lowerQuery} `)) {
+              relevanceScore = 100;
+            } else if (content.includes(lowerQuery)) {
+              relevanceScore = 50;
+            } else if (fullText.includes(lowerQuery)) {
+              relevanceScore = 25;
             }
 
-            foundResults.push({
-              id: subsection.id,
-              title: subsection.title,
-              breadcrumb: `${mainSection.title} › ${section.title}`,
-              snippet,
-              relevanceScore,
-            });
+            if (relevanceScore > 0) {
+              let snippet = '';
+              const matchIndex = content.indexOf(lowerQuery);
 
-            seenIds.add(subsection.id);
+              if (matchIndex !== -1) {
+                const start = Math.max(0, matchIndex - 40);
+                const end = Math.min(subsection.content.length, matchIndex + lowerQuery.length + 40);
+                snippet = (start > 0 ? '...' : '') + subsection.content.slice(start, end) + (end < subsection.content.length ? '...' : '');
+              } else {
+                snippet = subsection.content.slice(0, 100) + (subsection.content.length > 100 ? '...' : '');
+              }
+
+              foundResults.push({
+                id: subsection.id,
+                title: subsection.title,
+                breadcrumb: `${mainSection.title} › ${section.title}`,
+                snippet,
+                relevanceScore,
+              });
+
+              seenIds.add(subsection.id);
+            }
           }
         }
       }
+
+      foundResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+      setResults(foundResults);
+      setIsSearching(false);
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Search error:', error);
+      }
+      setResults([]);
+      setIsSearching(false);
     }
-
-    foundResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
-
-    setResults(foundResults);
-    setIsSearching(false);
   }, []);
 
   useEffect(() => {
@@ -136,7 +155,10 @@ export default function SearchScreen() {
     try {
       const stored = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
       if (stored) {
-        setRecentSearches(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setRecentSearches(parsed);
+        }
       }
     } catch (error) {
       if (__DEV__) {
@@ -174,9 +196,15 @@ export default function SearchScreen() {
   };
 
   const handleResultPress = (id: string) => {
-    saveRecentSearch(searchQuery);
-    const route = getItemRoute(id);
-    router.push(route as any);
+    try {
+      saveRecentSearch(searchQuery);
+      const route = getItemRoute(id);
+      router.push(route as any);
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Error navigating to result:', error);
+      }
+    }
   };
 
   const handleRecentSearchPress = (query: string) => {

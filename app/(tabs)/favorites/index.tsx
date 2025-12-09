@@ -48,39 +48,46 @@ export default function FavoritesScreen() {
         const items: FavoriteItem[] = [];
 
         for (const id of favoriteIds) {
-          if (id.startsWith('state:')) {
-            const stateCode = id.replace('state:', '');
-            let foundState = null;
-            
-            for (const region of mapData) {
-              const state = region.states.find((s) => s.code === stateCode);
-              if (state) {
-                foundState = state;
-                break;
+          try {
+            if (id.startsWith('state:')) {
+              const stateCode = id.replace('state:', '');
+              let foundState = null;
+              
+              for (const region of mapData) {
+                if (!region || !region.states) continue;
+                const state = region.states.find((s) => s && s.code === stateCode);
+                if (state) {
+                  foundState = state;
+                  break;
+                }
+              }
+
+              if (foundState && foundState.name && foundState.blurb) {
+                const snippet = foundState.blurb.slice(0, 100) + (foundState.blurb.length > 100 ? '...' : '');
+                items.push({
+                  id,
+                  title: foundState.name,
+                  breadcrumb: `Map › State`,
+                  snippet,
+                  type: 'state',
+                });
+              }
+            } else {
+              const result = findItemById(id);
+              if (result && result.item && result.mainSection && result.section) {
+                const snippet = result.item.content.slice(0, 100) + (result.item.content.length > 100 ? '...' : '');
+                items.push({
+                  id,
+                  title: result.item.title,
+                  breadcrumb: `${result.mainSection.title} › ${result.section.title}`,
+                  snippet,
+                  type: 'content',
+                });
               }
             }
-
-            if (foundState) {
-              const snippet = foundState.blurb.slice(0, 100) + (foundState.blurb.length > 100 ? '...' : '');
-              items.push({
-                id,
-                title: foundState.name,
-                breadcrumb: `Map › State`,
-                snippet,
-                type: 'state',
-              });
-            }
-          } else {
-            const result = findItemById(id);
-            if (result) {
-              const snippet = result.item.content.slice(0, 100) + (result.item.content.length > 100 ? '...' : '');
-              items.push({
-                id,
-                title: result.item.title,
-                breadcrumb: `${result.mainSection.title} › ${result.section.title}`,
-                snippet,
-                type: 'content',
-              });
+          } catch (error) {
+            if (__DEV__) {
+              console.log('Error processing favorite item:', id, error);
             }
           }
         }
@@ -117,12 +124,18 @@ export default function FavoritesScreen() {
   };
 
   const handleItemPress = (item: FavoriteItem) => {
-    if (item.type === 'state') {
-      const stateCode = item.id.replace('state:', '').toLowerCase();
-      router.push(`/map/state/${stateCode}` as any);
-    } else {
-      const route = getItemRoute(item.id);
-      router.push(route as any);
+    try {
+      if (item.type === 'state') {
+        const stateCode = item.id.replace('state:', '').toLowerCase();
+        router.push(`/(tabs)/map/state/${stateCode}` as any);
+      } else {
+        const route = getItemRoute(item.id);
+        router.push(route as any);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Error navigating to item:', error);
+      }
     }
   };
 

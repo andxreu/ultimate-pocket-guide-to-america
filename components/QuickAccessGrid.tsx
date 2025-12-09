@@ -1,153 +1,158 @@
-
+// components/QuickAccessGrid.tsx
 import React from "react";
 import {
   View,
   Text,
   StyleSheet,
+  TouchableOpacity,
   Platform,
-  Pressable,
 } from "react-native";
-import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
-import { IconSymbol } from '@/components/IconSymbol';
-import * as Haptics from 'expo-haptics';
+import { useRouter } from "expo-router";
+import { useTheme } from "@/contexts/ThemeContext";
+import { IconSymbol } from "@/components/IconSymbol";
+import * as Haptics from "expo-haptics";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
+
+interface QuickButton {
+  id: string;
+  label: string;
+  iosIcon: string;
+  androidIcon: string;
+  route?: string;
+  action?: () => void;
+}
 
 export default function QuickAccessGrid() {
-  const { colors, toggleTheme } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const router = useRouter();
 
-  const handlePress = (action: string) => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+  const buttons: QuickButton[] = [
+    { id: "map", label: "Map", iosIcon: "map.fill", androidIcon: "map", route: "/(tabs)/map" },
+    { id: "quiz", label: "Quiz", iosIcon: "brain", androidIcon: "quiz", route: "/(tabs)/quiz" },
+    { id: "search", label: "Search", iosIcon: "magnifyingglass", androidIcon: "search", route: "/(tabs)/search" },
+    { id: "glossary", label: "Glossary", iosIcon: "book.fill", androidIcon: "menu_book", route: "/(tabs)/glossary" },
+    { id: "favorites", label: "Favorites", iosIcon: "star.fill", androidIcon: "star", route: "/(tabs)/favorites" },
+    { id: "theme", label: isDark ? "Light Mode" : "Dark Mode", iosIcon: "lightbulb.fill", androidIcon: "lightbulb", action: toggleTheme },
+  ];
 
-    switch (action) {
-      case 'map':
-        router.push('/(tabs)/map/');
-        break;
-      case 'quiz':
-        router.push('/(tabs)/quiz/');
-        break;
-      case 'search':
-        router.push('/(tabs)/search/');
-        break;
-      case 'glossary':
-        router.push('/(tabs)/glossary/');
-        break;
-      case 'favorites':
-        router.push('/(tabs)/favorites/');
-        break;
-      case 'theme':
-        toggleTheme();
-        break;
+  const handlePress = (button: QuickButton) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (button.route) {
+      router.push(button.route);
+    } else if (button.action) {
+      button.action();
     }
   };
-
-  const buttons = [
-    {
-      id: 'map',
-      label: 'Map',
-      iosIcon: 'map.fill',
-      androidIcon: 'map',
-    },
-    {
-      id: 'quiz',
-      label: 'Quiz',
-      iosIcon: 'questionmark.circle.fill',
-      androidIcon: 'help',
-    },
-    {
-      id: 'search',
-      label: 'Search',
-      iosIcon: 'magnifyingglass',
-      androidIcon: 'search',
-    },
-    {
-      id: 'glossary',
-      label: 'Glossary',
-      iosIcon: 'book.fill',
-      androidIcon: 'menu_book',
-    },
-    {
-      id: 'favorites',
-      label: 'Favorites',
-      iosIcon: 'star.fill',
-      androidIcon: 'star',
-    },
-    {
-      id: 'theme',
-      label: 'Light / Dark',
-      iosIcon: 'lightbulb',
-      androidIcon: 'lightbulb_outline',
-    },
-  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {buttons.map((button, index) => (
-          <React.Fragment key={index}>
-            <Pressable
-              onPress={() => handlePress(button.id)}
-              accessibilityLabel={`${button.label} button`}
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.button,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.primary + "15",
-                  transform: pressed ? [{ scale: 0.97 }] : [{ scale: 1 }],
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
-            >
-              <IconSymbol
-                ios_icon_name={button.iosIcon}
-                android_material_icon_name={button.androidIcon as any}
-                size={24}
-                color={colors.primary}
-              />
-              <Text style={[styles.buttonLabel, { color: colors.text }]}>
-                {button.label}
-              </Text>
-            </Pressable>
-          </React.Fragment>
+        {buttons.map((button) => (
+          <QuickButtonItem
+            key={button.id}
+            button={button}
+            colors={colors}
+            isDark={isDark}
+            onPress={() => handlePress(button)}
+          />
         ))}
       </View>
     </View>
   );
 }
 
+function QuickButtonItem({
+  button,
+  colors,
+  isDark,
+  onPress,
+}: {
+  button: QuickButton;
+  colors: any;
+  isDark: boolean;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handleIn = () => {
+    scale.value = withSpring(0.94, { damping: 14, stiffness: 300 });
+  };
+  const handleOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  // Dynamic styles moved OUT of StyleSheet.create
+  const dynamicButtonStyle = {
+    backgroundColor: colors.card,
+    borderColor: colors.primary + "30", // now safe — applied inline
+    shadowColor: isDark ? "#000000" : "#D4AF37",
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handleIn}
+      onPressOut={handleOut}
+      activeOpacity={1}
+      style={styles.touchable}
+      accessibilityLabel={button.label}
+      accessibilityRole="button"
+    >
+      <Animated.View style={[styles.button, dynamicButtonStyle, animatedStyle]}>
+        <IconSymbol
+          ios_icon_name={button.iosIcon}
+          android_material_icon_name={button.androidIcon}
+          size={36}
+          color={colors.primary}
+        />
+        <Text style={[styles.label, { color: colors.text }]}>
+          {button.label}
+        </Text>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+// Only static styles here — safe for Natively.dev
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 32,
+    paddingHorizontal: 8,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  touchable: {
+    width: "30.8%",
   },
   button: {
-    width: '31%',
     aspectRatio: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    minHeight: 44,
+    borderRadius: 28,
+    borderWidth: 2.5,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 24,
+    shadowOpacity: 0.4,
+    elevation: 18,
   },
-  buttonLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 8,
-    textAlign: 'center',
-    lineHeight: 17.4,
+  label: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    textAlign: "center",
+    marginTop: 4,
   },
 });
