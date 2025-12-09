@@ -1,24 +1,18 @@
-// babel.config.js
 module.exports = function (api) {
   api.cache(true);
 
-  // Only enable Natively.dev live editing in development AND when explicitly enabled
-  const enableEditableMode =
+  const EDITABLE_COMPONENTS =
     process.env.EXPO_PUBLIC_ENABLE_EDIT_MODE === "TRUE" &&
-    process.env.NODE_ENV === "development";
-
-  const editablePlugins = enableEditableMode
-    ? [
-        ["./babel-plugins/editable-elements.js", {}],
-        ["./babel-plugins/inject-source-location.js", {}],
-      ]
-    : [];
+    process.env.NODE_ENV === "development"
+      ? [
+          ["./babel-plugins/editable-elements.js", {}],
+          ["./babel-plugins/inject-source-location.js", {}],
+        ]
+      : [];
 
   return {
     presets: ["babel-preset-expo"],
-
     plugins: [
-      // Clean, elite module resolver
       [
         "module-resolver",
         {
@@ -37,24 +31,16 @@ module.exports = function (api) {
           alias: {
             "@": "./",
             "@components": "./components",
-            "@contexts": "./contexts",
-            "@data": "./data",
+            "@style": "./style",
             "@hooks": "./hooks",
-            "@utils": "./utils",
-            "@styles": "./styles",
-            "@assets": "./assets",
+            "@types": "./types",
+            "@contexts": "./contexts",
           },
         },
       ],
-
-      // Natively.dev live editing — only in dev mode
-      ...editablePlugins,
-
-      // Modern JS features
+      ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-
-      // Required for Reanimated 3+ worklets (must be last!)
-      "react-native-reanimated/plugin",
+      "react-native-worklets/plugin", // react-native-worklets/plugin must be listed last!
     ],
   };
 };

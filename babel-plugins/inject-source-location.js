@@ -1,55 +1,53 @@
 /* eslint-disable */
 
+const { EDITABLE_ELEMENTS } = require("./config.js");
 const { _isEditableFile } = require("./utils.js");
 
 module.exports = function ({ types: t }) {
   return {
     visitor: {
       JSXOpeningElement(path, state) {
+        const openingName = path.node.name;
         const filename = state.file.opts.filename || "unknown";
-        const loc = path.node.loc;
 
+        const loc = path.node.loc;
         if (!loc) return;
-        if (!_isEditableFile(filename)) return;
 
         const line = loc.start.line;
         const column = loc.start.column;
-        const sourceLocation = `${filename}:${line}:${column}`;
+        const location = `${filename}:${line}:${column}`;
 
-        const openingName = path.node.name;
         if (!openingName || openingName.type !== "JSXIdentifier") return;
+        const elementName = openingName.name;
+        if (!_isEditableFile(filename)) return;
 
-        // Inject __sourceLocation
         path.node.attributes.push(
           t.jsxAttribute(
             t.jsxIdentifier("__sourceLocation"),
-            t.stringLiteral(sourceLocation)
+            t.stringLiteral(location)
           )
         );
 
-        // Inject __trace — builds a path from root to this element
         path.node.attributes.push(
           t.jsxAttribute(
             t.jsxIdentifier("__trace"),
             t.jsxExpressionContainer(
               t.arrayExpression([
-                // Spread parent trace if exists
                 t.spreadElement(
                   t.logicalExpression(
                     "||",
                     t.memberExpression(
                       t.logicalExpression(
                         "||",
-                        t.memberExpression(t.identifier("arguments"), t.numericLiteral(0), true), // props
+                        t.identifier("arguments[0]"),
                         t.arrayExpression([])
-                      ),
+                      ), // parent props object
                       t.identifier("__trace")
                     ),
-                    t.arrayExpression([])
+                    t.arrayExpression([]) // fallback to empty array if undefined
                   )
                 ),
-                // Current location
-                t.stringLiteral(sourceLocation),
+                t.stringLiteral(location), // current element location
               ])
             )
           )

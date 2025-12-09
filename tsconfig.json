@@ -2,53 +2,22 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "exactOptionalPropertyTypes": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noUncheckedIndexedAccess": true,
-
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-
     "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./*"],
-      "@components/*": ["components/*"],
-      "@contexts/*": ["contexts/*"],
-      "@data/*": ["data/*"],
-      "@hooks/*": ["hooks/*"],
-      "@utils/*": ["utils/*"],
-      "@styles/*": ["styles/*"],
-      "@assets/*": ["assets/*"]
-    },
-
-    "types": ["react-native", "expo-router", "expo/types"]
+      "@/*": [
+        "./*"
+      ]
+    }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
+    "workbox-config.js",
   ],
   "exclude": [
-    "node_modules",
-    "babel.config.js",
-    "metro.config.js",
-    "workbox-config.js"
+    "node_modules"
   ]
 }

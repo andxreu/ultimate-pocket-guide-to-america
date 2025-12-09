@@ -1,5 +1,4 @@
-// app/(tabs)/_layout.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Stack, useRouter, usePathname } from "expo-router";
 import {
   View,
@@ -12,16 +11,9 @@ import {
   Platform,
 } from "react-native";
 import { IconSymbol } from "@/components/IconSymbol";
-import { useTheme } from "@/contexts/ThemeContext";
-import * as Haptics from "expo-haptics";
-import { BlurView } from "expo-blur";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  FadeIn,
-  FadeOut,
-} from "react-native-reanimated";
+import { colors, darkColors } from "@/styles/commonStyles";
+import { useColorScheme } from "react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 const menuItems = [
   { label: "Home", route: "/(tabs)/(home)" },
@@ -35,12 +27,18 @@ const menuItems = [
   { label: "Search", route: "/(tabs)/search" },
   { label: "Glossary", route: "/(tabs)/glossary" },
   { label: "Favorites", route: "/(tabs)/favorites" },
-] as const;
+];
 
 function HamburgerButton({ onPress }: { onPress: () => void }) {
   return (
-    <TouchableOpacity onPress={onPress} hitSlop={20} activeOpacity={0.7}>
-      <IconSymbol ios_icon_name="line.3.horizontal" android_material_icon_name="menu" size={28} color="#FFFFFF" />
+    <TouchableOpacity
+      onPress={onPress}
+      hitSlop={10}
+      accessibilityLabel="Open menu"
+      accessibilityRole="button"
+      activeOpacity={0.7}
+    >
+      <MaterialIcons name="menu" size={28} color="#FFFFFF" />
     </TouchableOpacity>
   );
 }
@@ -54,162 +52,267 @@ function HamburgerMenu({
   onClose: () => void;
   onNavigate: (route: string) => void;
 }) {
-  const { colors, isDark } = useTheme();
+  const colorScheme = useColorScheme();
+  const themeColors = colorScheme === "dark" ? darkColors : colors;
   const pathname = usePathname();
 
-  const translateX = useSharedValue(-320);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  React.useEffect(() => {
-    translateX.value = withSpring(visible ? 0 : -320, { damping: 20, stiffness: 180 });
-  }, [visible]);
-
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Animated.View style={[styles.menuContainer, animatedStyle]}>
-          <BlurView intensity={isDark ? 100 : 120} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-          <Pressable style={styles.menuInner} onPress={(e) => e.stopPropagation()}>
-            <View style={[styles.header, { borderBottomColor: colors.primary + "30" }]}>
-              <Text style={[styles.menuTitle, { color: colors.text }]}>Menu</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-                <IconSymbol ios_icon_name="xmark" android_material_icon_name="close" size={26} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <Pressable
+          style={[styles.menuContainer, { backgroundColor: themeColors.background }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View
+            style={[
+              styles.menuHeader,
+              { borderBottomColor: themeColors.secondary },
+            ]}
+          >
+            <Text
+              style={[
+                styles.menuTitle,
+                {
+                  color: themeColors.text,
+                },
+              ]}
+            >
+              Menu
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButton}
+              activeOpacity={0.7}
+              accessibilityLabel="Close menu"
+              accessibilityRole="button"
+            >
+              <IconSymbol
+                ios_icon_name="xmark"
+                android_material_icon_name="close"
+                size={24}
+                color={themeColors.text}
+              />
+            </TouchableOpacity>
+          </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {menuItems.map((item) => {
-                const isActive = pathname.startsWith(item.route);
-                return (
-                  <TouchableOpacity
-                    key={item.route}
+          <ScrollView
+            style={styles.menuScrollView}
+            showsVerticalScrollIndicator={false}
+          >
+            {menuItems.map((item, index) => {
+              const isActive = pathname.includes(
+                item.route.replace("/(tabs)", "")
+              );
+
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.menuItem,
+                    { borderBottomColor: themeColors.secondary + "40" },
+                    isActive && { backgroundColor: themeColors.highlight },
+                  ]}
+                  onPress={() => onNavigate(item.route)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={`Navigate to ${item.label}`}
+                  accessibilityRole="button"
+                >
+                  <Text
                     style={[
-                      styles.menuItem,
-                      isActive && { backgroundColor: colors.primary + "15" },
+                      styles.menuItemText,
+                      { color: themeColors.text },
+                      isActive && {
+                        color: themeColors.primary,
+                        fontWeight: "700",
+                      },
                     ]}
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      onNavigate(item.route);
-                    }}
-                    activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.menuItemText,
-                        { color: isActive ? colors.primary : colors.text },
-                        isActive && { fontWeight: "700" },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                    {isActive && (
-                      <IconSymbol ios_icon_name="checkmark" android_material_icon_name="check" size={20} color={colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Animated.View>
+                    {item.label}
+                  </Text>
+                  {isActive && (
+                    <IconSymbol
+                      ios_icon_name="chevron.right"
+                      android_material_icon_name="chevron_right"
+                      size={20}
+                      color={themeColors.primary}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Pressable>
       </Pressable>
     </Modal>
   );
 }
 
 export default function TabLayout() {
-  const [visible, setVisible] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const router = useRouter();
-  const { colors } = useTheme();
 
-  const open = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setVisible(true);
-  }, []);
+  const openMenu = () => {
+    setIsMenuVisible(true);
+  };
 
-  const close = useCallback(() => {
-    Haptics.selectionAsync();
-    setVisible(false);
-  }, []);
+  const closeMenu = () => {
+    setIsMenuVisible(false);
+  };
 
-  const navigate = useCallback(
-    (route: string) => {
-      close();
-      router.push(route as any);
-    },
-    [router, close]
-  );
+  const navigateTo = (route: string) => {
+    closeMenu();
+    router.push(route as any);
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1 }}>
       <Stack
         screenOptions={{
           headerShown: true,
-          headerLeft: () => <HamburgerButton onPress={open} />,
+          headerLeft: () => <HamburgerButton onPress={openMenu} />,
           headerTitleAlign: "center",
-          headerStyle: { backgroundColor: "#1a1a1a" },
+          headerStyle: {
+            backgroundColor: "#1a1a1a",
+          },
           headerTintColor: "#FFFFFF",
-          headerShadowVisible: false,
+          headerShadowVisible: true,
         }}
       >
-        {menuItems.map((i) => (
-          <Stack.Screen
-            key={i.route}
-            name={i.route.replace("/(tabs)/", "")}
-            options={{ title: i.label }}
-          />
-        ))}
+        <Stack.Screen
+          name="(home)"
+          options={{
+            title: "Home",
+          }}
+        />
+        <Stack.Screen
+          name="foundations"
+          options={{
+            title: "Foundations",
+          }}
+        />
+        <Stack.Screen
+          name="civic-literacy"
+          options={{
+            title: "Civic Literacy",
+          }}
+        />
+        <Stack.Screen
+          name="political-landscape"
+          options={{
+            title: "Political Landscape",
+          }}
+        />
+        <Stack.Screen
+          name="principles-practice"
+          options={{
+            title: "Principles in Practice",
+          }}
+        />
+        <Stack.Screen
+          name="land-life"
+          options={{
+            title: "Land and Life",
+          }}
+        />
+        <Stack.Screen
+          name="map"
+          options={{
+            title: "Map",
+          }}
+        />
+        <Stack.Screen
+          name="quiz"
+          options={{
+            title: "Quiz",
+          }}
+        />
+        <Stack.Screen
+          name="search"
+          options={{
+            title: "Search",
+          }}
+        />
+        <Stack.Screen
+          name="glossary"
+          options={{
+            title: "Glossary",
+          }}
+        />
+        <Stack.Screen
+          name="favorites"
+          options={{
+            title: "Favorites",
+          }}
+        />
       </Stack>
 
-      <HamburgerMenu visible={visible} onClose={close} onNavigate={navigate} />
+      <HamburgerMenu
+        visible={isMenuVisible}
+        onClose={closeMenu}
+        onNavigate={navigateTo}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-start",
+    alignItems: "flex-start",
   },
   menuContainer: {
-    width: 320,
+    width: 280,
     height: "100%",
-    backgroundColor: "transparent",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 2,
+      height: 0,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  menuInner: {
-    flex: 1,
-    paddingTop: Platform.OS === "android" ? 48 : 60,
-  },
-  header: {
+  menuHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    borderBottomWidth: 1.5,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? 48 : 60,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
   },
   menuTitle: {
-    fontSize: 28,
-    fontWeight: "900",
-    letterSpacing: 0.5,
+    fontSize: 24,
+    fontWeight: "700",
   },
-  closeBtn: {
-    padding: 10,
-    borderRadius: 20,
+  closeButton: {
+    padding: 4,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuScrollView: {
+    flex: 1,
   },
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255,255,255,0.08)",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    minHeight: 44,
   },
   menuItemText: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

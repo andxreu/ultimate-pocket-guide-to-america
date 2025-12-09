@@ -1,157 +1,133 @@
-import React, { useEffect, useState, useCallback } from "react";
+
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Platform,
+  ScrollView,
 } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useLocalSearchParams, Stack } from "expo-router";
+import { mapData, State } from "@/data/mapData";
 import { useTheme } from "@/contexts/ThemeContext";
-import { loadMapData, State } from "@/data/mapData";
-import { IconSymbol } from "@/components/IconSymbol";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
-import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
-import * as Speech from "expo-speech";
 
+/**
+ * State detail screen for the American Map Explorer.
+ * - Looks up the state by its two-letter code (e.g., "NY", "TX").
+ * - Uses `state.content` if present; falls back to `state.blurb` otherwise.
+ * - Splits the long text on "\n\n" and renders each as a separate paragraph.
+ */
 export default function StateDetailScreen() {
-  const { colors, isDark } = useTheme();
-  const router = useRouter();
+  const { colors } = useTheme();
   const params = useLocalSearchParams();
   const rawCode = params.code as string | string[] | undefined;
-  const stateCode = (Array.isArray(rawCode) ? rawCode[0] : rawCode || "").toUpperCase();
 
-  const [state, setState] = useState<State | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Handle param variations safely
+  const stateCode = (Array.isArray(rawCode) ? rawCode[0] : rawCode || "")
+    .toUpperCase();
 
-  useEffect(() => {
-    loadMapData().then(data => {
-      let found: State | undefined;
-      for (const region of data) {
-        found = region.states.find(s => s.code === stateCode);
-        if (found) break;
-      }
-      setState(found || null);
-      setIsLoading(false);
-    });
-  }, [stateCode]);
-
-  const speakContent = useCallback(() => {
-    if (state) {
-      const text = state.content || state.blurb || "";
-      Speech.speak(text);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // Find the matching state in any region
+  let foundState: State | undefined;
+  for (const region of mapData) {
+    const match = region.states.find((s) => s.code === stateCode);
+    if (match) {
+      foundState = match;
+      break;
     }
-  }, [state]);
+  }
 
-  const shareState = useCallback(() => {
-    if (state) {
-      Haptics.selectionAsync();
-      // You can expand this with expo-sharing later
-      alert(`Share ${state.name} — coming soon!`);
-    }
-  }, [state]);
-
-  if (isLoading) {
+  if (!foundState) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ title: "Loading..." }} />
-        <Text style={{ color: colors.text, textAlign: "center", marginTop: 100 }}>
-          Loading state details...
-        </Text>
+        <Stack.Screen options={{ title: "State" }} />
+        <View style={styles.inner}>
+          <Text style={[styles.errorTitle, { color: colors.accent }]}>State not found</Text>
+          <Text style={[styles.errorText, { color: colors.text }]}>
+            The state you tried to open could not be located. Please go back to
+            the map and try again.
+          </Text>
+        </View>
       </View>
     );
   }
 
-  if (!state) {
-    return (
-      <>
-        <Stack.Screen options={{ title: "State Not Found" }} />
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <View style={styles.errorContainer}>
-            <IconSymbol ios_icon_name="exclamationmark.triangle.fill" android_material_icon_name="error" size={72} color={colors.accent} />
-            <Text style={[styles.errorTitle, { color: colors.text }]}>State Not Found</Text>
-            <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-              We couldn't find the state you're looking for.
-            </Text>
-            <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primary }]} onPress={() => router.back()}>
-              <Text style={styles.backButtonText}>Go Back</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </>
-    );
-  }
+  const longText =
+    (foundState.content && foundState.content.trim().length > 0
+      ? foundState.content
+      : foundState.blurb) || "";
 
-  const content = (state.content || state.blurb || "").trim();
-  const paragraphs = content.split("\n\n").filter(p => p.trim().length > 0);
-  const stateId = `state:${state.code}`;
+  const paragraphs = longText.split("\n\n");
+
+  // Create a unique ID for this state for favorites
+  const stateId = `state:${foundState.code}`;
 
   return (
-    <>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          title: state.name,
+          title: foundState.name,
           headerShown: true,
-          headerBackTitle: "Map",
-          headerTintColor: "#FFFFFF",
-          headerStyle: { backgroundColor: "#1a1a1a" },
-          headerRight: () => (
-            <View style={{ flexDirection: "row", gap: 12, marginRight: 8 }}>
-              <TouchableOpacity onPress={speakContent}>
-                <IconSymbol ios_icon_name="speaker.wave.2" android_material_icon_name="volume_up" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={shareState}>
-                <IconSymbol ios_icon_name="square.and.arrow.up" android_material_icon_name="share" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <FavoriteToggle itemId={stateId} size={26} />
-            </View>
-          ),
+          headerBackVisible: true,
+          headerRight: () => <FavoriteToggle itemId={stateId} />,
+          headerStyle: {
+            backgroundColor: '#1a1a1a',
+          },
+          headerTintColor: '#FFFFFF',
         }}
       />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={[styles.title, { color: colors.text }]}>{foundState.name}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{foundState.code}</Text>
 
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <FlatList
-          data={paragraphs}
-          keyExtractor={(_, i) => i.toString()}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <>
-              <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>{state.name}</Text>
-                <View style={[styles.codeBadge, { backgroundColor: colors.primary + "20" }]}>
-                  <Text style={[styles.codeText, { color: colors.primary }]}>{state.code}</Text>
-                </View>
-              </View>
-            </>
-          }
-          renderItem={({ item }) => (
-            <BlurView intensity={isDark ? 80 : 100} tint={isDark ? "dark" : "light"} style={styles.paragraphCard}>
-              <Text style={[styles.paragraph, { color: colors.text }]}>{item}</Text>
-            </BlurView>
-          )}
-          ListFooterComponent={<View style={{ height: 80 }} />}
-        />
-      </View>
-    </>
+        {paragraphs.map((para, index) => (
+          <View key={index} style={[styles.card, { backgroundColor: colors.card }]}>
+            <Text style={[styles.paragraph, { color: colors.text }]}>{para}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 120 },
-  header: { alignItems: "center", marginBottom: 32 },
-  title: { fontSize: 34, fontWeight: "800", textAlign: "center", marginBottom: 12, lineHeight: 44 },
-  codeBadge: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
-  codeText: { fontSize: 20, fontWeight: "900", letterSpacing: 2 },
-  paragraphCard: { padding: 20, borderRadius: 20, marginBottom: 16, overflow: "hidden" },
-  paragraph: { fontSize: 16.5, lineHeight: 26, textAlign: "justify" },
-  errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
-  errorTitle: { fontSize: 24, fontWeight: "700", marginTop: 20, marginBottom: 12 },
-  errorText: { fontSize: 16, textAlign: "center", lineHeight: 24, marginBottom: 32 },
-  backButton: { paddingHorizontal: 32, paddingVertical: 14, borderRadius: 16 },
-  backButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  container: {
+    flex: 1,
+  },
+  inner: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 120,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  card: {
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+  },
+  paragraph: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
 });
