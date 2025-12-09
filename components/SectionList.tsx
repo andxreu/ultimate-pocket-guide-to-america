@@ -1,12 +1,11 @@
-// components/SectionList.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
+  ScrollView,
+  StyleSheet,
   View,
   Text,
-  StyleSheet,
-  FlatList,
+  Pressable,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -17,14 +16,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  FadeIn,
 } from "react-native-reanimated";
-import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
-import NetInfo from "@react-native-community/netinfo";
 
 interface SectionListProps {
   mainSection: MainSection;
+  /** Controls the small bar header with back button + title */
   showCustomHeader?: boolean;
 }
 
@@ -36,219 +32,290 @@ const FOUNDING_DOCUMENTS = [
   "federalist-papers",
 ];
 
+export function SectionList({
+  mainSection,
+  showCustomHeader = true,
+}: SectionListProps) {
+  const { colors } = useTheme();
+  const router = useRouter();
+
+  const navigateToItem = (subsectionId: string) => {
+    if (FOUNDING_DOCUMENTS.includes(subsectionId)) {
+      router.push(`/document/${subsectionId}` as any);
+    } else {
+      router.push(`/detail/${subsectionId}` as any);
+    }
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Custom Header with Back Button (can be hidden) */}
+      {showCustomHeader && (
+        <View
+          style={[
+            styles.customHeader,
+            { backgroundColor: colors.background, borderBottomColor: colors.card },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <IconSymbol
+              ios_icon_name="chevron.left"
+              android_material_icon_name="arrow_back"
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+          <Text
+            style={[styles.headerTitle, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {mainSection.title}
+          </Text>
+          <View style={styles.headerSpacer} />
+        </View>
+      )}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            accessibilityRole="header"
+          >
+            {mainSection.title}
+          </Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {mainSection.description}
+          </Text>
+        </View>
+
+        <View style={styles.sectionsContainer}>
+          {mainSection.sections.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.sectionGroup}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  {section.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.sectionDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {section.description}
+                </Text>
+              </View>
+
+              <View style={styles.subsectionsContainer}>
+                {section.subsections.map((subsection, subsectionIndex) => {
+                  const isDocument = FOUNDING_DOCUMENTS.includes(subsection.id);
+                  return (
+                    <SubsectionCard
+                      key={subsectionIndex}
+                      subsection={subsection}
+                      isDocument={isDocument}
+                      colors={colors}
+                      onPress={() => navigateToItem(subsection.id)}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <AppFooter />
+      </ScrollView>
+    </View>
+  );
+}
+
 function SubsectionCard({
   subsection,
   isDocument,
   colors,
-  isDark,
   onPress,
 }: {
   subsection: any;
   isDocument: boolean;
   colors: any;
-  isDark: boolean;
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }));
 
-  const handleIn = () => {
-    scale.value = withSpring(0.96, { damping: 16, stiffness: 300 });
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    opacity.value = withSpring(0.8, { damping: 15, stiffness: 300 });
   };
 
-  const handleOut = () => {
-    scale.value = withSpring(1);
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    opacity.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      onPressIn={handleIn}
-      onPressOut={handleOut}
-      activeOpacity={0.9}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel={`Navigate to ${subsection.title}`}
       accessibilityRole="button"
-      accessibilityLabel={subsection.title}
     >
-      <Animated.View style={[styles.subsectionCard, animatedStyle]}>
-        <BlurView
-          intensity={isDark ? 90 : 110}
-          tint={isDark ? "dark" : "light"}
-          style={styles.cardInner}
-        >
-          <View style={styles.content}>
-            {isDocument && (
-              <View style={[styles.badge, { backgroundColor: colors.primary + "22" }]}>
-                <IconSymbol
-                  ios_icon_name="doc.text.fill"
-                  android_material_icon_name="history_edu"
-                  size={16}
-                  color={colors.primary}
-                />
-              </View>
-            )}
-            <Text style={[styles.title, { color: colors.text }]}>
-              {subsection.title}
-            </Text>
-          </View>
-          <IconSymbol
-            ios_icon_name="chevron.right"
-            android_material_icon_name="chevron_right"
-            size={22}
-            color={colors.textSecondary}
-          />
-        </BlurView>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
-export function SectionList({
-  mainSection,
-  showCustomHeader = true,
-}: SectionListProps) {
-  const { colors, isDark } = useTheme();
-  const router = useRouter();
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state =>
-      setIsOffline(!state.isConnected)
-    );
-    return unsubscribe;
-  }, []);
-
-  const navigateToItem = (id: string) => {
-    const route = FOUNDING_DOCUMENTS.includes(id)
-      ? `/document/${id}`
-      : `/detail/${id}`;
-    router.push(route as any);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const data = mainSection.sections.flatMap(section => [
-    { type: "header" as const, section },
-    ...section.subsections.map(sub => ({
-      type: "subsection" as const,
-      subsection: sub,
-      isDocument: FOUNDING_DOCUMENTS.includes(sub.id),
-    })),
-  ]);
-
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {isOffline && (
-        <View style={styles.offlineBanner}>
-          <Text style={{ color: colors.accent, fontSize: 13, fontWeight: "600" }}>
-            Offline • Using cached content
+      <Animated.View
+        style={[
+          styles.subsectionCard,
+          {
+            backgroundColor: colors.card,
+            borderColor: "rgba(255, 255, 255, 0.06)",
+          },
+          animatedStyle,
+        ]}
+      >
+        <View style={styles.subsectionContent}>
+          {isDocument && (
+            <View
+              style={[
+                styles.documentBadge,
+                { backgroundColor: colors.primary + "20" },
+              ]}
+            >
+              <IconSymbol
+                ios_icon_name="doc.text.fill"
+                android_material_icon_name="description"
+                size={12}
+                color={colors.primary}
+              />
+            </View>
+          )}
+          <Text style={[styles.subsectionTitle, { color: colors.text }]}>
+            {subsection.title}
           </Text>
         </View>
-      )}
-
-      <FlatList
-        data={data}
-        keyExtractor={(_, i) => i.toString()}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <>
-            {showCustomHeader && (
-              <View style={[styles.customHeader, { borderBottomColor: colors.primary + "20" }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                  <IconSymbol
-                    ios_icon_name="chevron.left"
-                    android_material_icon_name="arrow_back"
-                    size={26}
-                    color={colors.text}
-                  />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>
-                  {mainSection.title}
-                </Text>
-                <View style={{ width: 44 }} />
-              </View>
-            )}
-            <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
-              <Text style={[styles.pageTitle, { color: colors.text }]}>
-                {mainSection.title}
-              </Text>
-              <Text style={[styles.pageDesc, { color: colors.textSecondary }]}>
-                {mainSection.description}
-              </Text>
-            </Animated.View>
-          </>
-        }
-        renderItem={({ item }) => {
-          if (item.type === "header") {
-            return (
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  {item.section.title}
-                </Text>
-                <Text style={[styles.sectionDesc, { color: colors.textSecondary }]}>
-                  {item.section.description}
-                </Text>
-              </View>
-            );
-          }
-          return (
-            <SubsectionCard
-              subsection={item.subsection}
-              isDocument={item.isDocument}
-              colors={colors}
-              isDark={isDark}
-              onPress={() => navigateToItem(item.subsection.id)}
-            />
-          );
-        }}
-        ListFooterComponent={<AppFooter />}
-      />
-    </View>
+        <IconSymbol
+          ios_icon_name="chevron.right"
+          android_material_icon_name="chevron_right"
+          size={20}
+          color={colors.textSecondary}
+        />
+      </Animated.View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  offlineBanner: { padding: 10, alignItems: "center", backgroundColor: "#00000040" },
-  content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 140 },
+  container: {
+    flex: 1,
+  },
   customHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: Platform.OS === "ios" ? 60 : 48,
-    paddingBottom: 16,
-    borderBottomWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  backBtn: { padding: 10, borderRadius: 20 },
-  headerTitle: { fontSize: 19, fontWeight: "800", flex: 1, textAlign: "center", marginRight: 44 },
-  header: { marginBottom: 32, alignItems: "center" },
-  pageTitle: { fontSize: 38, fontWeight: "900", textAlign: "center", lineHeight: 48, marginBottom: 12 },
-  pageDesc: { fontSize: 17, textAlign: "center", lineHeight: 26, opacity: 0.9 },
-  sectionHeader: { marginBottom: 24 },
-  sectionTitle: { fontSize: 24, fontWeight: "900", marginBottom: 8, lineHeight: 32 },
-  sectionDesc: { fontSize: 15.5, lineHeight: 24, opacity: 0.85 },
-  subsectionCard: {
-    marginBottom: 16,
-    borderRadius: 24,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#D4AF3725",
-  },
-  cardInner: {
-    flexDirection: "row",
-    padding: 22,
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  content: { flex: 1 },
-  badge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
   },
-  title: { fontSize: 19, fontWeight: "700", flex: 1, lineHeight: 28 },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 8,
+  },
+  headerSpacer: {
+    width: 44,
+  },
+  scrollContent: {
+    paddingTop: 32,
+    paddingHorizontal: 16,
+    paddingBottom: 120,
+  },
+  header: {
+    marginBottom: 28,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 8,
+    lineHeight: 43.5,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 21.75,
+  },
+  sectionsContainer: {
+    gap: 28,
+  },
+  sectionGroup: {
+    marginBottom: 8,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: "600",
+    marginBottom: 6,
+    lineHeight: 27.55,
+  },
+  sectionDescription: {
+    fontSize: 13,
+    lineHeight: 18.85,
+  },
+  subsectionsContainer: {
+    gap: 12,
+  },
+  subsectionCard: {
+    flexDirection: "row",
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    minHeight: 44,
+  },
+  subsectionContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  documentBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    flex: 1,
+    lineHeight: 23.2,
+  },
 });

@@ -1,4 +1,3 @@
-// components/Button.tsx
 import React from "react";
 import {
   ActivityIndicator,
@@ -6,13 +5,12 @@ import {
   StyleSheet,
   Text,
   TextStyle,
+  useColorScheme,
   ViewStyle,
-  Platform,
 } from "react-native";
-import { useTheme } from "@/contexts/ThemeContext";
-import * as Haptics from "expo-haptics";
+import { appleBlue, zincColors } from "@/constants/Colors";
 
-type ButtonVariant = "filled" | "outline" | "ghost" | "gold";
+type ButtonVariant = "filled" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps {
@@ -24,7 +22,6 @@ interface ButtonProps {
   children: React.ReactNode;
   style?: ViewStyle;
   textStyle?: TextStyle;
-  accessibilityLabel?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -36,78 +33,90 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   style,
   textStyle,
-  accessibilityLabel,
 }) => {
-  const { colors, isDark } = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
-  const sizeStyles = {
-    sm: { height: 40, fontSize: 15, padding: 14, borderRadius: 12 },
-    md: { height: 50, fontSize: 17, padding: 20, borderRadius: 16 },
-    lg: { height: 60, fontSize: 19, padding: 24, borderRadius: 20 },
-  }[size];
+  const sizeStyles: Record<
+    ButtonSize,
+    { height: number; fontSize: number; padding: number }
+  > = {
+    sm: { height: 36, fontSize: 14, padding: 12 },
+    md: { height: 44, fontSize: 16, padding: 16 },
+    lg: { height: 55, fontSize: 18, padding: 20 },
+  };
 
-  const variantStyles = {
-    filled: {
-      backgroundColor: colors.primary,
-      borderWidth: 0,
-    },
-    outline: {
-      backgroundColor: "transparent",
-      borderWidth: 2,
-      borderColor: colors.primary,
-    },
-    ghost: {
-      backgroundColor: "transparent",
-      borderWidth: 0,
-    },
-    gold: {
-      backgroundColor: "#D4AF37",
-      borderWidth: 2,
-      borderColor: "#B8972A",
-    },
-  }[variant];
+  const getVariantStyle = () => {
+    const baseStyle: ViewStyle = {
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    };
 
-  const textColors = {
-    filled: "#FFFFFF",
-    outline: colors.primary,
-    ghost: colors.primary,
-    gold: "#1a1a1a",
-  }[variant];
+    switch (variant) {
+      case "filled":
+        return {
+          ...baseStyle,
+          backgroundColor: isDark ? zincColors[50] : zincColors[900],
+        };
+      case "outline":
+        return {
+          ...baseStyle,
+          backgroundColor: "transparent",
+          borderWidth: 1,
+          borderColor: isDark ? zincColors[700] : zincColors[300],
+        };
+      case "ghost":
+        return {
+          ...baseStyle,
+          backgroundColor: "transparent",
+        };
+    }
+  };
 
-  const handlePress = () => {
-    if (!disabled && !loading && onPress) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      onPress();
+  const getTextColor = () => {
+    if (disabled) {
+      return isDark ? zincColors[500] : zincColors[400];
+    }
+
+    switch (variant) {
+      case "filled":
+        return isDark ? zincColors[900] : zincColors[50];
+      case "outline":
+      case "ghost":
+        return appleBlue;
     }
   };
 
   return (
     <Pressable
-      onPress={handlePress}
+      onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.button,
-        sizeStyles,
-        variantStyles,
+      style={[
+        getVariantStyle(),
         {
-          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
-          shadowOpacity: pressed ? 0.3 : 0.4,
+          height: sizeStyles[size].height,
+          paddingHorizontal: sizeStyles[size].padding,
+          opacity: disabled ? 0.5 : 1,
         },
         style,
       ]}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel || (typeof children === "string" ? children : undefined)}
-      accessibilityState={{ disabled: disabled || loading }}
     >
       {loading ? (
-        <ActivityIndicator color={textColors} size="small" />
+        <ActivityIndicator color={getTextColor()} />
       ) : (
         <Text
-          style={[
-            styles.text,
-            { fontSize: sizeStyles.fontSize, color: textColors },
+          style={StyleSheet.flatten([
+            {
+              fontSize: sizeStyles[size].fontSize,
+              color: getTextColor(),
+              textAlign: "center",
+              marginBottom: 0,
+              fontWeight: "700",
+            },
             textStyle,
-          ]}
+          ])}
         >
           {children}
         </Text>
@@ -115,24 +124,5 @@ export const Button: React.FC<ButtonProps> = ({
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  text: {
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    textAlign: "center",
-  },
-});
 
 export default Button;

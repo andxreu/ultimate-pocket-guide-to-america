@@ -1,35 +1,30 @@
-// contexts/WidgetContext.tsx
-import React, { createContext, useCallback, useContext, useEffect } from "react";
+import * as React from "react";
+import { createContext, useCallback, useContext } from "react";
 import { ExtensionStorage } from "@bacons/apple-targets";
 
-// Replace with your actual App Group ID from Apple Developer
-// Example: group.com.yourcompany.ultimatepocketguide
-const storage = new ExtensionStorage("group.com.amateurxhuman.ultimatepocketguidetoamerica");
+// Initialize storage with your group ID
+const storage = new ExtensionStorage(
+  "group.com.<user_name>.<app_name>"
+);
 
-interface WidgetContextType {
+type WidgetContextType = {
   refreshWidget: () => void;
-}
+};
 
 const WidgetContext = createContext<WidgetContextType | null>(null);
 
 export function WidgetProvider({ children }: { children: React.ReactNode }) {
-  // Optional: Trigger widget refresh when app becomes active
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      ExtensionStorage.reloadWidget();
-    }, 1000);
+  // Update widget state whenever what we want to show changes
+  React.useEffect(() => {
+    // set widget_state to null if we want to reset the widget
+    // storage.set("widget_state", null);
 
-    return () => clearTimeout(timer);
+    // Refresh widget
+    ExtensionStorage.reloadWidget();
   }, []);
 
   const refreshWidget = useCallback(() => {
-    try {
-      ExtensionStorage.reloadWidget();
-    } catch (error) {
-      if (__DEV__) {
-        console.log("Widget refresh failed (normal if no widget installed):", error);
-      }
-    }
+    ExtensionStorage.reloadWidget();
   }, []);
 
   return (
@@ -39,7 +34,7 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useWidget = (): WidgetContextType => {
+export const useWidget = () => {
   const context = useContext(WidgetContext);
   if (!context) {
     throw new Error("useWidget must be used within a WidgetProvider");

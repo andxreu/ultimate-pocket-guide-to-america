@@ -5,94 +5,58 @@
     "slug": "ultimate-pocket-guide-to-america",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon-1024x1024.png",
+    "icon": "./assets/images/final_quest_240x240.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "assetBundlePatterns": ["**/*"],
+
+    "splash": {
+      "image": "./assets/images/final_quest_240x240.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": [],
-        "UIRequiredDeviceCapabilities": ["arm64"],
+        "UIRequiredDeviceCapabilities": [],
         "NSCameraUsageDescription": "This app does not use the camera.",
         "NSPhotoLibraryUsageDescription": "This app does not access your photo library.",
-        "NSLocationWhenInUseUsageDescription": "This app does not use location services.",
-        "NSMicrophoneUsageDescription": "This app does not use the microphone.",
-        "CFBundleDevelopmentRegion": "en",
-        "CFBundleDisplayName": "Pocket Guide"
-      },
-      "entitlements": {
-        "com.apple.developer.networking.multicast": true
+        "NSLocationWhenInUseUsageDescription": "This app does not use your location.",
+        "NSLocationAlwaysUsageDescription": "This app does not use your location.",
+        "NSMicrophoneUsageDescription": "This app does not use the microphone."
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon-maskable-512x512.png",
-        "backgroundColor": "#0F0F0F"
+        "foregroundImage": "./assets/images/final_quest_240x240.png",
+        "backgroundColor": "#000000"
       },
+      "edgeToEdgeEnabled": true,
       "package": "com.amateurxhuman.ultimatepocketguidetoamerica",
-      "versionCode": 1,
-      "googleServicesFile": "./google-services.json",
-      "useNextNotificationsApi": true,
-      "permissions": []
+      "versionCode": 1
     },
+
     "web": {
-      "favicon": "./assets/images/favicon.ico",
-      "bundler": "metro",
-      "output": "static",
-      "meta": {
-        "theme_color": "#D4AF37",
-        "apple-mobile-web-app-capable": "yes",
-        "apple-mobile-web-app-status-bar-style": "black-translucent"
-      }
+      "favicon": "./assets/images/final_quest_240x240.png",
+      "bundler": "metro"
     },
+
     "plugins": [
-      "expo-router",
       "expo-font",
-      "expo-haptics",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#0F0F0F"
-        }
-      ],
-      [
-        "expo-updates",
-        {
-          "enabled": true
-        }
-      ]
+      "expo-router",
+      "expo-web-browser"
     ],
-    "scheme": "pocketguide",
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
+
+    "scheme": "ultimate-pocket-guide-to-america",
+
     "experiments": {
-      "typedRoutes": true,
-      "tsconfigPaths": true
+      "typedRoutes": true
     },
+
     "extra": {
-      "eas": {
-        "projectId": "your-eas-project-id-here"
-      }
-    },
-    "owner": "amateurxhuman",
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0F0F0F"
-    },
-    "description": "A beautiful, offline-first civic education app exploring American history, government, and values.",
-    "githubUrl": "https://github.com/amateurxhuman/ultimate-pocket-guide-to-america",
-    "orientation": "portrait",
-    "primaryColor": "#D4AF37"
+      "router": {}
+    }
   }
 }
