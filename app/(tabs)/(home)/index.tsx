@@ -13,7 +13,6 @@ import {
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { contentData } from "@/data/contentData";
-import { historyData } from "@/data/historyData";
 import { IconSymbol } from "@/components/IconSymbol";
 import QuickAccessGrid from "@/components/QuickAccessGrid";
 import DailyInsightCard from "@/components/DailyInsightCard";
@@ -87,12 +86,9 @@ export default function HomeScreen() {
     [router]
   );
 
-  const allSections = useMemo(() => {
-    return [...contentData, historyData];
-  }, []);
-
+  // ✅ FIX: Use contentData directly - it already includes historyData
   const sectionCards = useMemo(() => {
-    return allSections.map((section, index) => {
+    return contentData.map((section, index) => {
       const icons = getIconName(section.icon);
       const isHistory = section.id === 'history';
       
@@ -163,7 +159,7 @@ export default function HomeScreen() {
         </Animated.View>
       );
     });
-  }, [allSections, colors, shadows, navigateToSection]);
+  }, [colors, shadows, navigateToSection]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

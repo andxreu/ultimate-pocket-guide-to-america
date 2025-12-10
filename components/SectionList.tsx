@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   ScrollView,
@@ -9,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useTextSize } from "@/contexts/TextSizeContext";
 import { MainSection } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
 import { AppFooter } from "@/components/AppFooter";
@@ -37,7 +39,9 @@ export function SectionList({
   showCustomHeader = true,
 }: SectionListProps) {
   const { colors, shadows } = useTheme();
+  const { getTextSizeMultiplier } = useTextSize();
   const router = useRouter();
+  const textMultiplier = getTextSizeMultiplier();
 
   // Safety check
   if (!mainSection || !mainSection.sections) {
@@ -120,13 +124,13 @@ export function SectionList({
       >
         <View style={styles.header}>
           <Text
-            style={[styles.title, { color: colors.text }]}
+            style={[styles.title, { color: colors.text, fontSize: 30 * textMultiplier }]}
             accessibilityRole="header"
           >
             {mainSection.title || "Content"}
           </Text>
           {mainSection.description && (
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
+            <Text style={[styles.description, { color: colors.textSecondary, fontSize: 15 * textMultiplier }]}>
               {mainSection.description}
             </Text>
           )}
@@ -140,14 +144,14 @@ export function SectionList({
             return (
               <View key={`section-${sectionIndex}`} style={styles.sectionGroup}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 19 * textMultiplier }]}>
                     {section.title || "Section"}
                   </Text>
                   {section.description && (
                     <Text
                       style={[
                         styles.sectionDescription,
-                        { color: colors.textSecondary },
+                        { color: colors.textSecondary, fontSize: 13 * textMultiplier },
                       ]}
                     >
                       {section.description}
@@ -168,6 +172,7 @@ export function SectionList({
                         isDocument={isDocument}
                         colors={colors}
                         shadows={shadows}
+                        textMultiplier={textMultiplier}
                         onPress={() => navigateToItem(subsection.id)}
                       />
                     );
@@ -189,12 +194,14 @@ function SubsectionCard({
   isDocument,
   colors,
   shadows,
+  textMultiplier,
   onPress,
 }: {
   subsection: any;
   isDocument: boolean;
   colors: any;
   shadows: any;
+  textMultiplier: number;
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
@@ -250,7 +257,7 @@ function SubsectionCard({
               />
             </View>
           )}
-          <Text style={[styles.subsectionTitle, { color: colors.text }]}>
+          <Text style={[styles.subsectionTitle, { color: colors.text, fontSize: 16 * textMultiplier }]}>
             {subsection.title || "Untitled"}
           </Text>
         </View>

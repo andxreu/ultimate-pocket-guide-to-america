@@ -1,4 +1,3 @@
-
 import { foundationsData } from './foundationsData';
 import { civicliteracyData } from './civicliteracyData';
 import { politicallandscapeData } from './politicallandscapeData';
@@ -30,23 +29,36 @@ export interface MainSection {
   sections: Section[];
 }
 
+/**
+ * Unified content array — EVERYTHING lives here.
+ * This ensures SectionList, Detail pages, Search, etc.
+ * all receive access to every section including History.
+ */
 export const contentData: MainSection[] = [
   foundationsData,
   civicliteracyData,
   politicallandscapeData,
   principlespracticeData,
   landlifeData,
+  historyData, // ✅ FIX: History is now part of the main dataset
 ];
 
-export const allContentData: MainSection[] = [
-  ...contentData,
-  historyData,
-];
+/**
+ * Optional alias — now identical to contentData.
+ * Keeping this for backward compatibility.
+ */
+export const allContentData: MainSection[] = contentData;
 
+/**
+ * Look up a main section by ID
+ */
 export function getSectionById(sectionId: string): MainSection | undefined {
   return allContentData.find((section) => section.id === sectionId);
 }
 
+/**
+ * Look up a subsection by IDs
+ */
 export function getSubSectionById(
   mainSectionId: string,
   sectionId: string,

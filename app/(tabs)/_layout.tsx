@@ -33,6 +33,7 @@ const menuItems = [
   { label: "Settings", route: "/(tabs)/settings" },
 ];
 
+// ✅ FIX: Updated tab order to Home | Favorites | Search | Glossary | Settings
 const floatingTabBarTabs = [
   {
     name: "home",
@@ -49,6 +50,13 @@ const floatingTabBarTabs = [
     label: "Favorites",
   },
   {
+    name: "search",
+    route: "/(tabs)/search" as any,
+    icon: "search" as keyof typeof MaterialIcons.glyphMap,
+    iosIcon: "magnifyingglass",
+    label: "Search",
+  },
+  {
     name: "glossary",
     route: "/(tabs)/glossary" as any,
     icon: "book" as keyof typeof MaterialIcons.glyphMap,
@@ -56,11 +64,11 @@ const floatingTabBarTabs = [
     label: "Glossary",
   },
   {
-    name: "search",
-    route: "/(tabs)/search" as any,
-    icon: "search" as keyof typeof MaterialIcons.glyphMap,
-    iosIcon: "magnifyingglass",
-    label: "Search",
+    name: "settings",
+    route: "/(tabs)/settings" as any,
+    icon: "settings" as keyof typeof MaterialIcons.glyphMap,
+    iosIcon: "gear",
+    label: "Settings",
   },
 ];
 

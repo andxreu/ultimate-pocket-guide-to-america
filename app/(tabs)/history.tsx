@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useTextSize } from "@/contexts/TextSizeContext";
 import { historyData } from "@/data/historyData";
 import { IconSymbol } from "@/components/IconSymbol";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,9 +19,12 @@ import * as Haptics from "expo-haptics";
 
 export default function HistoryScreen() {
   const { colors, shadows } = useTheme();
+  const { getTextSizeMultiplier } = useTextSize();
   const router = useRouter();
+  const textMultiplier = getTextSizeMultiplier();
 
-  const handleSectionPress = (sectionId: string) => {
+  // ✅ FIX: Navigate to subsection IDs directly
+  const handleSubsectionPress = (subsectionId: string) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
@@ -28,7 +32,7 @@ export default function HistoryScreen() {
         console.log('Haptics error:', error);
       }
     }
-    router.push(`/detail/${historyData.id}-${sectionId}` as any);
+    router.push(`/detail/${subsectionId}` as any);
   };
 
   return (
@@ -60,11 +64,11 @@ export default function HistoryScreen() {
                 color={colors.primary}
               />
             </View>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <Text style={[styles.headerTitle, { color: colors.text, fontSize: 28 * textMultiplier }]}>
               {historyData.title}
             </Text>
             <Text
-              style={[styles.headerDescription, { color: colors.textSecondary }]}
+              style={[styles.headerDescription, { color: colors.textSecondary, fontSize: 15 * textMultiplier }]}
             >
               {historyData.description}
             </Text>
@@ -72,64 +76,64 @@ export default function HistoryScreen() {
         </Animated.View>
 
         <View style={styles.sectionsContainer}>
-          {historyData.sections.map((section, index) => (
-            <Animated.View
-              key={section.id}
-              entering={FadeInDown.delay(200 + index * 50).springify()}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.sectionCard,
-                  {
-                    backgroundColor: colors.card,
-                    ...shadows.medium,
-                  },
-                ]}
-                onPress={() => handleSectionPress(section.id)}
-                activeOpacity={0.85}
-                accessibilityLabel={`View ${section.title}`}
-                accessibilityRole="button"
+          {historyData.sections.map((section, sectionIndex) => (
+            <View key={section.id} style={styles.sectionGroup}>
+              <Animated.View
+                entering={FadeInDown.delay(200 + sectionIndex * 50).springify()}
               >
-                <LinearGradient
-                  colors={[colors.borderGlow, colors.primary + '00']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.cardGradientBorder}
-                />
-                <View style={styles.sectionContent}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 19 * textMultiplier }]}>
                     {section.title}
                   </Text>
-                  <Text
-                    style={[
-                      styles.sectionDescription,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {section.description}
-                  </Text>
-                  <View style={styles.subsectionCount}>
-                    <IconSymbol
-                      ios_icon_name="doc.text.fill"
-                      android_material_icon_name="description"
-                      size={14}
-                      color={colors.primary}
-                    />
+                  {section.description && (
                     <Text
-                      style={[styles.countText, { color: colors.textSecondary }]}
+                      style={[
+                        styles.sectionDescription,
+                        { color: colors.textSecondary, fontSize: 13 * textMultiplier },
+                      ]}
                     >
-                      {section.subsections.length} topics
+                      {section.description}
                     </Text>
-                  </View>
+                  )}
                 </View>
-                <IconSymbol
-                  ios_icon_name="chevron.right"
-                  android_material_icon_name="chevron_right"
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </Animated.View>
+              </Animated.View>
+
+              <View style={styles.subsectionsContainer}>
+                {section.subsections.map((subsection, subsectionIndex) => (
+                  <Animated.View
+                    key={subsection.id}
+                    entering={FadeInDown.delay(250 + sectionIndex * 50 + subsectionIndex * 30).springify()}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.subsectionCard,
+                        {
+                          backgroundColor: colors.card,
+                          borderColor: colors.primary + "20",
+                          ...shadows.small,
+                        },
+                      ]}
+                      onPress={() => handleSubsectionPress(subsection.id)}
+                      activeOpacity={0.85}
+                      accessibilityLabel={`View ${subsection.title}`}
+                      accessibilityRole="button"
+                    >
+                      <View style={styles.subsectionContent}>
+                        <Text style={[styles.subsectionTitle, { color: colors.text, fontSize: 16 * textMultiplier }]}>
+                          {subsection.title}
+                        </Text>
+                      </View>
+                      <IconSymbol
+                        ios_icon_name="chevron.right"
+                        android_material_icon_name="chevron_right"
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </Animated.View>
+                ))}
+              </View>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -175,47 +179,41 @@ const styles = StyleSheet.create({
     lineHeight: 21.75,
   },
   sectionsContainer: {
-    gap: 14,
+    gap: 28,
   },
-  sectionCard: {
-    flexDirection: "row",
-    padding: 18,
-    borderRadius: 16,
-    alignItems: "center",
-    position: "relative",
-    overflow: "hidden",
+  sectionGroup: {
+    marginBottom: 8,
   },
-  cardGradientBorder: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  sectionContent: {
-    flex: 1,
+  sectionHeader: {
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 19,
+    fontWeight: "600",
     marginBottom: 6,
-    lineHeight: 24,
-    letterSpacing: 0.2,
+    lineHeight: 27.55,
   },
   sectionDescription: {
     fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 8,
-    opacity: 0.85,
+    lineHeight: 18.85,
   },
-  subsectionCount: {
+  subsectionsContainer: {
+    gap: 12,
+  },
+  subsectionCard: {
     flexDirection: "row",
+    padding: 16,
+    borderRadius: 12,
     alignItems: "center",
-    gap: 6,
+    borderWidth: 1,
+    minHeight: 44,
   },
-  countText: {
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 17.4,
+  subsectionContent: {
+    flex: 1,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    lineHeight: 23.2,
   },
 });

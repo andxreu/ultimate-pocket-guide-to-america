@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTextSize } from '@/contexts/TextSizeContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { AppFooter } from '@/components/AppFooter';
 import { glossaryData, GlossaryTerm } from '@/data/glossaryData';
@@ -18,7 +19,9 @@ import { findItemById } from '@/utils/findItemById';
 
 export default function GlossaryScreen() {
   const { colors } = useTheme();
+  const { getTextSizeMultiplier } = useTextSize();
   const router = useRouter();
+  const textMultiplier = getTextSizeMultiplier();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTerm, setSelectedTerm] = useState<GlossaryTerm | null>(null);
 
@@ -138,7 +141,7 @@ export default function GlossaryScreen() {
                 size={64}
                 color={colors.textSecondary}
               />
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
                 No terms match your search. Try a different word or clear the search box.
               </Text>
             </View>
@@ -158,11 +161,11 @@ export default function GlossaryScreen() {
                           accessibilityLabel={`View definition of ${term.term}`}
                           accessibilityRole="button"
                         >
-                          <Text style={[styles.termTitle, { color: colors.text }]}>
+                          <Text style={[styles.termTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
                             {term.term}
                           </Text>
                           <Text
-                            style={[styles.termDefinition, { color: colors.textSecondary }]}
+                            style={[styles.termDefinition, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}
                             numberOfLines={2}
                           >
                             {term.definition}
@@ -183,7 +186,7 @@ export default function GlossaryScreen() {
           <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
             <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                <Text style={[styles.modalTitle, { color: colors.text, fontSize: 22 * textMultiplier }]}>
                   {selectedTerm.term}
                 </Text>
                 <TouchableOpacity
@@ -202,7 +205,7 @@ export default function GlossaryScreen() {
               </View>
 
               <ScrollView style={styles.modalScroll}>
-                <Text style={[styles.modalDefinition, { color: colors.text }]}>
+                <Text style={[styles.modalDefinition, { color: colors.text, fontSize: 16 * textMultiplier }]}>
                   {selectedTerm.definition}
                 </Text>
 
@@ -222,7 +225,7 @@ export default function GlossaryScreen() {
                               accessibilityLabel={`View ${topic.title}`}
                               accessibilityRole="button"
                             >
-                              <Text style={[styles.relatedButtonText, { color: colors.primary }]}>
+                              <Text style={[styles.relatedButtonText, { color: colors.primary, fontSize: 15 * textMultiplier }]}>
                                 {topic.title}
                               </Text>
                               <IconSymbol

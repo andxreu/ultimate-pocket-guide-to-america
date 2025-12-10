@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTextSize } from '@/contexts/TextSizeContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { AppFooter } from '@/components/AppFooter';
 import { allContentData } from '@/data/contentData';
@@ -31,7 +32,9 @@ interface SearchResult {
 
 export default function SearchScreen() {
   const { colors } = useTheme();
+  const { getTextSizeMultiplier } = useTextSize();
   const router = useRouter();
+  const textMultiplier = getTextSizeMultiplier();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -273,7 +276,7 @@ export default function SearchScreen() {
           {showRecentSearches && (
             <View style={styles.recentContainer}>
               <View style={styles.recentHeader}>
-                <Text style={[styles.recentTitle, { color: colors.text }]}>
+                <Text style={[styles.recentTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
                   Recent Searches
                 </Text>
                 <TouchableOpacity
@@ -300,7 +303,7 @@ export default function SearchScreen() {
                       size={18}
                       color={colors.textSecondary}
                     />
-                    <Text style={[styles.recentText, { color: colors.text }]}>
+                    <Text style={[styles.recentText, { color: colors.text, fontSize: 16 * textMultiplier }]}>
                       {query}
                     </Text>
                   </TouchableOpacity>
@@ -317,10 +320,10 @@ export default function SearchScreen() {
                 size={64}
                 color={colors.textSecondary}
               />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              <Text style={[styles.emptyTitle, { color: colors.text, fontSize: 20 * textMultiplier }]}>
                 Search the Guide
               </Text>
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
                 Try searching for &apos;Constitution&apos;, &apos;federalism&apos;, or &apos;founders&apos;
               </Text>
             </View>
@@ -328,7 +331,7 @@ export default function SearchScreen() {
 
           {!isSearching && debouncedQuery.length > 0 && results.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}>
                 No results found. Try another word or phrase.
               </Text>
             </View>
@@ -347,13 +350,13 @@ export default function SearchScreen() {
                     accessibilityLabel={`Open ${result.title}`}
                     accessibilityRole="button"
                   >
-                    <Text style={[styles.resultTitle, { color: colors.text }]}>
+                    <Text style={[styles.resultTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
                       {result.title}
                     </Text>
-                    <Text style={[styles.resultBreadcrumb, { color: colors.textSecondary }]}>
+                    <Text style={[styles.resultBreadcrumb, { color: colors.textSecondary, fontSize: 13 * textMultiplier }]}>
                       {result.breadcrumb}
                     </Text>
-                    <Text style={[styles.resultSnippet, { color: colors.textSecondary }]}>
+                    <Text style={[styles.resultSnippet, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}>
                       {result.snippet}
                     </Text>
                   </TouchableOpacity>
