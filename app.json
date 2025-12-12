@@ -1,10 +1,11 @@
+
 {
   "expo": {
     "name": "Pocket Guide to America",
     "slug": "Pocket Guide to America",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/final_quest_240x240.png",
+    "icon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -16,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "buildNumber": "1",
+      "icon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIRequiredDeviceCapabilities": [],
