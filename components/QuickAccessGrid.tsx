@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   View,
@@ -21,8 +22,7 @@ interface QuickButton {
   id: string;
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
-  route?: string;
-  action?: () => void;
+  route: string;
 }
 
 /**
@@ -34,12 +34,42 @@ export default function QuickAccessGrid() {
   const router = useRouter();
 
   const buttons: QuickButton[] = [
-    { id: "map", label: "Map", icon: "map", route: "/(tabs)/map" },
-    { id: "quiz", label: "Quiz", icon: "quiz", route: "/(tabs)/quiz/index" },
-    { id: "search", label: "Search", icon: "search", route: "/(tabs)/search/index" },
-    { id: "glossary", label: "Glossary", icon: "menu-book", route: "/(tabs)/glossary/index" },
-    { id: "favorites", label: "Favorites", icon: "star", route: "/(tabs)/favorites/index" },
-    { id: "settings", label: "Settings", icon: "settings", route: "/(tabs)/settings/index" },
+    { 
+      id: "map", 
+      label: "Map", 
+      icon: "map", 
+      route: "/(tabs)/map"
+    },
+    { 
+      id: "quiz", 
+      label: "Quiz", 
+      icon: "quiz", 
+      route: "/(tabs)/quiz"
+    },
+    { 
+      id: "search", 
+      label: "Search", 
+      icon: "search", 
+      route: "/(tabs)/search"
+    },
+    { 
+      id: "glossary", 
+      label: "Glossary", 
+      icon: "menu-book", 
+      route: "/(tabs)/glossary"
+    },
+    { 
+      id: "favorites", 
+      label: "Favorites", 
+      icon: "star", 
+      route: "/(tabs)/favorites"
+    },
+    { 
+      id: "settings", 
+      label: "Settings", 
+      icon: "settings", 
+      route: "/(tabs)/settings"
+    },
   ];
 
   const handlePress = (button: QuickButton) => {
@@ -53,10 +83,11 @@ export default function QuickAccessGrid() {
       }
     }
     
-    if (button.route) {
-      router.push(button.route);
-    } else if (button.action) {
-      button.action();
+    try {
+      console.log('Quick Access navigating to:', button.route);
+      router.push(button.route as any);
+    } catch (error) {
+      console.error(`Navigation error for ${button.label}:`, error);
     }
   };
 
@@ -65,7 +96,7 @@ export default function QuickAccessGrid() {
       <View style={styles.grid}>
         {buttons.map((button, index) => (
           <QuickButtonItem
-            key={button.id}
+            key={`quick-${button.id}-${index}`}
             button={button}
             index={index}
             colors={colors}
@@ -117,6 +148,7 @@ function QuickButtonItem({
       style={styles.touchable}
       accessibilityLabel={button.label}
       accessibilityRole="button"
+      accessibilityHint={`Navigate to ${button.label}`}
     >
       <Animated.View 
         style={[

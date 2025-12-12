@@ -1,3 +1,4 @@
+
 import React, { useMemo, useCallback, useEffect } from "react";
 import {
   ScrollView,
@@ -30,8 +31,8 @@ import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-const HERO_FLAG_URL =
-  "https://thehumanconservative.com/wp-content/uploads/2025/12/app-logo-2.0.png";
+// Updated hero image to use the uploaded asset
+const HERO_IMAGE = require("@/assets/images/d4ded13e-953f-43c6-b97c-4fe496414321.png");
 
 /**
  * Icon mapping for sections - using vector icons
@@ -180,7 +181,7 @@ export default function HomeScreen() {
         </Animated.View>
       );
     });
-  }, [colors, shadows, navigateToSection, isDark]);
+  }, [colors, shadows, navigateToSection]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -217,7 +218,7 @@ export default function HomeScreen() {
               style={styles.flagBorder}
             >
               <ImageBackground
-                source={{ uri: HERO_FLAG_URL }}
+                source={HERO_IMAGE}
                 style={styles.heroCard}
                 imageStyle={styles.heroImage}
                 resizeMode="contain"
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     overflow: "hidden",
     justifyContent: "flex-end",
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#FFFFFF',
   },
   heroImage: {
     borderRadius: 17,

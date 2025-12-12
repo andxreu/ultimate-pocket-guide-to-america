@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import {
   View,
@@ -55,7 +54,7 @@ export default function DocumentScreen() {
         section: foundMainSection,
       });
     }
-  }, [foundDocument, foundMainSection]);
+  }, [foundDocument, foundMainSection, addToHistory]);
 
   if (!foundDocument) {
     return (

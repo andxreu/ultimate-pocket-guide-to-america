@@ -15,8 +15,8 @@ import { contentData } from "@/data/contentData";
 import { IconSymbol } from "@/components/IconSymbol";
 import QuickAccessGrid from "@/components/QuickAccessGrid";
 
-const HERO_FLAG_URL =
-  "https://thehumanconservative.com/wp-content/uploads/2025/11/App-Logo-Final.png";
+// Updated hero image to use the uploaded asset
+const HERO_IMAGE = require("@/assets/images/d4ded13e-953f-43c6-b97c-4fe496414321.png");
 
 const AMERICAN_FACTS: string[] = [
   "The United States Constitution is the oldest written national constitution still in use.",
@@ -170,7 +170,7 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View style={[styles.flagBorder, { borderColor: colors.primary }]}>
               <ImageBackground
-                source={{ uri: HERO_FLAG_URL }}
+                source={HERO_IMAGE}
                 style={styles.heroCard}
                 imageStyle={styles.heroImage}
                 resizeMode="contain"
@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: "hidden",
     justifyContent: "flex-end",
+    backgroundColor: '#FFFFFF',
   },
   heroImage: {
   },

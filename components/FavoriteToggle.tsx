@@ -25,6 +25,11 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const scale = useSharedValue(1);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  // Early return AFTER all hooks
   if (!itemId) {
     if (__DEV__) {
       console.log('FavoriteToggle: itemId is required');
@@ -33,10 +38,6 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
   }
 
   const isCurrentlyFavorite = isFavorite(itemId);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
 
   const toggleFavorite = () => {
     try {

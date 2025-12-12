@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -45,75 +45,47 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   const animatedValue = useSharedValue(0);
 
   /**
-   * Determine active tab index with improved matching logic
+   * Determine active tab index with simplified matching logic
    */
   const activeTabIndex = React.useMemo(() => {
-    let bestMatch = -1;
-    let bestMatchScore = 0;
-
-    tabs.forEach((tab, index) => {
-      let score = 0;
-      const tabRoute = String(tab.route);
-
+    // Direct pathname matching
+    for (let i = 0; i < tabs.length; i++) {
+      const tabRoute = String(tabs[i].route);
+      
       // Exact match
       if (pathname === tabRoute) {
-        score = 100;
+        return i;
       }
-      // Check if pathname starts with the tab route
-      else if (pathname.startsWith(tabRoute)) {
-        score = 80;
+      
+      // Home route special case
+      if (tabs[i].name === 'home' && (pathname === '/' || pathname.includes('(home)'))) {
+        return i;
       }
-      // Check for home route special case
-      else if (tabRoute.includes('(home)') && (pathname === '/' || pathname.includes('(home)'))) {
-        score = 90;
+      
+      // Check if pathname includes the tab name
+      if (pathname.includes(`/${tabs[i].name}`)) {
+        return i;
       }
-      // Check for favorites route
-      else if (tabRoute.includes('favorites') && pathname.includes('favorites')) {
-        score = 85;
-      }
-      // Check for search route
-      else if (tabRoute.includes('search') && pathname.includes('search')) {
-        score = 85;
-      }
-      // Check for glossary route
-      else if (tabRoute.includes('glossary') && pathname.includes('glossary')) {
-        score = 85;
-      }
-      // Check for settings route
-      else if (tabRoute.includes('settings') && pathname.includes('settings')) {
-        score = 85;
-      }
-      // Check if the tab name is in the pathname
-      else if (pathname.includes(tab.name)) {
-        score = 60;
-      }
-
-      if (score > bestMatchScore) {
-        bestMatchScore = score;
-        bestMatch = index;
-      }
-    });
-
-    return bestMatch >= 0 ? bestMatch : 0;
+    }
+    
+    // Default to first tab (home)
+    return 0;
   }, [pathname, tabs]);
 
   /**
-   * Animate indicator on tab change
+   * Animate indicator immediately on tab change
    */
-  React.useEffect(() => {
-    if (activeTabIndex >= 0) {
-      animatedValue.value = withSpring(activeTabIndex, {
-        damping: 25,
-        stiffness: 150,
-        mass: 1,
-      });
-    }
+  useEffect(() => {
+    // Use withTiming for instant response, then spring for smoothness
+    animatedValue.value = withTiming(activeTabIndex, {
+      duration: 150,
+    });
   }, [activeTabIndex, animatedValue]);
 
   /**
-   * Handle tab press with haptic feedback
+   * Handle tab press with immediate navigation
    */
-  const handleTabPress = useCallback((route: Href) => {
+  const handleTabPress = useCallback((route: Href, index: number) => {
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -124,13 +96,17 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
       }
     }
     
+    // Update animation immediately
+    animatedValue.value = withTiming(index, { duration: 150 });
+    
+    // Navigate
     try {
       console.log('Navigating to:', route);
       router.push(route);
     } catch (error) {
       console.error('Navigation error:', error);
     }
-  }, [router]);
+  }, [router, animatedValue]);
 
   const tabWidth = 100 / tabs.length;
 
@@ -152,7 +128,7 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   });
 
   /**
-   * Get icon color with smooth animation
+   * Get icon color
    */
   const getIconColor = (isActive: boolean) => {
     return isActive ? colors.primary : colors.textSecondary;
@@ -215,12 +191,13 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
 
               return (
                 <TabButton
-                  key={`tab-${index}`}
+                  key={`tab-${tab.name}-${index}`}
                   tab={tab}
+                  index={index}
                   isActive={isActive}
                   width={tabWidth}
                   iconColor={getIconColor(isActive)}
-                  onPress={() => handleTabPress(tab.route)}
+                  onPress={() => handleTabPress(tab.route, index)}
                 />
               );
             })}
@@ -236,13 +213,14 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
  */
 interface TabButtonProps {
   tab: TabBarItem;
+  index: number;
   isActive: boolean;
   width: number;
   iconColor: string;
   onPress: () => void;
 }
 
-const TabButton = React.memo(({ tab, isActive, width, iconColor, onPress }: TabButtonProps) => {
+const TabButton = React.memo(({ tab, index, isActive, width, iconColor, onPress }: TabButtonProps) => {
   const { colors } = useTheme();
   const scale = useSharedValue(1);
 

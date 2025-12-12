@@ -26,7 +26,7 @@ configureReanimatedLogger({ strict: false });
  */
 export default function ListItem({ listId }: { listId: string }) {
   const { colors, isDark } = useTheme();
-
+  
   const RightAction = (
     prog: SharedValue<number>,
     drag: SharedValue<number>
@@ -34,7 +34,7 @@ export default function ListItem({ listId }: { listId: string }) {
     const styleAnimation = useAnimatedStyle(() => ({
       transform: [{ translateX: drag.value + 200 }],
     }));
-
+    
     return (
       <Pressable
         onPress={() => {
@@ -53,10 +53,10 @@ export default function ListItem({ listId }: { listId: string }) {
         <Reanimated.View style={[styleAnimation, styles.rightAction]}>
           <MaterialIcons name="delete" size={24} color="white" />
         </Reanimated.View>
-      </Reanimated.View>
+      </Pressable>
     );
   };
-
+  
   return (
     <Animated.View entering={FadeIn}>
       <ReanimatedSwipeable

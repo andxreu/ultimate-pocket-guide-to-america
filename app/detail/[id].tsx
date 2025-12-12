@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import {
   View,
@@ -66,7 +65,7 @@ export default function DetailScreen() {
         section: foundMainSection,
       });
     }
-  }, [foundItem, foundMainSection]);
+  }, [foundItem, foundMainSection, addToHistory]);
 
   if (!foundItem) {
     return (

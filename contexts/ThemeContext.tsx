@@ -33,6 +33,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
    */
   useEffect(() => {
     loadThemePreference();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -105,7 +106,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       shadows,
       glassmorphism,
     }),
-    [theme, currentColors, isDark]
+    [theme, currentColors, isDark, setTheme, toggleTheme]
   );
 
   // Show nothing while theme loads (prevents flash)
