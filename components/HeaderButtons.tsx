@@ -1,3 +1,4 @@
+
 import React from "react";
 import { View, StyleSheet, Alert, TouchableOpacity, Platform } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -59,7 +60,7 @@ export function HeaderButton({
     if (onPress) {
       onPress();
     } else {
-      Alert.alert(F
+      Alert.alert(
         "Not Implemented",
         "This feature is not implemented yet"
       );
@@ -97,7 +98,7 @@ export function HeaderButton({
  * />
  * ```
  */
-export function HeaderRightButton({ onPress }: { onPress?: () => void } = {}) {
+export function HeaderRightButton({ onPress }: { onPress?: () => void }) {
   return (
     <HeaderButton 
       icon="add" 
@@ -120,7 +121,7 @@ export function HeaderRightButton({ onPress }: { onPress?: () => void } = {}) {
  * />
  * ```
  */
-export function HeaderLeftButton({ onPress }: { onPress?: () => void } = {}) {
+export function HeaderLeftButton({ onPress }: { onPress?: () => void }) {
   return (
     <HeaderButton 
       icon="settings" 

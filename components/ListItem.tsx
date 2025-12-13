@@ -1,3 +1,4 @@
+
 import React, { useCallback } from "react";
 import * as Haptics from "expo-haptics";
 import { 
@@ -106,28 +107,13 @@ export default function ListItem({
   
   /**
    * Render right swipe action (delete)
+   * Note: RightAction is a render function, not a component
    */
   const RightAction = useCallback((
     prog: SharedValue<number>,
     drag: SharedValue<number>
   ) => {
-    const styleAnimation = useAnimatedStyle(() => ({
-      transform: [{ translateX: drag.value + 200 }],
-    }));
-    
-    return (
-      <Pressable
-        onPress={handleDelete}
-        style={{ flex: 1 }}
-        accessibilityLabel="Delete item"
-        accessibilityRole="button"
-      >
-        <Reanimated.View style={[styleAnimation, styles.rightAction]}>
-          <MaterialIcons name="delete" size={24} color="white" />
-          <Text style={styles.deleteText}>Delete</Text>
-        </Reanimated.View>
-      </Pressable>
-    );
+    return <RightActionContent drag={drag} onDelete={handleDelete} />;
   }, [handleDelete]);
   
   return (
@@ -165,6 +151,36 @@ export default function ListItem({
         </Pressable>
       </ReanimatedSwipeable>
     </Animated.View>
+  );
+}
+
+/**
+ * Right Action Content Component
+ * Separated to allow useAnimatedStyle to be called at component level
+ */
+function RightActionContent({ 
+  drag, 
+  onDelete 
+}: { 
+  drag: SharedValue<number>; 
+  onDelete: () => void;
+}) {
+  const styleAnimation = useAnimatedStyle(() => ({
+    transform: [{ translateX: drag.value + 200 }],
+  }));
+  
+  return (
+    <Pressable
+      onPress={onDelete}
+      style={{ flex: 1 }}
+      accessibilityLabel="Delete item"
+      accessibilityRole="button"
+    >
+      <Reanimated.View style={[styleAnimation, styles.rightAction]}>
+        <MaterialIcons name="delete" size={24} color="white" />
+        <Text style={styles.deleteText}>Delete</Text>
+      </Reanimated.View>
+    </Pressable>
   );
 }
 

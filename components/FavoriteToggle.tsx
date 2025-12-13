@@ -1,3 +1,4 @@
+
 import React, { useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -52,22 +53,20 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
     transform: [{ scale: scale.value }],
   }));
 
-  // Early return AFTER all hooks
-  if (!itemId) {
-    if (__DEV__) {
-      console.log('FavoriteToggle: itemId is required');
-    }
-    return null;
-  }
-
-  const isCurrentlyFavorite = isFavorite(itemId);
-
   /**
    * Toggle favorite status with animation and haptic feedback
    */
   const toggleFavorite = useCallback(() => {
+    // Early validation inside the callback
+    if (!itemId) {
+      if (__DEV__) {
+        console.log('FavoriteToggle: itemId is required');
+      }
+      return;
+    }
+
     try {
-      const wasAlreadyFavorite = isCurrentlyFavorite;
+      const wasAlreadyFavorite = isFavorite(itemId);
 
       if (wasAlreadyFavorite) {
         removeFavorite(itemId);
@@ -101,7 +100,17 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
         console.log('Error toggling favorite:', error);
       }
     }
-  }, [isCurrentlyFavorite, itemId, addFavorite, removeFavorite, scale]);
+  }, [itemId, isFavorite, addFavorite, removeFavorite, scale]);
+
+  // Early return AFTER all hooks
+  if (!itemId) {
+    if (__DEV__) {
+      console.log('FavoriteToggle: itemId is required');
+    }
+    return null;
+  }
+
+  const isCurrentlyFavorite = isFavorite(itemId);
 
   return (
     <TouchableOpacity

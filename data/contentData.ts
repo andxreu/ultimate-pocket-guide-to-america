@@ -1,3 +1,4 @@
+
 /**
  * Content Data Management
  * 
@@ -232,16 +233,16 @@ export function getAllSubSections(mainSectionId: string): SubSection[] {
  * });
  * ```
  */
-export function searchContent(query: string): Array<{
+export function searchContent(query: string): {
   subsection: SubSection;
   mainSectionId: string;
   sectionId: string;
-}> {
-  const results: Array<{
+}[] {
+  const results: {
     subsection: SubSection;
     mainSectionId: string;
     sectionId: string;
-  }> = [];
+  }[] = [];
   
   const lowerQuery = query.toLowerCase();
   

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -197,7 +198,7 @@ export default function SearchScreen() {
   /**
    * Save recent search to AsyncStorage
    */
-  const saveRecentSearch = async (query: string) => {
+  const saveRecentSearch = useCallback(async (query: string) => {
     try {
       const trimmed = query.trim();
       if (!trimmed) return;
@@ -212,7 +213,7 @@ export default function SearchScreen() {
         console.log('Error saving recent search:', error);
       }
     }
-  };
+  }, [recentSearches]);
 
   /**
    * Clear all recent searches
@@ -261,7 +262,7 @@ export default function SearchScreen() {
         console.log('Error navigating to result:', error);
       }
     }
-  }, [searchQuery, router]);
+  }, [searchQuery, router, saveRecentSearch]);
 
   /**
    * Handle recent search press
@@ -438,7 +439,7 @@ export default function SearchScreen() {
                 Search the Guide
               </Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
-                Try searching for 'Constitution', 'federalism', or 'founders'
+                Try searching for &apos;Constitution&apos;, &apos;federalism&apos;, or &apos;founders&apos;
               </Text>
             </Animated.View>
           )}
@@ -456,7 +457,7 @@ export default function SearchScreen() {
                 color={colors.textSecondary}
               />
               <Text style={[styles.emptyStateText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
-                No results found for "{debouncedQuery}"
+                No results found for &quot;{debouncedQuery}&quot;
               </Text>
               <Text style={[styles.emptyStateHint, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}>
                 Try another word or phrase
