@@ -1,28 +1,86 @@
 
+/**
+ * Political Landscape Data
+ * 
+ * Understanding America's political parties and movements.
+ * 
+ * This module contains information about:
+ * - Democratic Party (History, values, positions)
+ * - Republican Party (History, values, positions)
+ * - Libertarian Party (Overview, principles, positions)
+ * - Green Party (Overview, values, positions)
+ * - Constitution Party (Overview, principles, positions)
+ * - Independent and Local Movements (Voters, local movements, third parties)
+ * 
+ * Total: 6 sections with 18 subsections
+ * 
+ * @module data/politicallandscapeData
+ */
+
+/**
+ * Subsection - Individual content item
+ */
 export interface SubSection {
+  /** Unique identifier for the subsection */
   id: string;
+  /** Display title */
   title: string;
+  /** Main content text */
   content: string;
+  /** Optional full text content (for documents) */
   fullText?: string;
+  /** Optional context/background information */
   context?: string;
+  /** Optional image URL */
   imageUrl?: string;
 }
 
+/**
+ * Section - Group of related subsections
+ */
 export interface Section {
+  /** Unique identifier for the section */
   id: string;
+  /** Display title */
   title: string;
+  /** Section description */
   description: string;
+  /** Array of subsections within this section */
   subsections: SubSection[];
 }
 
+/**
+ * Main Section - Top-level content category
+ */
 export interface MainSection {
+  /** Unique identifier for the main section */
   id: string;
+  /** Display title */
   title: string;
+  /** Icon name for visual representation */
   icon: string;
+  /** Section description */
   description: string;
+  /** Array of sections within this main section */
   sections: Section[];
 }
 
+/**
+ * Political Landscape Section Content
+ * 
+ * Comprehensive overview of American political parties and movements,
+ * from major parties to third parties and independent voters.
+ * 
+ * Covers:
+ * - **Democratic Party** - History, values, policy positions
+ * - **Republican Party** - History, values, policy positions
+ * - **Libertarian Party** - Overview, principles, positions
+ * - **Green Party** - Overview, values, positions
+ * - **Constitution Party** - Overview, principles, positions
+ * - **Independent Movements** - Independent voters, local movements, third parties
+ * 
+ * @constant
+ */
 export const politicallandscapeData: MainSection = {
   id: "political-landscape",
     title: "Political Landscape",

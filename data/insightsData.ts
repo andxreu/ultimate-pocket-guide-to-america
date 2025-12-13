@@ -1,9 +1,38 @@
+/**
+ * Daily Insights Data
+ * 
+ * Collection of 365+ interesting facts about American history, government,
+ * geography, and culture. Provides daily rotating insights and random facts.
+ * 
+ * Categories include:
+ * - Constitutional & Founding facts
+ * - Historical events and figures
+ * - Government structure and operations
+ * - Geography and landmarks
+ * - Culture and achievements
+ * - Innovation and technology
+ * 
+ * @module data/insightsData
+ */
 
+/**
+ * Daily Insight interface
+ */
 export interface DailyInsight {
+  /** Unique identifier */
   id: number;
+  /** Insight text content */
   text: string;
 }
 
+/**
+ * Collection of daily insights about America
+ * 
+ * 365+ facts organized across various categories to provide
+ * users with interesting information that rotates daily.
+ * 
+ * @constant
+ */
 export const insights: DailyInsight[] = [
   // Original Constitutional & Founding insights
   { id: 1, text: "The Constitution was signed on September 17, 1787, by 39 delegates at the Constitutional Convention in Philadelphia." },
@@ -378,8 +407,18 @@ export const insights: DailyInsight[] = [
 ];
 
 /**
- * Returns the insight of the day based on the current date.
- * The same insight will be returned for the entire day.
+ * Returns the insight of the day based on the current date
+ * 
+ * The same insight will be returned for the entire day (based on day of year).
+ * This ensures users see a consistent "daily insight" throughout the day.
+ * 
+ * @returns The DailyInsight for today
+ * 
+ * @example
+ * ```tsx
+ * const todaysInsight = getInsightOfTheDay();
+ * console.log(todaysInsight.text);
+ * ```
  */
 export function getInsightOfTheDay(): DailyInsight {
   const now = new Date();
@@ -391,7 +430,17 @@ export function getInsightOfTheDay(): DailyInsight {
 }
 
 /**
- * Returns a random insight from the collection.
+ * Returns a random insight from the collection
+ * 
+ * Useful for "refresh" functionality or displaying random facts.
+ * 
+ * @returns A randomly selected DailyInsight
+ * 
+ * @example
+ * ```tsx
+ * const randomFact = getRandomInsight();
+ * console.log(randomFact.text);
+ * ```
  */
 export function getRandomInsight(): DailyInsight {
   const randomIndex = Math.floor(Math.random() * insights.length);

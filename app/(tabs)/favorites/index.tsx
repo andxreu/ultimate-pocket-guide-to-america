@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,17 @@ import {
   ScrollView,
   Platform,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { AppFooter } from '@/components/AppFooter';
 import { findItemById, getItemRoute } from '@/utils/findItemById';
 import { mapData } from '@/data/mapData';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-
-const FAVORITES_KEY = 'favorites';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 
 interface FavoriteItem {
   id: string;
@@ -27,89 +27,107 @@ interface FavoriteItem {
   type: 'content' | 'state';
 }
 
+/**
+ * Favorites Screen Component
+ * 
+ * Displays user's saved favorite items with ability to remove and navigate.
+ * Now properly integrated with FavoritesContext for real-time updates.
+ * 
+ * Features:
+ * - Uses FavoritesContext for state management
+ * - Real-time updates when favorites change
+ * - Pull-to-refresh support
+ * - Haptic feedback
+ * - Animated list items
+ * - State and content item support
+ * 
+ * @component
+ */
 export default function FavoritesScreen() {
   const { colors, shadows, isDark } = useTheme();
   const router = useRouter();
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { favorites: favoriteIds, removeFavorite, isLoaded } = useFavorites();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadFavorites();
-    }, [])
-  );
+  /**
+   * Resolve favorite IDs to full item details
+   * Memoized to avoid recalculating on every render
+   */
+  const favorites = useMemo(() => {
+    const items: FavoriteItem[] = [];
 
-  const loadFavorites = async () => {
-    try {
-      setIsLoading(true);
-      const stored = await AsyncStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        const favoriteIds: string[] = JSON.parse(stored);
-        const items: FavoriteItem[] = [];
-
-        for (const id of favoriteIds) {
-          try {
-            if (id.startsWith('state:')) {
-              const stateCode = id.replace('state:', '');
-              let foundState = null;
-              
-              for (const region of mapData) {
-                if (!region || !region.states) continue;
-                const state = region.states.find((s) => s && s.code === stateCode);
-                if (state) {
-                  foundState = state;
-                  break;
-                }
-              }
-
-              if (foundState && foundState.name && foundState.blurb) {
-                const snippet = foundState.blurb.slice(0, 100) + (foundState.blurb.length > 100 ? '...' : '');
-                items.push({
-                  id,
-                  title: foundState.name,
-                  breadcrumb: `Map › State`,
-                  snippet,
-                  type: 'state',
-                });
-              }
-            } else {
-              const result = findItemById(id);
-              if (result && result.item && result.mainSection && result.section) {
-                const snippet = result.item.content.slice(0, 100) + (result.item.content.length > 100 ? '...' : '');
-                items.push({
-                  id,
-                  title: result.item.title,
-                  breadcrumb: `${result.mainSection.title} › ${result.section.title}`,
-                  snippet,
-                  type: 'content',
-                });
-              }
-            }
-          } catch (error) {
-            if (__DEV__) {
-              console.log('Error processing favorite item:', id, error);
+    for (const id of favoriteIds) {
+      try {
+        if (id.startsWith('state:')) {
+          // Handle state favorites
+          const stateCode = id.replace('state:', '');
+          let foundState = null;
+          
+          for (const region of mapData) {
+            if (!region || !region.states) continue;
+            const state = region.states.find((s) => s && s.code === stateCode);
+            if (state) {
+              foundState = state;
+              break;
             }
           }
+
+          if (foundState && foundState.name && foundState.blurb) {
+            const snippet = foundState.blurb.slice(0, 100) + (foundState.blurb.length > 100 ? '...' : '');
+            items.push({
+              id,
+              title: foundState.name,
+              breadcrumb: `Map › State`,
+              snippet,
+              type: 'state',
+            });
+          }
+        } else {
+          // Handle content favorites
+          const result = findItemById(id);
+          if (result && result.item && result.mainSection && result.section) {
+            const snippet = result.item.content.slice(0, 100) + (result.item.content.length > 100 ? '...' : '');
+            items.push({
+              id,
+              title: result.item.title,
+              breadcrumb: `${result.mainSection.title} › ${result.section.title}`,
+              snippet,
+              type: 'content',
+            });
+          }
         }
-
-        items.sort((a, b) => a.title.localeCompare(b.title));
-        setFavorites(items);
-      } else {
-        setFavorites([]);
+      } catch (error) {
+        if (__DEV__) {
+          console.log('Error processing favorite item:', id, error);
+        }
       }
-    } catch (error) {
-      if (__DEV__) {
-        console.log('Error loading favorites:', error);
-      }
-      setFavorites([]);
-    } finally {
-      setIsLoading(false);
     }
-  };
 
-  const handleRemoveFavorite = async (id: string) => {
+    // Sort alphabetically for better UX
+    items.sort((a, b) => a.title.localeCompare(b.title));
+    return items;
+  }, [favoriteIds]);
+
+  /**
+   * Handle pull-to-refresh
+   * Just triggers a re-render since context handles the data
+   */
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    // Small delay for visual feedback
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 300);
+  }, []);
+
+  /**
+   * Remove item from favorites with haptic feedback
+   */
+  const handleRemoveFavorite = useCallback(async (id: string) => {
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     } catch (error) {
       if (__DEV__) {
         console.log('Haptics error:', error);
@@ -117,23 +135,22 @@ export default function FavoritesScreen() {
     }
     
     try {
-      const stored = await AsyncStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        const favoriteIds: string[] = JSON.parse(stored);
-        const updated = favoriteIds.filter((fid) => fid !== id);
-        await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-        loadFavorites();
-      }
+      await removeFavorite(id);
     } catch (error) {
       if (__DEV__) {
         console.log('Error removing favorite:', error);
       }
     }
-  };
+  }, [removeFavorite]);
 
-  const handleItemPress = (item: FavoriteItem) => {
+  /**
+   * Navigate to favorite item with haptic feedback
+   */
+  const handleItemPress = useCallback((item: FavoriteItem) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     } catch (error) {
       if (__DEV__) {
         console.log('Haptics error:', error);
@@ -153,9 +170,12 @@ export default function FavoritesScreen() {
         console.log('Error navigating to item:', error);
       }
     }
-  };
+  }, [router]);
 
-  const confirmRemove = (id: string, title: string) => {
+  /**
+   * Confirm before removing favorite
+   */
+  const confirmRemove = useCallback((id: string, title: string) => {
     if (Platform.OS === 'web') {
       if (confirm(`Remove "${title}" from favorites?`)) {
         handleRemoveFavorite(id);
@@ -166,28 +186,38 @@ export default function FavoritesScreen() {
         `Remove "${title}" from favorites?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Remove', style: 'destructive', onPress: () => handleRemoveFavorite(id) },
+          { 
+            text: 'Remove', 
+            style: 'destructive', 
+            onPress: () => handleRemoveFavorite(id) 
+          },
         ]
       );
     }
-  };
+  }, [handleRemoveFavorite]);
 
-  if (isLoading) {
+  /**
+   * Render loading state
+   */
+  if (!isLoaded) {
     return (
       <>
         <Stack.Screen
           options={{
             title: 'Favorites',
             headerShown: true,
-            headerStyle: { backgroundColor: isDark ? '#1a1a1a' : '#1E3A8A' },
-            headerTintColor: '#FFFFFF',
+            headerStyle: { backgroundColor: colors.card },
+            headerTintColor: colors.text,
+            headerShadowVisible: false,
           }}
         />
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              Loading...
-            </Text>
+            <Animated.View entering={FadeIn.duration(400)}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                Loading favorites...
+              </Text>
+            </Animated.View>
           </View>
         </View>
       </>
@@ -200,17 +230,30 @@ export default function FavoritesScreen() {
         options={{
           title: 'Favorites',
           headerShown: true,
-          headerStyle: { backgroundColor: isDark ? '#1a1a1a' : '#1E3A8A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
         }}
       />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         >
           {favorites.length === 0 ? (
-            <View style={styles.emptyState}>
+            <Animated.View 
+              style={styles.emptyState}
+              entering={FadeIn.duration(600)}
+            >
               <IconSymbol
                 ios_icon_name="star"
                 android_material_icon_name="star_border"
@@ -223,49 +266,90 @@ export default function FavoritesScreen() {
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Tap the star icon on any topic or state to save it here
               </Text>
-            </View>
+            </Animated.View>
           ) : (
             <>
-              <Text style={[styles.count, { color: colors.textSecondary }]}>
-                {favorites.length} {favorites.length === 1 ? 'favorite' : 'favorites'}
-              </Text>
+              <Animated.View entering={FadeInDown.delay(50).springify()}>
+                <Text style={[styles.count, { color: colors.textSecondary }]}>
+                  {favorites.length} {favorites.length === 1 ? 'favorite' : 'favorites'}
+                </Text>
+              </Animated.View>
+              
               {favorites.map((item, index) => (
-                <View key={index} style={[styles.itemCard, { backgroundColor: colors.card, ...shadows.small }]}>
-                  <TouchableOpacity
-                    style={styles.itemContent}
-                    onPress={() => handleItemPress(item)}
-                    accessibilityLabel={`Open ${item.title}`}
-                    accessibilityRole="button"
+                <Animated.View 
+                  key={item.id}
+                  entering={FadeInDown.delay(100 + index * 50).springify()}
+                >
+                  <View 
+                    style={[
+                      styles.itemCard, 
+                      { 
+                        backgroundColor: colors.card, 
+                        ...shadows.small 
+                      }
+                    ]}
                   >
-                    {item.type === 'state' && (
-                      <View style={[styles.stateBadge, { backgroundColor: colors.highlight }]}>
-                        <Text style={[styles.stateBadgeText, { color: colors.primary }]}>STATE</Text>
-                      </View>
-                    )}
-                    <Text style={[styles.itemTitle, { color: colors.text }]}>
-                      {item.title}
-                    </Text>
-                    <Text style={[styles.itemBreadcrumb, { color: colors.textSecondary }]}>
-                      {item.breadcrumb}
-                    </Text>
-                    <Text style={[styles.itemSnippet, { color: colors.textSecondary }]}>
-                      {item.snippet}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => confirmRemove(item.id, item.title)}
-                    accessibilityLabel={`Remove ${item.title} from favorites`}
-                    accessibilityRole="button"
-                  >
-                    <IconSymbol
-                      ios_icon_name="trash"
-                      android_material_icon_name="delete"
-                      size={20}
-                      color={colors.accent}
-                    />
-                  </TouchableOpacity>
-                </View>
+                    <TouchableOpacity
+                      style={styles.itemContent}
+                      onPress={() => handleItemPress(item)}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Open ${item.title}`}
+                      accessibilityRole="button"
+                      accessibilityHint={item.breadcrumb}
+                    >
+                      {item.type === 'state' && (
+                        <View 
+                          style={[
+                            styles.stateBadge, 
+                            { backgroundColor: colors.primary + '20' }
+                          ]}
+                        >
+                          <Text 
+                            style={[
+                              styles.stateBadgeText, 
+                              { color: colors.primary }
+                            ]}
+                          >
+                            STATE
+                          </Text>
+                        </View>
+                      )}
+                      <Text 
+                        style={[styles.itemTitle, { color: colors.text }]}
+                        numberOfLines={2}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text 
+                        style={[styles.itemBreadcrumb, { color: colors.textSecondary }]}
+                        numberOfLines={1}
+                      >
+                        {item.breadcrumb}
+                      </Text>
+                      <Text 
+                        style={[styles.itemSnippet, { color: colors.textSecondary }]}
+                        numberOfLines={3}
+                      >
+                        {item.snippet}
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => confirmRemove(item.id, item.title)}
+                      activeOpacity={0.6}
+                      accessibilityLabel={`Remove ${item.title} from favorites`}
+                      accessibilityRole="button"
+                    >
+                      <IconSymbol
+                        ios_icon_name="trash"
+                        android_material_icon_name="delete"
+                        size={20}
+                        color={colors.accent}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </Animated.View>
               ))}
             </>
           )}
@@ -297,27 +381,28 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 16,
     marginBottom: 8,
-    lineHeight: 29,
+    lineHeight: 28,
+    letterSpacing: 0.3,
   },
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
-    lineHeight: 23.2,
+    lineHeight: 24,
   },
   count: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 16,
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    lineHeight: 18.85,
+    letterSpacing: 1.5,
+    lineHeight: 18,
   },
   itemCard: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -329,34 +414,37 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
     marginBottom: 8,
   },
   stateBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   itemTitle: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 6,
-    lineHeight: 24.65,
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   itemBreadcrumb: {
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 8,
-    lineHeight: 18.85,
+    lineHeight: 18,
+    opacity: 0.8,
   },
   itemSnippet: {
     fontSize: 14,
-    lineHeight: 20.3,
+    lineHeight: 21,
+    opacity: 0.85,
   },
   removeButton: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 56,
+    minHeight: 56,
   },
 });

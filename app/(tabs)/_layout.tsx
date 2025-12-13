@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from "react";
 import { Stack, useRouter, usePathname } from "expo-router";
 import {
@@ -16,7 +15,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import FloatingTabBar from "@/components/FloatingTabBar";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
-import { BlurView } from "expo-blur";
+import Animated, { FadeIn, SlideInLeft } from "react-native-reanimated";
 
 /**
  * Menu configuration - centralized for easy maintenance
@@ -81,6 +80,7 @@ const floatingTabBarTabs = [
 
 /**
  * Hamburger menu button component
+ * Displays three-line icon in header for opening navigation menu
  */
 function HamburgerButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
@@ -101,7 +101,8 @@ function HamburgerButton({ onPress }: { onPress: () => void }) {
 }
 
 /**
- * Hamburger menu drawer component with glassmorphism effect
+ * Hamburger menu drawer component
+ * Slide-out navigation menu with smooth animations
  */
 function HamburgerMenu({
   visible,
@@ -124,109 +125,118 @@ function HamburgerMenu({
       statusBarTranslucent
     >
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={[
-            styles.menuContainer,
-            {
-              backgroundColor: themeColors.background,
-              ...shadows.large,
-            },
-          ]}
-          onPress={(e) => e.stopPropagation()}
+        <Animated.View 
+          entering={SlideInLeft.duration(300).damping(20)}
+          style={styles.menuWrapper}
         >
-          {/* Header */}
-          <View
+          <Pressable
             style={[
-              styles.menuHeader,
-              { 
-                borderBottomColor: themeColors.secondary + '30',
-                backgroundColor: themeColors.cardOverlay,
+              styles.menuContainer,
+              {
+                backgroundColor: themeColors.background,
+                ...shadows.large,
               },
             ]}
+            onPress={(e) => e.stopPropagation()}
           >
-            <Text
+            {/* Header */}
+            <View
               style={[
-                styles.menuTitle,
-                {
-                  color: themeColors.text,
+                styles.menuHeader,
+                { 
+                  borderBottomColor: themeColors.secondary + '30',
+                  backgroundColor: themeColors.card,
                 },
               ]}
             >
-              Menu
-            </Text>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeButton}
-              activeOpacity={0.6}
-              accessibilityLabel="Close navigation menu"
-              accessibilityRole="button"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              <Text
+                style={[
+                  styles.menuTitle,
+                  {
+                    color: themeColors.text,
+                  },
+                ]}
+              >
+                Navigation
+              </Text>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.closeButton}
+                activeOpacity={0.6}
+                accessibilityLabel="Close navigation menu"
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <IconSymbol
+                  ios_icon_name="xmark"
+                  android_material_icon_name="close"
+                  size={24}
+                  color={themeColors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Menu Items */}
+            <ScrollView
+              style={styles.menuScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.menuScrollContent}
             >
-              <IconSymbol
-                ios_icon_name="xmark"
-                android_material_icon_name="close"
-                size={24}
-                color={themeColors.primary}
-              />
-            </TouchableOpacity>
-          </View>
+              {menuItems.map((item, index) => {
+                const isActive = pathname.includes(
+                  item.route.replace("/(tabs)", "")
+                );
 
-          {/* Menu Items */}
-          <ScrollView
-            style={styles.menuScrollView}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.menuScrollContent}
-          >
-            {menuItems.map((item, index) => {
-              const isActive = pathname.includes(
-                item.route.replace("/(tabs)", "")
-              );
-
-              return (
-                <TouchableOpacity
-                  key={`menu-item-${index}`}
-                  style={[
-                    styles.menuItem,
-                    { borderBottomColor: themeColors.secondary + "20" },
-                    isActive && { 
-                      backgroundColor: themeColors.highlight,
-                      borderLeftWidth: 3,
-                      borderLeftColor: themeColors.primary,
-                    },
-                  ]}
-                  onPress={() => onNavigate(item.route)}
-                  activeOpacity={0.7}
-                  accessibilityLabel={`Navigate to ${item.label}`}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
-                >
-                  <Text
-                    style={[
-                      styles.menuItemText,
-                      { color: themeColors.text },
-                      isActive && {
-                        color: themeColors.primary,
-                        fontWeight: "700",
-                      },
-                    ]}
+                return (
+                  <Animated.View
+                    key={`menu-item-${index}`}
+                    entering={FadeIn.delay(50 + index * 30)}
                   >
-                    {item.label}
-                  </Text>
-                  {isActive && (
-                    <View style={styles.activeIndicator}>
-                      <IconSymbol
-                        ios_icon_name="chevron.right"
-                        android_material_icon_name="chevron_right"
-                        size={20}
-                        color={themeColors.primary}
-                      />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </Pressable>
+                    <TouchableOpacity
+                      style={[
+                        styles.menuItem,
+                        { borderBottomColor: themeColors.secondary + "15" },
+                        isActive && { 
+                          backgroundColor: themeColors.primary + '10',
+                          borderLeftWidth: 4,
+                          borderLeftColor: themeColors.primary,
+                        },
+                      ]}
+                      onPress={() => onNavigate(item.route)}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Navigate to ${item.label}`}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isActive }}
+                    >
+                      <Text
+                        style={[
+                          styles.menuItemText,
+                          { color: themeColors.text },
+                          isActive && {
+                            color: themeColors.primary,
+                            fontWeight: "700",
+                          },
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                      {isActive && (
+                        <View style={styles.activeIndicator}>
+                          <IconSymbol
+                            ios_icon_name="chevron.right"
+                            android_material_icon_name="chevron_right"
+                            size={20}
+                            color={themeColors.primary}
+                          />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Animated.View>
       </Pressable>
     </Modal>
   );
@@ -234,6 +244,7 @@ function HamburgerMenu({
 
 /**
  * Main tab layout component
+ * Manages navigation stack, hamburger menu, and floating tab bar
  */
 export default function TabLayout() {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
@@ -257,9 +268,18 @@ export default function TabLayout() {
   }, []);
 
   /**
-   * Close menu
+   * Close menu with haptic feedback
    */
   const closeMenu = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log("Haptics error:", error);
+      }
+    }
     setIsMenuVisible(false);
   }, []);
 
@@ -276,9 +296,12 @@ export default function TabLayout() {
         console.log("Haptics error:", error);
       }
     }
-    closeMenu();
-    router.push(route as any);
-  }, [closeMenu, router]);
+    setIsMenuVisible(false);
+    // Small delay to let menu close smoothly
+    setTimeout(() => {
+      router.push(route as any);
+    }, 100);
+  }, [router]);
 
   /**
    * Memoized screen options for better performance
@@ -288,13 +311,14 @@ export default function TabLayout() {
     headerLeft: () => <HamburgerButton onPress={openMenu} />,
     headerTitleAlign: "center" as const,
     headerStyle: {
-      backgroundColor: themeColors.background,
+      backgroundColor: themeColors.card,
     },
     headerTintColor: themeColors.text,
     headerShadowVisible: false,
     headerTitleStyle: {
-      fontWeight: '600' as const,
+      fontWeight: '700' as const,
       fontSize: 18,
+      letterSpacing: 0.3,
       color: themeColors.text,
     },
   }), [themeColors, openMenu]);
@@ -403,9 +427,12 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
     justifyContent: "flex-start",
     alignItems: "flex-start",
+  },
+  menuWrapper: {
+    height: "100%",
   },
   menuContainer: {
     width: 280,
@@ -424,8 +451,8 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 28,
-    fontWeight: "700",
-    letterSpacing: -0.5,
+    fontWeight: "800",
+    letterSpacing: 0.3,
   },
   closeButton: {
     padding: 4,
@@ -446,12 +473,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 20,
+    paddingLeft: 20,
     borderBottomWidth: 1,
     minHeight: 56,
   },
   menuItemText: {
     fontSize: 16,
     fontWeight: "500",
+    letterSpacing: 0.2,
     flex: 1,
   },
   activeIndicator: {

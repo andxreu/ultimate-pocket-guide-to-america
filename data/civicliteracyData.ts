@@ -1,28 +1,95 @@
 
+/**
+ * Civic Literacy Data
+ * 
+ * Understanding American government, founding documents, and civic responsibility.
+ * 
+ * This comprehensive module covers:
+ * - Branches of Government (Legislative, Executive, Judicial)
+ * - Founding Documents (Declaration, Articles, Constitution, Bill of Rights, Federalist Papers)
+ * - Citizenship (Civic responsibility, naturalization, rights & responsibilities)
+ * - Media Literacy (Identifying bias, fact-checking, evaluating sources)
+ * - National Symbols (Flag, eagle, seal, Liberty Bell, Statue of Liberty)
+ * - National Hymns (National Anthem, America the Beautiful, God Bless America)
+ * - The American Experiment (Self-government, identity, unity & diversity)
+ * - To Be an American (Reflection on American identity)
+ * 
+ * Total: 8 sections with 25 subsections
+ * 
+ * @module data/civicliteracyData
+ */
+
+/**
+ * Subsection - Individual content item
+ */
 export interface SubSection {
+  /** Unique identifier for the subsection */
   id: string;
+  /** Display title */
   title: string;
+  /** Main content text */
   content: string;
+  /** Optional full text content (for founding documents) */
   fullText?: string;
+  /** Optional context/background information */
   context?: string;
+  /** Optional image URL */
   imageUrl?: string;
 }
 
+/**
+ * Section - Group of related subsections
+ */
 export interface Section {
+  /** Unique identifier for the section */
   id: string;
+  /** Display title */
   title: string;
+  /** Section description */
   description: string;
+  /** Array of subsections within this section */
   subsections: SubSection[];
 }
 
+/**
+ * Main Section - Top-level content category
+ */
 export interface MainSection {
+  /** Unique identifier for the main section */
   id: string;
+  /** Display title */
   title: string;
+  /** Icon name for visual representation */
   icon: string;
+  /** Section description */
   description: string;
+  /** Array of sections within this main section */
   sections: Section[];
 }
 
+/**
+ * Civic Literacy Section Content
+ * 
+ * Comprehensive civics education covering American government structure,
+ * founding documents, citizenship, media literacy, and national identity.
+ * 
+ * Major sections:
+ * - **Branches of Government** (3 subsections) - Legislative, Executive, Judicial branches
+ * - **Founding Documents** (5 subsections) - Declaration, Articles, Constitution, Bill of Rights, Federalist Papers
+ * - **Citizenship** (3 subsections) - Civic responsibility, naturalization, rights & responsibilities
+ * - **Media Literacy** (3 subsections) - Identifying bias, fact-checking, evaluating sources
+ * - **National Symbols** (5 subsections) - Flag, eagle, Great Seal, Liberty Bell, Statue of Liberty
+ * - **National Hymns** (3 subsections) - National Anthem, America the Beautiful, God Bless America
+ * - **The American Experiment** (3 subsections) - Self-government, American identity, unity & diversity
+ * - **To Be an American** (1 subsection) - Reflection on what it means to be American
+ * 
+ * Special features:
+ * - Full text of founding documents included
+ * - Historical context for each document
+ * - Image URLs for national symbols
+ * 
+ * @constant
+ */
 export const civicliteracyData: MainSection = {
   id: "civic-literacy",
     title: "Civic Literacy",

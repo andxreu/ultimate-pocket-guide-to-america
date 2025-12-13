@@ -18,7 +18,25 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 /**
  * Favorites Provider Component
- * Manages user's favorited items with persistence
+ * 
+ * Manages user's favorited items with AsyncStorage persistence.
+ * 
+ * Features:
+ * - Persistent favorites across app sessions
+ * - Add/remove/toggle favorites
+ * - Check favorite status
+ * - Get favorites count
+ * - Clear all favorites
+ * - Optimistic updates with async persistence
+ * - Duplicate prevention
+ * - Error handling
+ * 
+ * @example
+ * ```tsx
+ * <FavoritesProvider>
+ *   <App />
+ * </FavoritesProvider>
+ * ```
  */
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -72,6 +90,11 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   /**
    * Add item to favorites
+   * 
+   * @param id - Unique identifier for the item
+   * @returns Promise that resolves when saved
+   * 
+   * Note: Prevents duplicates automatically
    */
   const addFavorite = useCallback(async (id: string): Promise<void> => {
     setFavorites((current) => {
@@ -82,7 +105,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       
       const newFavorites = [...current, id];
       
-      // Save asynchronously
+      // Save asynchronously (optimistic update)
       saveFavorites(newFavorites).catch((error) => {
         if (__DEV__) {
           console.error('Error saving favorites:', error);
@@ -95,12 +118,15 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   /**
    * Remove item from favorites
+   * 
+   * @param id - Unique identifier for the item to remove
+   * @returns Promise that resolves when saved
    */
   const removeFavorite = useCallback(async (id: string): Promise<void> => {
     setFavorites((current) => {
       const newFavorites = current.filter((fav) => fav !== id);
       
-      // Save asynchronously
+      // Save asynchronously (optimistic update)
       saveFavorites(newFavorites).catch((error) => {
         if (__DEV__) {
           console.error('Error saving favorites:', error);
@@ -113,6 +139,11 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   /**
    * Toggle favorite status
+   * 
+   * @param id - Unique identifier for the item
+   * @returns Promise that resolves when saved
+   * 
+   * Adds item if not favorited, removes if already favorited
    */
   const toggleFavorite = useCallback(async (id: string): Promise<void> => {
     setFavorites((current) => {
@@ -120,7 +151,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         ? current.filter((fav) => fav !== id)
         : [...current, id];
       
-      // Save asynchronously
+      // Save asynchronously (optimistic update)
       saveFavorites(newFavorites).catch((error) => {
         if (__DEV__) {
           console.error('Error saving favorites:', error);
@@ -133,6 +164,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   /**
    * Check if item is favorited
+   * 
+   * @param id - Unique identifier for the item
+   * @returns true if item is favorited, false otherwise
    */
   const isFavorite = useCallback((id: string): boolean => {
     return favorites.includes(id);
@@ -140,6 +174,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   /**
    * Clear all favorites
+   * 
+   * @returns Promise that resolves when storage is cleared
+   * @throws Error if storage operation fails
    */
   const clearAllFavorites = useCallback(async (): Promise<void> => {
     try {
@@ -155,6 +192,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   /**
    * Get total count of favorites
+   * 
+   * @returns Number of favorited items
    */
   const getFavoritesCount = useCallback((): number => {
     return favorites.length;
@@ -186,7 +225,22 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
 /**
  * Hook to access favorites context
+ * 
+ * @returns FavoritesContextType object with favorites state and methods
  * @throws Error if used outside FavoritesProvider
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { favorites, addFavorite, isFavorite } = useFavorites();
+ *   
+ *   return (
+ *     <Button onPress={() => addFavorite('constitution')}>
+ *       {isFavorite('constitution') ? 'Unfavorite' : 'Favorite'}
+ *     </Button>
+ *   );
+ * }
+ * ```
  */
 export function useFavorites(): FavoritesContextType {
   const context = useContext(FavoritesContext);

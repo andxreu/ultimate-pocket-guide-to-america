@@ -1,6 +1,36 @@
+/**
+ * History Data
+ * 
+ * America's story from founding to today.
+ * 
+ * This module contains historical content organized chronologically:
+ * - Early America & Colonies
+ * - Founding & Revolution
+ * - The New Nation & Expansion
+ * - Civil War & Reconstruction
+ * - Industrial Age & Gilded Era
+ * - Progressive Era & World Wars
+ * - Cold War & Civil Rights
+ * - Late 20th Century & Modern America
+ * 
+ * Each period includes subsections on:
+ * - Innovations & Breakthroughs
+ * - Wars & Conflicts
+ * - Culture & Society
+ * 
+ * @module data/historyData
+ */
 
 import { MainSection } from './contentData';
 
+/**
+ * History Section Content
+ * 
+ * Comprehensive historical narrative from colonial times to the present.
+ * Organized into 8 major time periods with 24 total subsections.
+ * 
+ * @constant
+ */
 export const historyData: MainSection = {
   id: 'history',
   title: 'History',

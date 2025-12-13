@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,22 +11,35 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  FadeInRight,
 } from 'react-native-reanimated';
 
 /**
  * Recently Viewed List Component
- * Displays a horizontal scrollable list of recently viewed items
+ * 
+ * Displays a horizontal scrollable list of recently viewed items with:
+ * - Horizontal scroll with snap-to-card behavior
+ * - Staggered entrance animations
+ * - Haptic feedback on press
+ * - Gradient accent bars
+ * - Theme-aware styling
+ * 
+ * @example
+ * ```tsx
+ * <RecentlyViewedList />
+ * ```
+ * 
+ * Note: Returns null if no reading history exists
  */
 export default function RecentlyViewedList() {
   const { colors, shadows } = useTheme();
   const { recentlyViewed } = useReadingHistory();
   const router = useRouter();
 
-  if (recentlyViewed.length === 0) {
-    return null;
-  }
-
-  const handleItemPress = (id: string) => {
+  /**
+   * Handle item press with haptic feedback and navigation
+   */
+  const handleItemPress = useCallback((id: string) => {
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -45,30 +58,41 @@ export default function RecentlyViewedList() {
         console.log('Error navigating to item:', error);
       }
     }
-  };
+  }, [router]);
+
+  // Early return after hooks
+  if (recentlyViewed.length === 0) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <Animated.View 
+        style={styles.header}
+        entering={FadeInRight.delay(50).springify()}
+      >
         <View style={styles.headerLeft}>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors.highlight },
+          <LinearGradient
+            colors={[
+              colors.primary + '25',
+              colors.highlight,
             ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconContainer}
           >
             <MaterialIcons
               name="history"
               size={18}
               color={colors.primary}
             />
-          </View>
+          </LinearGradient>
           <Text style={[styles.headerText, { color: colors.text }]}>
             Recently Viewed
           </Text>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Horizontal scroll list */}
       <ScrollView
@@ -77,10 +101,11 @@ export default function RecentlyViewedList() {
         contentContainerStyle={styles.scrollContent}
         snapToInterval={212} // card width (200) + gap (12)
         decelerationRate="fast"
+        snapToAlignment="start"
       >
         {recentlyViewed.map((item, index) => (
           <RecentlyViewedCard
-            key={`recent-${index}`}
+            key={`recent-${item.id}-${index}`}
             item={item}
             index={index}
             colors={colors}
@@ -95,6 +120,7 @@ export default function RecentlyViewedList() {
 
 /**
  * Individual Recently Viewed Card Component
+ * Memoized for performance - only re-renders when props change
  */
 interface RecentlyViewedCardProps {
   item: any;
@@ -104,70 +130,85 @@ interface RecentlyViewedCardProps {
   onPress: () => void;
 }
 
-function RecentlyViewedCard({ item, index, colors, shadows, onPress }: RecentlyViewedCardProps) {
+const RecentlyViewedCard = React.memo(function RecentlyViewedCard({ 
+  item, 
+  index, 
+  colors, 
+  shadows, 
+  onPress 
+}: RecentlyViewedCardProps) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.96, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      activeOpacity={1}
-      accessibilityLabel={`View ${item.title}`}
-      accessibilityRole="button"
-    >
-      <Animated.View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.card,
-            ...shadows.small,
-          },
-          animatedStyle,
-        ]}
+    <Animated.View entering={FadeInRight.delay(100 + index * 50).springify()}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        accessibilityLabel={`View ${item.title}`}
+        accessibilityRole="button"
+        accessibilityHint={`Navigate to ${item.title} in ${item.section}`}
       >
-        {/* Left accent bar */}
-        <LinearGradient
-          colors={[
-            colors.primary,
-            colors.goldGradientEnd,
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              ...shadows.small,
+            },
+            animatedStyle,
           ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.cardAccent}
-        />
-
-        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={[styles.cardSection, { color: colors.textSecondary }]} numberOfLines={1}>
-          {item.section}
-        </Text>
-
-        {/* Arrow indicator */}
-        <View style={styles.arrowContainer}>
-          <MaterialIcons
-            name="arrow-forward"
-            size={16}
-            color={colors.primary}
+        >
+          {/* Left accent bar */}
+          <LinearGradient
+            colors={[
+              colors.primary,
+              colors.goldGradientEnd,
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.cardAccent}
           />
-        </View>
-      </Animated.View>
-    </TouchableOpacity>
+
+          <Text 
+            style={[styles.cardTitle, { color: colors.text }]} 
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+          <Text 
+            style={[styles.cardSection, { color: colors.textSecondary }]} 
+            numberOfLines={1}
+          >
+            {item.section}
+          </Text>
+
+          {/* Arrow indicator */}
+          <View style={styles.arrowContainer}>
+            <MaterialIcons
+              name="arrow-forward"
+              size={16}
+              color={colors.primary}
+            />
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -222,6 +263,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 6,
     lineHeight: 21,
+    letterSpacing: 0.2,
   },
   cardSection: {
     fontSize: 13,

@@ -469,3 +469,4 @@ export const glossaryData: GlossoryTerm[] = [
     relatedIds: ['executive', 'legislative', 'checks-balances'],
   },
 ].sort((a, b) => a.term.localeCompare(b.term));
+

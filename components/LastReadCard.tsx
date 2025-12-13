@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -15,7 +15,23 @@ import Animated, {
 
 /**
  * Last Read Card Component
- * Shows the last item the user was reading with a "Continue" action
+ * 
+ * Displays the last item the user was reading with a "Continue" action.
+ * 
+ * Features:
+ * - Shows last read item from reading history
+ * - One-tap navigation to continue reading
+ * - Animated press feedback
+ * - Haptic feedback
+ * - Gradient accents
+ * - Theme-aware styling
+ * 
+ * @example
+ * ```tsx
+ * <LastReadCard />
+ * ```
+ * 
+ * Note: Returns null if no reading history exists
  */
 export default function LastReadCard() {
   const { colors, shadows } = useTheme();
@@ -27,15 +43,26 @@ export default function LastReadCard() {
     transform: [{ scale: scale.value }],
   }));
 
-  const handlePressIn = () => {
+  /**
+   * Handle press-in with scale animation
+   */
+  const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.98, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
-  const handlePressOut = () => {
+  /**
+   * Handle press-out with scale return
+   */
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
-  const handlePress = () => {
+  /**
+   * Handle press with haptic feedback and navigation
+   */
+  const handlePress = useCallback(() => {
+    if (!lastReadItem) return;
+
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -54,7 +81,7 @@ export default function LastReadCard() {
         console.log('Error navigating to last read item:', error);
       }
     }
-  };
+  }, [lastReadItem, router]);
 
   // Early return after all hooks are called
   if (!lastReadItem) {
@@ -69,6 +96,7 @@ export default function LastReadCard() {
       activeOpacity={1}
       accessibilityLabel={`Continue reading ${lastReadItem.title}`}
       accessibilityRole="button"
+      accessibilityHint="Double tap to continue where you left off"
     >
       <Animated.View
         style={[
@@ -116,10 +144,16 @@ export default function LastReadCard() {
 
         {/* Content */}
         <View style={styles.content}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          <Text 
+            style={[styles.title, { color: colors.text }]} 
+            numberOfLines={2}
+          >
             {lastReadItem.title}
           </Text>
-          <Text style={[styles.section, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text 
+            style={[styles.section, { color: colors.textSecondary }]} 
+            numberOfLines={1}
+          >
             {lastReadItem.section}
           </Text>
         </View>

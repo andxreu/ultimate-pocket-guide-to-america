@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -19,6 +19,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  FadeIn,
   FadeInDown,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -38,7 +39,22 @@ const FOUNDING_DOCUMENTS = [
 
 /**
  * SectionList Component
- * Displays a list of sections and subsections with beautiful animations
+ * 
+ * Displays a hierarchical list of sections and subsections with:
+ * - Staggered entrance animations
+ * - Haptic feedback on navigation
+ * - Gradient accents
+ * - Document badges for founding documents
+ * - Custom header with back navigation
+ * - Text size scaling support
+ * 
+ * @example
+ * ```tsx
+ * <SectionList 
+ *   mainSection={civicLiteracySection}
+ *   showCustomHeader={true}
+ * />
+ * ```
  */
 export function SectionList({
   mainSection,
@@ -49,26 +65,10 @@ export function SectionList({
   const router = useRouter();
   const textMultiplier = getTextSizeMultiplier();
 
-  // Safety check
-  if (!mainSection || !mainSection.sections) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.errorContainer}>
-          <MaterialIcons
-            name="error-outline"
-            size={48}
-            color={colors.textSecondary}
-            style={styles.errorIcon}
-          />
-          <Text style={[styles.errorText, { color: colors.text }]}>
-            Content not available
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  const navigateToItem = (subsectionId: string) => {
+  /**
+   * Navigate to detail or document screen
+   */
+  const navigateToItem = useCallback((subsectionId: string) => {
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -90,10 +90,56 @@ export function SectionList({
         console.log('Navigation error:', error);
       }
     }
-  };
+  }, [router]);
+
+  /**
+   * Handle back navigation
+   */
+  const handleBack = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
+    try {
+      router.back();
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Back navigation error:', error);
+      }
+    }
+  }, [router]);
+
+  // Safety check - show error state
+  if (!mainSection || !mainSection.sections) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Animated.View 
+          style={styles.errorContainer}
+          entering={FadeIn.duration(400)}
+        >
+          <MaterialIcons
+            name="error-outline"
+            size={48}
+            color={colors.textSecondary}
+            style={styles.errorIcon}
+          />
+          <Text style={[styles.errorText, { color: colors.text }]}>
+            Content not available
+          </Text>
+        </Animated.View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Custom Header */}
       {showCustomHeader && (
         <View
           style={[
@@ -115,16 +161,9 @@ export function SectionList({
           />
           
           <TouchableOpacity
-            onPress={() => {
-              try {
-                router.back();
-              } catch (error) {
-                if (__DEV__) {
-                  console.log('Back navigation error:', error);
-                }
-              }
-            }}
+            onPress={handleBack}
             style={styles.backButton}
+            activeOpacity={0.7}
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
@@ -153,7 +192,7 @@ export function SectionList({
         {/* Page Header */}
         <Animated.View 
           style={styles.header}
-          entering={FadeInDown.duration(400)}
+          entering={FadeInDown.delay(50).duration(400)}
         >
           <Text
             style={[
@@ -192,7 +231,7 @@ export function SectionList({
               <Animated.View 
                 key={`section-${sectionIndex}`} 
                 style={styles.sectionGroup}
-                entering={FadeInDown.delay((sectionIndex + 1) * 100).springify()}
+                entering={FadeInDown.delay(100 + sectionIndex * 50).springify()}
               >
                 <View style={styles.sectionHeader}>
                   <Text 
@@ -229,7 +268,7 @@ export function SectionList({
                     const isDocument = FOUNDING_DOCUMENTS.includes(subsection.id);
                     return (
                       <SubsectionCard
-                        key={`subsection-${subsectionIndex}`}
+                        key={subsection.id}
                         subsection={subsection}
                         isDocument={isDocument}
                         colors={colors}
@@ -252,9 +291,10 @@ export function SectionList({
 }
 
 /**
- * Subsection Card Component with animations
+ * Subsection Card Component
+ * Memoized for performance - only re-renders when props change
  */
-function SubsectionCard({
+const SubsectionCard = React.memo(function SubsectionCard({
   subsection,
   isDocument,
   colors,
@@ -275,13 +315,13 @@ function SubsectionCard({
     transform: [{ scale: scale.value }],
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.97, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
   return (
     <Pressable
@@ -290,6 +330,7 @@ function SubsectionCard({
       onPressOut={handlePressOut}
       accessibilityLabel={`Navigate to ${subsection.title || 'content'}`}
       accessibilityRole="button"
+      accessibilityHint={isDocument ? "Founding document" : undefined}
     >
       <Animated.View
         style={[
@@ -350,7 +391,7 @@ function SubsectionCard({
       </Animated.View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

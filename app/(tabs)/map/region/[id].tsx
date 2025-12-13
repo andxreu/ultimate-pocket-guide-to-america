@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -18,15 +17,41 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  FadeIn,
+  FadeInDown,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
+/**
+ * Region Detail Screen Component
+ * Displays a region's information and list of states within that region
+ */
 export default function RegionDetailScreen() {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
   const region = mapData.find((r) => r.id === id);
 
+  /**
+   * Handle state card press with haptic feedback
+   */
+  const handleStatePress = useCallback((stateCode: string) => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    router.push(`/map/state/${stateCode.toLowerCase()}` as any);
+  }, [router]);
+
+  /**
+   * Render error state if region not found
+   */
   if (!region) {
     return (
       <>
@@ -37,10 +62,14 @@ export default function RegionDetailScreen() {
             headerBackTitle: "Back",
             headerTintColor: colors.text,
             headerStyle: { backgroundColor: colors.card },
+            headerShadowVisible: false,
           }}
         />
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <View style={styles.errorContainer}>
+          <Animated.View 
+            style={styles.errorContainer}
+            entering={FadeIn.duration(400)}
+          >
             <IconSymbol
               ios_icon_name="exclamationmark.triangle.fill"
               android_material_icon_name="error"
@@ -51,14 +80,21 @@ export default function RegionDetailScreen() {
               Region not found
             </Text>
             <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: colors.primary }]}
+              style={[
+                styles.backButton, 
+                { 
+                  backgroundColor: colors.primary,
+                  ...shadows.small 
+                }
+              ]}
               onPress={() => router.back()}
+              activeOpacity={0.8}
               accessibilityLabel="Go back"
               accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Go Back</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </>
     );
@@ -73,6 +109,7 @@ export default function RegionDetailScreen() {
           headerBackTitle: "Map",
           headerTintColor: colors.text,
           headerStyle: { backgroundColor: colors.card },
+          headerShadowVisible: false,
         }}
       />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -80,7 +117,11 @@ export default function RegionDetailScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          {/* Header Section */}
+          <Animated.View 
+            style={styles.header}
+            entering={FadeInDown.delay(50).springify()}
+          >
             <Text
               style={[styles.title, { color: colors.text }]}
               accessibilityRole="header"
@@ -90,25 +131,42 @@ export default function RegionDetailScreen() {
             <Text style={[styles.description, { color: colors.textSecondary }]}>
               {region.description}
             </Text>
-          </View>
+          </Animated.View>
 
-          <View style={styles.sectionHeader}>
+          {/* Section Title */}
+          <Animated.View 
+            style={styles.sectionHeader}
+            entering={FadeInDown.delay(100).springify()}
+          >
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               States in this region
             </Text>
-          </View>
+            <View 
+              style={[
+                styles.stateBadge, 
+                { backgroundColor: colors.primary + '20' }
+              ]}
+            >
+              <Text style={[styles.stateCount, { color: colors.primary }]}>
+                {region.states.length}
+              </Text>
+            </View>
+          </Animated.View>
 
+          {/* States List */}
           <View style={styles.statesContainer}>
             {region.states.map((state, index) => (
-              <React.Fragment key={index}>
+              <Animated.View
+                key={state.code}
+                entering={FadeInDown.delay(150 + index * 50).springify()}
+              >
                 <StateCard
                   state={state}
                   colors={colors}
-                  onPress={() =>
-                    router.push(`/map/state/${state.code.toLowerCase()}` as any)
-                  }
+                  shadows={shadows}
+                  onPress={() => handleStatePress(state.code)}
                 />
-              </React.Fragment>
+              </Animated.View>
             ))}
           </View>
 
@@ -119,31 +177,33 @@ export default function RegionDetailScreen() {
   );
 }
 
+/**
+ * State Card Component
+ * Animated card for individual state with press interaction
+ */
 function StateCard({
   state,
   colors,
+  shadows,
   onPress,
 }: {
   state: any;
   colors: any;
+  shadows: any;
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: opacity.value,
   }));
 
   const handlePressIn = () => {
     scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-    opacity.value = withSpring(0.8, { damping: 15, stiffness: 300 });
   };
 
   const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    opacity.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
   return (
@@ -153,6 +213,7 @@ function StateCard({
       onPressOut={handlePressOut}
       accessibilityLabel={`Navigate to ${state.name}`}
       accessibilityRole="button"
+      accessibilityHint={`View details about ${state.name}`}
     >
       <Animated.View
         style={[
@@ -160,27 +221,40 @@ function StateCard({
           {
             backgroundColor: colors.card,
             borderColor: colors.primary + "10",
+            ...shadows.small,
           },
           animatedStyle,
         ]}
       >
+        {/* State Code Badge */}
         <View
-          style={[styles.stateCodeBadge, { backgroundColor: colors.highlight }]}
+          style={[
+            styles.stateCodeBadge, 
+            { backgroundColor: colors.primary + '20' }
+          ]}
         >
           <Text style={[styles.stateCode, { color: colors.primary }]}>
             {state.code}
           </Text>
         </View>
+
+        {/* State Name */}
         <View style={styles.stateContent}>
-          <Text style={[styles.stateName, { color: colors.text }]}>
+          <Text 
+            style={[styles.stateName, { color: colors.text }]}
+            numberOfLines={1}
+          >
             {state.name}
           </Text>
         </View>
+
+        {/* Chevron */}
         <IconSymbol
           ios_icon_name="chevron.right"
           android_material_icon_name="chevron_right"
           size={20}
           color={colors.textSecondary}
+          style={styles.chevron}
         />
       </Animated.View>
     </Pressable>
@@ -201,22 +275,41 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
+    fontSize: 32,
+    fontWeight: "800",
     marginBottom: 8,
-    lineHeight: 43.5,
+    lineHeight: 40,
+    letterSpacing: 0.3,
   },
   description: {
-    fontSize: 15,
-    lineHeight: 21.75,
+    fontSize: 16,
+    lineHeight: 24,
+    opacity: 0.9,
   },
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 19,
-    fontWeight: "600",
-    lineHeight: 27.55,
+    fontSize: 20,
+    fontWeight: "700",
+    lineHeight: 28,
+    letterSpacing: 0.3,
+  },
+  stateBadge: {
+    minWidth: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  stateCount: {
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 20,
   },
   statesContainer: {
     gap: 12,
@@ -224,36 +317,36 @@ const styles = StyleSheet.create({
   stateCard: {
     flexDirection: "row",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: "center",
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    minHeight: 44,
-    gap: 12,
+    minHeight: 72,
+    gap: 14,
   },
   stateCodeBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
   },
   stateCode: {
-    fontSize: 14,
-    fontWeight: "700",
-    lineHeight: 20.3,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20,
+    letterSpacing: 0.5,
   },
   stateContent: {
     flex: 1,
   },
   stateName: {
-    fontSize: 16,
-    fontWeight: "500",
-    lineHeight: 23.2,
+    fontSize: 17,
+    fontWeight: "600",
+    lineHeight: 24,
+    letterSpacing: 0.2,
+  },
+  chevron: {
+    opacity: 0.5,
   },
   errorContainer: {
     flex: 1,
@@ -263,20 +356,23 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
+    fontWeight: '600',
     marginTop: 16,
     marginBottom: 20,
-    lineHeight: 26.1,
+    lineHeight: 26,
+    textAlign: 'center',
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
-    minHeight: 44,
+    borderRadius: 12,
+    minHeight: 48,
   },
   backButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 23.2,
+    fontWeight: "700",
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
 });

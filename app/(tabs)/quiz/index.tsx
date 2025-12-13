@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  Platform,
 } from "react-native";
 import { Stack } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -16,10 +17,18 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  FadeIn,
+  FadeInDown,
+  ZoomIn,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
+/**
+ * Quiz Screen Component
+ * Interactive civics quiz with explanations and scoring
+ */
 export default function QuizScreen() {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() =>
     generateRandomQuiz(10)
   );
@@ -32,47 +41,107 @@ export default function QuizScreen() {
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const isQuizComplete = currentQuestionIndex >= quizQuestions.length;
 
-  const handleAnswerSelect = (index: number) => {
+  /**
+   * Handle answer selection with haptic feedback
+   */
+  const handleAnswerSelect = useCallback((index: number) => {
     if (selectedAnswer !== null) return;
+
+    const isCorrect = index === currentQuestion.correctIndex;
+    
+    try {
+      if (Platform.OS !== 'web') {
+        if (isCorrect) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
 
     setSelectedAnswer(index);
     setShowExplanation(true);
 
-    if (index === currentQuestion.correctIndex) {
+    if (isCorrect) {
       setScore(score + 1);
     }
 
     setAnsweredQuestions([...answeredQuestions, currentQuestionIndex]);
-  };
+  }, [selectedAnswer, currentQuestion, score, answeredQuestions, currentQuestionIndex]);
 
-  const handleNext = () => {
+  /**
+   * Handle next question with haptic feedback
+   */
+  const handleNext = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
     setSelectedAnswer(null);
     setShowExplanation(false);
     setCurrentQuestionIndex(currentQuestionIndex + 1);
-  };
+  }, [currentQuestionIndex]);
 
-  const handleRestart = () => {
+  /**
+   * Handle quiz restart with haptic feedback
+   */
+  const handleRestart = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
     setQuizQuestions(generateRandomQuiz(10));
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setShowExplanation(false);
     setScore(0);
     setAnsweredQuestions([]);
-  };
+  }, []);
 
+  /**
+   * Render quiz completion screen
+   */
   if (isQuizComplete) {
+    const percentage = Math.round((score / quizQuestions.length) * 100);
+    const isPerfect = score === quizQuestions.length;
+    const isGood = percentage >= 70;
+
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.completionContainer}>
-            <View
+          <Animated.View 
+            style={styles.completionContainer}
+            entering={FadeIn.duration(600)}
+          >
+            <Animated.View
               style={[
                 styles.scoreCircle,
-                { backgroundColor: colors.highlight },
+                { 
+                  backgroundColor: colors.primary + '20',
+                  borderColor: colors.primary,
+                  ...shadows.medium,
+                },
               ]}
+              entering={ZoomIn.duration(600).springify()}
             >
               <Text style={[styles.scoreText, { color: colors.primary }]}>
                 {score}
@@ -85,39 +154,55 @@ export default function QuizScreen() {
               >
                 {quizQuestions.length}
               </Text>
-            </View>
+            </Animated.View>
 
-            <Text style={[styles.completionTitle, { color: colors.text }]}>
-              Quiz Complete!
-            </Text>
-            <Text
-              style={[
-                styles.completionMessage,
-                { color: colors.textSecondary },
-              ]}
-            >
-              You answered {score} out of {quizQuestions.length} questions
-              correctly.
-            </Text>
+            <Animated.View entering={FadeInDown.delay(300).springify()}>
+              <Text style={[styles.completionTitle, { color: colors.text }]}>
+                {isPerfect ? "Perfect Score! 🎉" : isGood ? "Great Job! 👏" : "Quiz Complete!"}
+              </Text>
+              <Text
+                style={[
+                  styles.completionPercentage,
+                  { color: colors.primary },
+                ]}
+              >
+                {percentage}%
+              </Text>
+              <Text
+                style={[
+                  styles.completionMessage,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                You answered {score} out of {quizQuestions.length} questions
+                correctly.
+              </Text>
+            </Animated.View>
 
-            <TouchableOpacity
-              style={[
-                styles.restartButton,
-                { backgroundColor: colors.primary },
-              ]}
-              onPress={handleRestart}
-              accessibilityLabel="Restart quiz with new questions"
-              accessibilityRole="button"
-            >
-              <IconSymbol
-                ios_icon_name="arrow.clockwise"
-                android_material_icon_name="refresh"
-                size={20}
-                color="#FFFFFF"
-              />
-              <Text style={styles.restartButtonText}>New Quiz</Text>
-            </TouchableOpacity>
-          </View>
+            <Animated.View entering={FadeInDown.delay(500).springify()}>
+              <TouchableOpacity
+                style={[
+                  styles.restartButton,
+                  { 
+                    backgroundColor: colors.primary,
+                    ...shadows.small,
+                  },
+                ]}
+                onPress={handleRestart}
+                activeOpacity={0.8}
+                accessibilityLabel="Restart quiz with new questions"
+                accessibilityRole="button"
+              >
+                <IconSymbol
+                  ios_icon_name="arrow.clockwise"
+                  android_material_icon_name="refresh"
+                  size={20}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.restartButtonText}>New Quiz</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </Animated.View>
 
           <AppFooter />
         </ScrollView>
@@ -125,6 +210,9 @@ export default function QuizScreen() {
     );
   }
 
+  /**
+   * Render active quiz
+   */
   return (
     <>
       <Stack.Screen
@@ -137,7 +225,11 @@ export default function QuizScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          {/* Header with Progress */}
+          <Animated.View 
+            style={styles.header}
+            entering={FadeInDown.delay(50).springify()}
+          >
             <Text
               style={[styles.title, { color: colors.text }]}
               accessibilityRole="header"
@@ -159,7 +251,7 @@ export default function QuizScreen() {
                   { backgroundColor: colors.highlight },
                 ]}
               >
-                <View
+                <Animated.View
                   style={[
                     styles.progressFill,
                     {
@@ -173,110 +265,136 @@ export default function QuizScreen() {
                 />
               </View>
             </View>
-          </View>
+          </Animated.View>
 
-          <View
-            style={[
-              styles.questionCard,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.primary + "15",
-              },
-            ]}
+          {/* Question Card */}
+          <Animated.View
+            entering={FadeInDown.delay(100).springify()}
           >
-            <Text style={[styles.questionText, { color: colors.text }]}>
-              {currentQuestion.question}
-            </Text>
-          </View>
-
-          <View style={styles.optionsContainer}>
-            {currentQuestion.options.map((option, index) => (
-              <OptionButton
-                key={index}
-                option={option}
-                index={index}
-                colors={colors}
-                selectedAnswer={selectedAnswer}
-                correctIndex={currentQuestion.correctIndex}
-                onPress={() => handleAnswerSelect(index)}
-              />
-            ))}
-          </View>
-
-          {showExplanation && currentQuestion.explanation && (
             <View
               style={[
-                styles.explanationCard,
+                styles.questionCard,
                 {
                   backgroundColor: colors.card,
-                  borderColor:
-                    selectedAnswer === currentQuestion.correctIndex
-                      ? colors.primary
-                      : colors.accent,
+                  borderColor: colors.primary + "15",
+                  ...shadows.small,
                 },
               ]}
             >
-              <View style={styles.explanationHeader}>
-                <IconSymbol
-                  ios_icon_name={
-                    selectedAnswer === currentQuestion.correctIndex
-                      ? "checkmark.circle.fill"
-                      : "xmark.circle.fill"
-                  }
-                  android_material_icon_name={
-                    selectedAnswer === currentQuestion.correctIndex
-                      ? "check_circle"
-                      : "cancel"
-                  }
-                  size={24}
-                  color={
-                    selectedAnswer === currentQuestion.correctIndex
-                      ? colors.primary
-                      : colors.accent
-                  }
-                />
-                <Text
-                  style={[
-                    styles.explanationTitle,
-                    {
-                      color:
-                        selectedAnswer === currentQuestion.correctIndex
-                          ? colors.primary
-                          : colors.accent,
-                    },
-                  ]}
-                >
-                  {selectedAnswer === currentQuestion.correctIndex
-                    ? "Correct!"
-                    : "Incorrect"}
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.explanationText,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                {currentQuestion.explanation}
+              <Text style={[styles.questionText, { color: colors.text }]}>
+                {currentQuestion.question}
               </Text>
             </View>
+          </Animated.View>
+
+          {/* Options */}
+          <View style={styles.optionsContainer}>
+            {currentQuestion.options.map((option, index) => (
+              <Animated.View
+                key={index}
+                entering={FadeInDown.delay(150 + index * 50).springify()}
+              >
+                <OptionButton
+                  option={option}
+                  index={index}
+                  colors={colors}
+                  shadows={shadows}
+                  selectedAnswer={selectedAnswer}
+                  correctIndex={currentQuestion.correctIndex}
+                  onPress={() => handleAnswerSelect(index)}
+                />
+              </Animated.View>
+            ))}
+          </View>
+
+          {/* Explanation */}
+          {showExplanation && currentQuestion.explanation && (
+            <Animated.View entering={FadeInDown.delay(200).springify()}>
+              <View
+                style={[
+                  styles.explanationCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor:
+                      selectedAnswer === currentQuestion.correctIndex
+                        ? colors.primary
+                        : colors.accent,
+                    ...shadows.small,
+                  },
+                ]}
+              >
+                <View style={styles.explanationHeader}>
+                  <IconSymbol
+                    ios_icon_name={
+                      selectedAnswer === currentQuestion.correctIndex
+                        ? "checkmark.circle.fill"
+                        : "xmark.circle.fill"
+                    }
+                    android_material_icon_name={
+                      selectedAnswer === currentQuestion.correctIndex
+                        ? "check_circle"
+                        : "cancel"
+                    }
+                    size={24}
+                    color={
+                      selectedAnswer === currentQuestion.correctIndex
+                        ? colors.primary
+                        : colors.accent
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.explanationTitle,
+                      {
+                        color:
+                          selectedAnswer === currentQuestion.correctIndex
+                            ? colors.primary
+                            : colors.accent,
+                      },
+                    ]}
+                  >
+                    {selectedAnswer === currentQuestion.correctIndex
+                      ? "Correct!"
+                      : "Incorrect"}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.explanationText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {currentQuestion.explanation}
+                </Text>
+              </View>
+            </Animated.View>
           )}
 
+          {/* Next Button */}
           {selectedAnswer !== null && (
-            <TouchableOpacity
-              style={[styles.nextButton, { backgroundColor: colors.primary }]}
-              onPress={handleNext}
-              accessibilityLabel="Next question"
-              accessibilityRole="button"
-            >
-              <Text style={styles.nextButtonText}>Next Question</Text>
-              <IconSymbol
-                ios_icon_name="arrow.right"
-                android_material_icon_name="arrow_forward"
-                size={20}
-                color="#FFFFFF"
-              />
-            </TouchableOpacity>
+            <Animated.View entering={FadeInDown.delay(250).springify()}>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton, 
+                  { 
+                    backgroundColor: colors.primary,
+                    ...shadows.small,
+                  }
+                ]}
+                onPress={handleNext}
+                activeOpacity={0.8}
+                accessibilityLabel="Next question"
+                accessibilityRole="button"
+              >
+                <Text style={styles.nextButtonText}>Next Question</Text>
+                <IconSymbol
+                  ios_icon_name="arrow.right"
+                  android_material_icon_name="arrow_forward"
+                  size={20}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+            </Animated.View>
           )}
 
           <AppFooter />
@@ -286,10 +404,15 @@ export default function QuizScreen() {
   );
 }
 
+/**
+ * Option Button Component
+ * Animated button for quiz answer selection
+ */
 function OptionButton({
   option,
   index,
   colors,
+  shadows,
   selectedAnswer,
   correctIndex,
   onPress,
@@ -297,28 +420,25 @@ function OptionButton({
   option: string;
   index: number;
   colors: any;
+  shadows: any;
   selectedAnswer: number | null;
   correctIndex: number;
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: opacity.value,
   }));
 
   const handlePressIn = () => {
     if (selectedAnswer === null) {
       scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-      opacity.value = withSpring(0.8, { damping: 15, stiffness: 300 });
     }
   };
 
   const handlePressOut = () => {
     scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    opacity.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
   const isSelected = selectedAnswer === index;
@@ -349,6 +469,7 @@ function OptionButton({
       disabled={selectedAnswer !== null}
       accessibilityLabel={`Option ${index + 1}: ${option}`}
       accessibilityRole="button"
+      accessibilityState={{ selected: isSelected, disabled: selectedAnswer !== null }}
     >
       <Animated.View
         style={[
@@ -356,6 +477,7 @@ function OptionButton({
           {
             backgroundColor,
             borderColor,
+            ...shadows.small,
           },
           animatedStyle,
         ]}
@@ -389,7 +511,10 @@ function OptionButton({
             {String.fromCharCode(65 + index)}
           </Text>
         </View>
-        <Text style={[styles.optionText, { color: colors.text }]}>
+        <Text 
+          style={[styles.optionText, { color: colors.text }]}
+          numberOfLines={3}
+        >
           {option}
         </Text>
         {showResult && isCorrect && (
@@ -418,7 +543,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 32,
+    paddingTop: Platform.OS === 'android' ? 32 : 24,
     paddingHorizontal: 16,
     paddingBottom: 120,
   },
@@ -426,43 +551,42 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
+    fontSize: 32,
+    fontWeight: "800",
     marginBottom: 16,
-    lineHeight: 43.5,
+    lineHeight: 40,
+    letterSpacing: 0.3,
   },
   progressContainer: {
     gap: 8,
   },
   progressText: {
     fontSize: 13,
-    fontWeight: "500",
-    lineHeight: 18.85,
+    fontWeight: "700",
+    lineHeight: 18,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   progressBar: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: 4,
   },
   questionCard: {
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   questionText: {
-    fontSize: 17,
-    fontWeight: "600",
-    lineHeight: 24.65,
+    fontSize: 18,
+    fontWeight: "700",
+    lineHeight: 26,
+    letterSpacing: 0.3,
   },
   optionsContainer: {
     gap: 12,
@@ -471,129 +595,138 @@ const styles = StyleSheet.create({
   optionButton: {
     flexDirection: "row",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
     borderWidth: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    minHeight: 44,
-    gap: 12,
+    minHeight: 64,
+    gap: 14,
   },
   optionNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
   },
   optionNumberText: {
-    fontSize: 14,
-    fontWeight: "700",
-    lineHeight: 20.3,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20,
+    letterSpacing: 0.5,
   },
   optionText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 21.75,
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500',
   },
   explanationCard: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     borderWidth: 2,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   explanationHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    gap: 10,
+    marginBottom: 10,
   },
   explanationTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 23.2,
+    fontSize: 17,
+    fontWeight: "800",
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   explanationText: {
-    fontSize: 14,
-    lineHeight: 20.3,
+    fontSize: 15,
+    lineHeight: 22,
   },
   nextButton: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
-    borderRadius: 12,
-    gap: 8,
+    borderRadius: 14,
+    gap: 10,
     marginBottom: 20,
+    minHeight: 56,
   },
   nextButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 23.2,
+    fontSize: 17,
+    fontWeight: "700",
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   completionContainer: {
     alignItems: "center",
     paddingVertical: 40,
   },
   scoreCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 4,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
     flexDirection: "row",
   },
   scoreText: {
-    fontSize: 36,
-    fontWeight: "bold",
-    lineHeight: 52.2,
+    fontSize: 40,
+    fontWeight: "800",
+    lineHeight: 52,
+    letterSpacing: 0.5,
   },
   scoreDivider: {
-    fontSize: 24,
-    fontWeight: "600",
-    lineHeight: 34.8,
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: 36,
     marginHorizontal: 4,
   },
   scoreTotalText: {
-    fontSize: 24,
-    fontWeight: "600",
-    lineHeight: 34.8,
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: 36,
   },
   completionTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 32,
+    fontWeight: "800",
+    marginBottom: 8,
+    lineHeight: 40,
+    letterSpacing: 0.3,
+    textAlign: 'center',
+  },
+  completionPercentage: {
+    fontSize: 56,
+    fontWeight: "900",
+    lineHeight: 64,
     marginBottom: 12,
-    lineHeight: 40.6,
+    textAlign: 'center',
+    letterSpacing: -1,
   },
   completionMessage: {
-    fontSize: 15,
+    fontSize: 16,
     textAlign: "center",
     marginBottom: 32,
-    lineHeight: 21.75,
+    lineHeight: 24,
   },
   restartButton: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 10,
+    minHeight: 56,
   },
   restartButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 23.2,
+    fontSize: 17,
+    fontWeight: "700",
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
 });

@@ -1,18 +1,65 @@
 
+/**
+ * Map Data - United States Regions and States
+ * 
+ * Comprehensive information about all 50 US states organized by region.
+ * 
+ * This module contains:
+ * - Northeast (10 states)
+ * - South (14 states)
+ * - Midwest (12 states)
+ * - West (14 states)
+ * 
+ * Each state includes:
+ * - State code, name, and blurb
+ * - Detailed content about history, geography, economy, and culture
+ * 
+ * Total: 50 states across 4 regions
+ * 
+ * @module data/mapData
+ */
+
+/**
+ * State interface
+ */
 export interface State {
+  /** Two-letter state code */
   code: string;
+  /** Full state name */
   name: string;
+  /** Brief one-sentence description */
   blurb: string;
+  /** Detailed content about the state */
   content: string;
 }
 
+/**
+ * Region interface
+ */
 export interface Region {
+  /** Unique region identifier */
   id: string;
+  /** Region name */
   name: string;
+  /** Region description */
   description: string;
+  /** Array of states in this region */
   states: State[];
 }
 
+/**
+ * United States Regional Data
+ * 
+ * Complete information about all 50 states organized into 4 geographic regions.
+ * 
+ * Regions:
+ * - **Northeast** (10 states) - Colonial history, urban centers, four seasons
+ * - **South** (14 states) - Warm climate, agricultural traditions, cultural legacy
+ * - **Midwest** (12 states) - Heartland, Great Lakes, industrial cities
+ * - **West** (14 states) - Frontier spirit, natural wonders, diverse landscapes
+ * 
+ * @constant
+ */
 export const mapData: Region[] = [
 {
   id: "northeast",

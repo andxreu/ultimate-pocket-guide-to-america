@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -17,10 +17,12 @@ import { AppFooter } from '@/components/AppFooter';
 import { allContentData } from '@/data/contentData';
 import { getItemRoute } from '@/utils/findItemById';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 const RECENT_SEARCHES_KEY = 'recent_searches';
 const MAX_RECENT_SEARCHES = 5;
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 300;
 
 interface SearchResult {
   id: string;
@@ -30,8 +32,12 @@ interface SearchResult {
   relevanceScore: number;
 }
 
+/**
+ * Search Screen Component
+ * Full-text search across all content with recent searches and relevance scoring
+ */
 export default function SearchScreen() {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const { getTextSizeMultiplier } = useTextSize();
   const router = useRouter();
   const textMultiplier = getTextSizeMultiplier();
@@ -45,6 +51,9 @@ export default function SearchScreen() {
     loadRecentSearches();
   }, []);
 
+  /**
+   * Debounce search input to avoid excessive searches
+   */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -53,6 +62,9 @@ export default function SearchScreen() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  /**
+   * Perform search with relevance scoring
+   */
   const performSearch = useCallback((query: string) => {
     try {
       setIsSearching(true);
@@ -84,6 +96,7 @@ export default function SearchScreen() {
 
             let relevanceScore = 0;
 
+            // Title matching (highest priority)
             if (title === lowerQuery) {
               relevanceScore = 10000;
             } else if (title.startsWith(lowerQuery)) {
@@ -92,11 +105,15 @@ export default function SearchScreen() {
               relevanceScore = 3000;
             } else if (title.includes(lowerQuery)) {
               relevanceScore = 1500;
-            } else if (sectionName === lowerQuery || mainSectionName === lowerQuery) {
+            } 
+            // Section name matching
+            else if (sectionName === lowerQuery || mainSectionName === lowerQuery) {
               relevanceScore = 1000;
             } else if (sectionName.includes(lowerQuery) || mainSectionName.includes(lowerQuery)) {
               relevanceScore = 500;
-            } else if (content.startsWith(lowerQuery)) {
+            } 
+            // Content matching
+            else if (content.startsWith(lowerQuery)) {
               relevanceScore = 200;
             } else if (content.includes(` ${lowerQuery}`) || content.includes(`${lowerQuery} `)) {
               relevanceScore = 100;
@@ -132,6 +149,7 @@ export default function SearchScreen() {
         }
       }
 
+      // Sort by relevance
       foundResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
       setResults(foundResults);
@@ -145,6 +163,9 @@ export default function SearchScreen() {
     }
   }, []);
 
+  /**
+   * Trigger search when debounced query changes
+   */
   useEffect(() => {
     if (debouncedQuery.trim()) {
       performSearch(debouncedQuery);
@@ -154,6 +175,9 @@ export default function SearchScreen() {
     }
   }, [debouncedQuery, performSearch]);
 
+  /**
+   * Load recent searches from AsyncStorage
+   */
   const loadRecentSearches = async () => {
     try {
       const stored = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
@@ -170,6 +194,9 @@ export default function SearchScreen() {
     }
   };
 
+  /**
+   * Save recent search to AsyncStorage
+   */
   const saveRecentSearch = async (query: string) => {
     try {
       const trimmed = query.trim();
@@ -187,7 +214,20 @@ export default function SearchScreen() {
     }
   };
 
-  const clearRecentSearches = async () => {
+  /**
+   * Clear all recent searches
+   */
+  const clearRecentSearches = useCallback(async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
     try {
       await AsyncStorage.removeItem(RECENT_SEARCHES_KEY);
       setRecentSearches([]);
@@ -196,9 +236,22 @@ export default function SearchScreen() {
         console.log('Error clearing recent searches:', error);
       }
     }
-  };
+  }, []);
 
-  const handleResultPress = (id: string) => {
+  /**
+   * Handle result press with haptic feedback
+   */
+  const handleResultPress = useCallback((id: string) => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
     try {
       saveRecentSearch(searchQuery);
       const route = getItemRoute(id);
@@ -208,19 +261,45 @@ export default function SearchScreen() {
         console.log('Error navigating to result:', error);
       }
     }
-  };
+  }, [searchQuery, router]);
 
-  const handleRecentSearchPress = (query: string) => {
+  /**
+   * Handle recent search press
+   */
+  const handleRecentSearchPress = useCallback((query: string) => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
     setSearchQuery(query);
-  };
+  }, []);
 
-  const handleClearInput = () => {
+  /**
+   * Clear search input
+   */
+  const handleClearInput = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
     setSearchQuery('');
     setResults([]);
-  };
+    Keyboard.dismiss();
+  }, []);
 
   const showRecentSearches = !searchQuery.trim() && recentSearches.length > 0;
   const showEmptyState = !searchQuery.trim() && recentSearches.length === 0;
+  const showNoResults = !isSearching && debouncedQuery.length > 0 && results.length === 0;
 
   return (
     <>
@@ -230,10 +309,22 @@ export default function SearchScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
+          headerShadowVisible: false,
         }}
       />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.primary + "20" }]}>
+        {/* Search Bar */}
+        <Animated.View 
+          entering={FadeInDown.delay(50).springify()}
+          style={[
+            styles.searchBar, 
+            { 
+              backgroundColor: colors.card, 
+              borderColor: colors.primary + "20",
+              ...shadows.small,
+            }
+          ]}
+        >
           <IconSymbol
             ios_icon_name="magnifyingglass"
             android_material_icon_name="search"
@@ -249,12 +340,14 @@ export default function SearchScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
+            clearButtonMode="never"
             accessibilityLabel="Search input"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
               onPress={handleClearInput}
               style={styles.clearButton}
+              activeOpacity={0.6}
               accessibilityLabel="Clear search"
               accessibilityRole="button"
             >
@@ -266,21 +359,27 @@ export default function SearchScreen() {
               />
             </TouchableOpacity>
           )}
-        </View>
+        </Animated.View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
+          {/* Recent Searches */}
           {showRecentSearches && (
-            <View style={styles.recentContainer}>
+            <Animated.View 
+              style={styles.recentContainer}
+              entering={FadeIn.duration(400)}
+            >
               <View style={styles.recentHeader}>
                 <Text style={[styles.recentTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
                   Recent Searches
                 </Text>
                 <TouchableOpacity
                   onPress={clearRecentSearches}
+                  activeOpacity={0.6}
                   accessibilityLabel="Clear recent searches"
                   accessibilityRole="button"
                 >
@@ -290,10 +389,21 @@ export default function SearchScreen() {
                 </TouchableOpacity>
               </View>
               {recentSearches.map((query, index) => (
-                <React.Fragment key={index}>
+                <Animated.View
+                  key={`recent-${index}`}
+                  entering={FadeInDown.delay(50 + index * 30).springify()}
+                >
                   <TouchableOpacity
-                    style={[styles.recentItem, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}
+                    style={[
+                      styles.recentItem, 
+                      { 
+                        backgroundColor: colors.card, 
+                        borderColor: colors.primary + "15",
+                        ...shadows.small,
+                      }
+                    ]}
                     onPress={() => handleRecentSearchPress(query)}
+                    activeOpacity={0.7}
                     accessibilityLabel={`Search for ${query}`}
                     accessibilityRole="button"
                   >
@@ -307,13 +417,17 @@ export default function SearchScreen() {
                       {query}
                     </Text>
                   </TouchableOpacity>
-                </React.Fragment>
+                </Animated.View>
               ))}
-            </View>
+            </Animated.View>
           )}
 
+          {/* Empty State */}
           {showEmptyState && (
-            <View style={styles.emptyState}>
+            <Animated.View 
+              style={styles.emptyState}
+              entering={FadeIn.duration(400)}
+            >
               <IconSymbol
                 ios_icon_name="magnifyingglass"
                 android_material_icon_name="search"
@@ -324,43 +438,80 @@ export default function SearchScreen() {
                 Search the Guide
               </Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
-                Try searching for &apos;Constitution&apos;, &apos;federalism&apos;, or &apos;founders&apos;
+                Try searching for 'Constitution', 'federalism', or 'founders'
               </Text>
-            </View>
+            </Animated.View>
           )}
 
-          {!isSearching && debouncedQuery.length > 0 && results.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyStateText, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}>
-                No results found. Try another word or phrase.
+          {/* No Results */}
+          {showNoResults && (
+            <Animated.View 
+              style={styles.emptyState}
+              entering={FadeIn.duration(400)}
+            >
+              <IconSymbol
+                ios_icon_name="exclamationmark.magnifyingglass"
+                android_material_icon_name="search_off"
+                size={64}
+                color={colors.textSecondary}
+              />
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
+                No results found for "{debouncedQuery}"
               </Text>
-            </View>
+              <Text style={[styles.emptyStateHint, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}>
+                Try another word or phrase
+              </Text>
+            </Animated.View>
           )}
 
+          {/* Search Results */}
           {results.length > 0 && (
             <View style={styles.resultsContainer}>
-              <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>
-                {results.length} {results.length === 1 ? 'result' : 'results'}
-              </Text>
+              <Animated.View entering={FadeInDown.delay(50).springify()}>
+                <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>
+                  {results.length} {results.length === 1 ? 'result' : 'results'}
+                </Text>
+              </Animated.View>
               {results.map((result, index) => (
-                <React.Fragment key={index}>
+                <Animated.View
+                  key={`result-${result.id}-${index}`}
+                  entering={FadeInDown.delay(100 + index * 30).springify()}
+                >
                   <TouchableOpacity
-                    style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.primary + "15" }]}
+                    style={[
+                      styles.resultCard, 
+                      { 
+                        backgroundColor: colors.card, 
+                        borderColor: colors.primary + "15",
+                        ...shadows.small,
+                      }
+                    ]}
                     onPress={() => handleResultPress(result.id)}
+                    activeOpacity={0.7}
                     accessibilityLabel={`Open ${result.title}`}
                     accessibilityRole="button"
+                    accessibilityHint={result.breadcrumb}
                   >
-                    <Text style={[styles.resultTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
+                    <Text 
+                      style={[styles.resultTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}
+                      numberOfLines={2}
+                    >
                       {result.title}
                     </Text>
-                    <Text style={[styles.resultBreadcrumb, { color: colors.textSecondary, fontSize: 13 * textMultiplier }]}>
+                    <Text 
+                      style={[styles.resultBreadcrumb, { color: colors.textSecondary, fontSize: 12 * textMultiplier }]}
+                      numberOfLines={1}
+                    >
                       {result.breadcrumb}
                     </Text>
-                    <Text style={[styles.resultSnippet, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}>
+                    <Text 
+                      style={[styles.resultSnippet, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}
+                      numberOfLines={3}
+                    >
                       {result.snippet}
                     </Text>
                   </TouchableOpacity>
-                </React.Fragment>
+                </Animated.View>
               ))}
             </View>
           )}
@@ -383,19 +534,14 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'android' ? 24 : 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    lineHeight: 23.2,
+    lineHeight: 24,
   },
   clearButton: {
     padding: 4,
@@ -422,89 +568,95 @@ const styles = StyleSheet.create({
   },
   recentTitle: {
     fontSize: 17,
-    fontWeight: '600',
-    lineHeight: 24.65,
+    fontWeight: '700',
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   clearText: {
     fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 20.3,
+    fontWeight: '700',
+    lineHeight: 20,
   },
   recentItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 8,
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    minHeight: 56,
   },
   recentText: {
     fontSize: 16,
-    lineHeight: 23.2,
+    lineHeight: 24,
+    flex: 1,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 60,
+    paddingHorizontal: 32,
   },
   emptyStateText: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginTop: 16,
+  },
+  emptyStateHint: {
     fontSize: 14,
     textAlign: 'center',
-    lineHeight: 20.3,
+    lineHeight: 20,
+    marginTop: 8,
+    opacity: 0.8,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
-    lineHeight: 29,
+    lineHeight: 28,
+    letterSpacing: 0.3,
   },
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
-    lineHeight: 23.2,
+    lineHeight: 24,
   },
   resultsContainer: {
     marginTop: 8,
   },
   resultsCount: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '800',
     marginBottom: 12,
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    lineHeight: 18.85,
+    letterSpacing: 1.5,
+    lineHeight: 18,
   },
   resultCard: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   resultTitle: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 6,
-    lineHeight: 24.65,
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   resultBreadcrumb: {
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 8,
-    lineHeight: 18.85,
+    lineHeight: 18,
+    opacity: 0.8,
   },
   resultSnippet: {
     fontSize: 14,
-    lineHeight: 20.3,
+    lineHeight: 21,
+    opacity: 0.85,
   },
 });

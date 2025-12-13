@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,6 +14,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  FadeInDown,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -27,13 +27,38 @@ interface QuickButton {
 
 /**
  * Quick Access Grid Component
- * Displays a grid of quick action buttons with beautiful animations
+ * 
+ * Displays a 3-column grid of quick action buttons for navigation.
+ * 
+ * Features:
+ * - 6 quick access buttons in a responsive grid
+ * - Animated press feedback
+ * - Haptic feedback on tap
+ * - Gradient accents
+ * - Theme-aware styling
+ * - Staggered entrance animations
+ * 
+ * @example
+ * ```tsx
+ * <QuickAccessGrid />
+ * ```
+ * 
+ * Available actions:
+ * - Map (US States & Regions)
+ * - Quiz (Test your knowledge)
+ * - Search (Find content)
+ * - Glossary (Key terms)
+ * - Favorites (Saved items)
+ * - Settings (App preferences)
  */
 export default function QuickAccessGrid() {
   const { colors, shadows } = useTheme();
   const router = useRouter();
 
-  const buttons: QuickButton[] = [
+  /**
+   * Quick access buttons configuration
+   */
+  const buttons: QuickButton[] = useMemo(() => [
     { 
       id: "map", 
       label: "Map", 
@@ -70,9 +95,12 @@ export default function QuickAccessGrid() {
       icon: "settings", 
       route: "/(tabs)/settings"
     },
-  ];
+  ], []);
 
-  const handlePress = (button: QuickButton) => {
+  /**
+   * Handle button press with haptic feedback and navigation
+   */
+  const handlePress = useCallback((button: QuickButton) => {
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -84,19 +112,20 @@ export default function QuickAccessGrid() {
     }
     
     try {
-      console.log('Quick Access navigating to:', button.route);
       router.push(button.route as any);
     } catch (error) {
-      console.error(`Navigation error for ${button.label}:`, error);
+      if (__DEV__) {
+        console.error(`Navigation error for ${button.label}:`, error);
+      }
     }
-  };
+  }, [router]);
 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
         {buttons.map((button, index) => (
           <QuickButtonItem
-            key={`quick-${button.id}-${index}`}
+            key={button.id}
             button={button}
             index={index}
             colors={colors}
@@ -110,9 +139,10 @@ export default function QuickAccessGrid() {
 }
 
 /**
- * Individual Quick Button Component with micro-interactions
+ * Individual Quick Button Component
+ * Memoized for performance - only re-renders when props change
  */
-function QuickButtonItem({
+const QuickButtonItem = React.memo(function QuickButtonItem({
   button,
   index,
   colors,
@@ -131,77 +161,82 @@ function QuickButtonItem({
     transform: [{ scale: scale.value }],
   }));
 
-  const handleIn = () => {
+  const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.92, { damping: 12, stiffness: 300 });
-  };
+  }, [scale]);
   
-  const handleOut = () => {
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 12, stiffness: 200 });
-  };
+  }, [scale]);
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      onPressIn={handleIn}
-      onPressOut={handleOut}
-      activeOpacity={1}
-      style={styles.touchable}
-      accessibilityLabel={button.label}
-      accessibilityRole="button"
-      accessibilityHint={`Navigate to ${button.label}`}
+    <Animated.View
+      style={styles.touchableWrapper}
+      entering={FadeInDown.delay(index * 50).springify()}
     >
-      <Animated.View 
-        style={[
-          styles.button,
-          {
-            backgroundColor: colors.card,
-            ...shadows.medium,
-          },
-          animatedStyle
-        ]}
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        style={styles.touchable}
+        accessibilityLabel={button.label}
+        accessibilityRole="button"
+        accessibilityHint={`Navigate to ${button.label}`}
       >
-        {/* Top gradient accent */}
-        <LinearGradient
-          colors={[
-            colors.primary + '30',
-            colors.primary + '10',
-            colors.primary + '00',
+        <Animated.View 
+          style={[
+            styles.button,
+            {
+              backgroundColor: colors.card,
+              ...shadows.medium,
+            },
+            animatedStyle
           ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientAccent}
-        />
-
-        {/* Icon container with gradient background */}
-        <View style={styles.iconWrapper}>
+        >
+          {/* Top gradient accent */}
           <LinearGradient
             colors={[
-              colors.primary + '20',
-              colors.highlight,
+              colors.primary + '30',
+              colors.primary + '10',
+              colors.primary + '00',
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.iconBackground}
-          >
-            <MaterialIcons
-              name={button.icon}
-              size={32}
-              color={colors.primary}
-            />
-          </LinearGradient>
-        </View>
+            style={styles.gradientAccent}
+          />
 
-        <Text 
-          style={[styles.label, { color: colors.text }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {button.label}
-        </Text>
-      </Animated.View>
-    </TouchableOpacity>
+          {/* Icon container with gradient background */}
+          <View style={styles.iconWrapper}>
+            <LinearGradient
+              colors={[
+                colors.primary + '20',
+                colors.highlight,
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconBackground}
+            >
+              <MaterialIcons
+                name={button.icon}
+                size={32}
+                color={colors.primary}
+              />
+            </LinearGradient>
+          </View>
+
+          <Text 
+            style={[styles.label, { color: colors.text }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {button.label}
+          </Text>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -214,8 +249,11 @@ const styles = StyleSheet.create({
     rowGap: 12,
     columnGap: 12,
   },
-  touchable: {
+  touchableWrapper: {
     width: "30%", // 3 columns: (100% - 2 gaps) / 3
+  },
+  touchable: {
+    width: "100%",
   },
   button: {
     aspectRatio: 1,

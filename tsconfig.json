@@ -1,23 +1,35 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    // Enable strict type checking for better code quality and error detection
     "strict": true,
+    
+    // Set base directory for resolving non-relative module names
     "baseUrl": ".",
+    
+    // Use React's new JSX transform (React 17+)
     "jsx": "react-jsx",
+    
+    // Path mappings for cleaner imports
+    // Allows using @/ instead of relative paths (e.g., @/components instead of ../../components)
     "paths": {
       "@/*": [
         "./*"
       ]
     }
   },
+  
+  // Files and patterns to include in compilation
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
-    "workbox-config.js",
+    "**/*.ts",           // All TypeScript files
+    "**/*.tsx",          // All TypeScript React files
+    ".expo/types/**/*.ts", // Expo-generated type definitions
+    "expo-env.d.ts",     // Expo environment type definitions
+    "workbox-config.js"  // Service worker configuration
   ],
+  
+  // Directories to exclude from compilation
   "exclude": [
-    "node_modules"
+    "node_modules"       // Exclude all dependencies
   ]
 }

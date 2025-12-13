@@ -1,28 +1,76 @@
+/**
+ * Land and Life Data
+ * 
+ * America's geography, people, and heritage.
+ * 
+ * This module contains content about:
+ * - Geography and Scale (Continental expanse, regions, natural features)
+ * - Natural Wealth (Resources, agriculture, conservation)
+ * - The American People (Immigration, diversity, shared identity)
+ * - Defense and Stewardship (National defense, environmental care, civic responsibility)
+ * - Chronicle of the Republic (Founding era, expansion, modern America)
+ * - Stewards and Shapers (Founders, reformers, innovators)
+ * - Unity and Continuance (E Pluribus Unum, peaceful transitions, future generations)
+ * 
+ * @module data/landlifeData
+ */
 
+/**
+ * Subsection - Individual content item
+ */
 export interface SubSection {
+  /** Unique identifier for the subsection */
   id: string;
+  /** Display title */
   title: string;
+  /** Main content text */
   content: string;
+  /** Optional full text content (for documents) */
   fullText?: string;
+  /** Optional context/background information */
   context?: string;
+  /** Optional image URL */
   imageUrl?: string;
 }
 
+/**
+ * Section - Group of related subsections
+ */
 export interface Section {
+  /** Unique identifier for the section */
   id: string;
+  /** Display title */
   title: string;
+  /** Section description */
   description: string;
+  /** Array of subsections within this section */
   subsections: SubSection[];
 }
 
+/**
+ * Main Section - Top-level content category
+ */
 export interface MainSection {
+  /** Unique identifier for the main section */
   id: string;
+  /** Display title */
   title: string;
+  /** Icon name for visual representation */
   icon: string;
+  /** Section description */
   description: string;
+  /** Array of sections within this main section */
   sections: Section[];
 }
 
+/**
+ * Land and Life Section Content
+ * 
+ * Explores America's physical landscape, natural resources, diverse people,
+ * and civic responsibilities. Covers 7 major themes with 21 total subsections.
+ * 
+ * @constant
+ */
 export const landlifeData: MainSection = {
   id: "land-life",
     title: "Land and Life",

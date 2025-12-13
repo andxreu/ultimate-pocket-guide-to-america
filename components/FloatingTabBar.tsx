@@ -1,11 +1,11 @@
-
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  interpolate,
   withTiming,
 } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -36,56 +35,101 @@ interface FloatingTabBarProps {
 }
 
 /**
- * Premium Floating Tab Bar with glassmorphism and smooth animations
+ * Premium Floating Tab Bar Component
+ * 
+ * A beautiful glassmorphic tab bar with:
+ * - Smooth animated indicator that follows active tab
+ * - Haptic feedback on tab press
+ * - Theme-aware glassmorphism effect
+ * - Gradient accents and polish
+ * - Smart tab matching algorithm
+ * - Micro-interactions on press
+ * - Accessibility support
+ * - **FIXED: Home button always works, even from nested screens**
+ * 
+ * @example
+ * ```tsx
+ * <FloatingTabBar
+ *   tabs={[
+ *     { name: 'home', route: '/', icon: 'home', label: 'Home' },
+ *     { name: 'search', route: '/search', icon: 'search', label: 'Search' },
+ *   ]}
+ * />
+ * ```
  */
 export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { colors, isDark, shadows, animations } = useTheme();
-  const animatedValue = useSharedValue(0);
+  const { colors, isDark, shadows } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const animatedIndex = useSharedValue(0);
 
   /**
-   * Determine active tab index with simplified matching logic
+   * Determine active tab index with smart matching
+   * Uses scoring system to find best matching tab for current route
    */
-  const activeTabIndex = React.useMemo(() => {
-    // Direct pathname matching
-    for (let i = 0; i < tabs.length; i++) {
-      const tabRoute = String(tabs[i].route);
-      
-      // Exact match
-      if (pathname === tabRoute) {
-        return i;
+  const activeTabIndex = useMemo(() => {
+    let bestMatch = -1;
+    let bestMatchScore = 0;
+
+    tabs.forEach((tab, index) => {
+      let score = 0;
+
+      // Exact match (highest priority)
+      if (pathname === tab.route) {
+        score = 100;
+      } 
+      // Route starts with tab route
+      else if (pathname.startsWith(tab.route as string)) {
+        score = 80;
+      } 
+      // Pathname includes tab name
+      else if (pathname.includes(tab.name)) {
+        score = 60;
+      } 
+      // Nested tab route match
+      else if (tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
+        score = 40;
       }
-      
-      // Home route special case
-      if (tabs[i].name === 'home' && (pathname === '/' || pathname.includes('(home)'))) {
-        return i;
+
+      if (score > bestMatchScore) {
+        bestMatchScore = score;
+        bestMatch = index;
       }
-      
-      // Check if pathname includes the tab name
-      if (pathname.includes(`/${tabs[i].name}`)) {
-        return i;
-      }
-    }
-    
-    // Default to first tab (home)
-    return 0;
+    });
+
+    return bestMatch >= 0 ? bestMatch : 0;
   }, [pathname, tabs]);
 
   /**
-   * Animate indicator immediately on tab change
+   * Animate indicator on tab change
    */
-  useEffect(() => {
-    // Use withTiming for instant response, then spring for smoothness
-    animatedValue.value = withTiming(activeTabIndex, {
-      duration: 150,
+  React.useEffect(() => {
+    animatedIndex.value = withSpring(activeTabIndex, {
+      damping: 20,
+      stiffness: 120,
+      mass: 0.5,
     });
-  }, [activeTabIndex, animatedValue]);
+  }, [activeTabIndex, animatedIndex]);
 
   /**
-   * Handle tab press with immediate navigation
+   * Handle tab press with haptic feedback
+   * 
+   * FIXED: Home button now always navigates home, even if already on home section.
+   * This ensures users can return to home from any nested screen (like detail pages).
+   * 
+   * Other tabs skip navigation if already active to prevent unnecessary re-renders.
    */
-  const handleTabPress = useCallback((route: Href, index: number) => {
+  const handleTabPress = useCallback((route: Href, index: number, tabName: string) => {
+    // Special handling for home button - ALWAYS navigate home
+    // This allows users to return to home from nested screens
+    const isHomeTab = tabName === 'home';
+    
+    // For non-home tabs, skip if already on this tab
+    if (!isHomeTab && index === activeTabIndex) {
+      return;
+    }
+
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -95,44 +139,41 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
         console.log('Haptics error:', error);
       }
     }
-    
-    // Update animation immediately
-    animatedValue.value = withTiming(index, { duration: 150 });
-    
-    // Navigate
-    try {
-      console.log('Navigating to:', route);
-      router.push(route);
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
-  }, [router, animatedValue]);
 
-  const tabWidth = 100 / tabs.length;
+    // Use replace for home to clear navigation stack
+    // Use push for other tabs to maintain history
+    if (isHomeTab) {
+      router.replace(route);
+    } else {
+      router.push(route);
+    }
+  }, [router, activeTabIndex]);
+
+  // Calculate tab dimensions
+  const tabCount = tabs.length;
+  const tabWidth = screenWidth / tabCount;
+  const indicatorWidth = tabWidth * 0.9; // 90% of tab width
+  const indicatorOffset = (tabWidth - indicatorWidth) / 2;
 
   /**
-   * Animated indicator style
+   * Animated indicator style with pixel-based positioning
    */
   const indicatorStyle = useAnimatedStyle(() => {
     return {
       transform: [
         {
-          translateX: interpolate(
-            animatedValue.value,
-            [0, tabs.length - 1],
-            [0, (tabs.length - 1) * (100 / tabs.length)]
-          ),
+          translateX: animatedIndex.value * tabWidth + indicatorOffset,
         },
       ],
     };
   });
 
   /**
-   * Get icon color
+   * Get icon color based on active state
    */
-  const getIconColor = (isActive: boolean) => {
+  const getIconColor = useCallback((isActive: boolean) => {
     return isActive ? colors.primary : colors.textSecondary;
-  };
+  }, [colors.primary, colors.textSecondary]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -140,7 +181,7 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
       <BlurView
         intensity={isDark ? 80 : 60}
         tint={isDark ? 'dark' : 'light'}
-        style={[styles.blurContainer]}
+        style={styles.blurContainer}
       >
         <LinearGradient
           colors={
@@ -162,13 +203,13 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
             style={styles.topBorder}
           />
 
-          {/* Animated indicator - now a pill shape */}
+          {/* Animated indicator - pill shape */}
           <Animated.View
             style={[
               styles.indicatorPill,
               indicatorStyle,
               { 
-                width: `${tabWidth - 4}%`,
+                width: indicatorWidth,
               },
             ]}
           >
@@ -193,11 +234,10 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
                 <TabButton
                   key={`tab-${tab.name}-${index}`}
                   tab={tab}
-                  index={index}
                   isActive={isActive}
                   width={tabWidth}
                   iconColor={getIconColor(isActive)}
-                  onPress={() => handleTabPress(tab.route, index)}
+                  onPress={() => handleTabPress(tab.route, index, tab.name)}
                 />
               );
             })}
@@ -210,38 +250,37 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
 
 /**
  * Individual tab button component with micro-interactions
+ * Memoized for performance - only re-renders when props change
  */
 interface TabButtonProps {
   tab: TabBarItem;
-  index: number;
   isActive: boolean;
   width: number;
   iconColor: string;
   onPress: () => void;
 }
 
-const TabButton = React.memo(({ tab, index, isActive, width, iconColor, onPress }: TabButtonProps) => {
-  const { colors } = useTheme();
+const TabButton = React.memo(({ tab, isActive, width, iconColor, onPress }: TabButtonProps) => {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     scale.value = withTiming(0.85, { duration: 100 });
-  };
+  }, [scale]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, {
       damping: 12,
       stiffness: 200,
     });
-  };
+  }, [scale]);
 
   return (
     <TouchableOpacity
-      style={[styles.tab, { width: `${width}%` }]}
+      style={[styles.tab, { width }]}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -249,6 +288,7 @@ const TabButton = React.memo(({ tab, index, isActive, width, iconColor, onPress 
       accessibilityLabel={`Navigate to ${tab.label}`}
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
+      accessibilityHint={isActive ? 'Currently selected' : 'Double tap to navigate'}
     >
       <Animated.View style={[styles.tabContent, animatedStyle]}>
         <MaterialIcons
@@ -301,7 +341,7 @@ const styles = StyleSheet.create({
   indicatorPill: {
     position: 'absolute',
     top: 8,
-    left: '2%',
+    left: 0,
     height: 48,
     borderRadius: 24,
     zIndex: 1,

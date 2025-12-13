@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import * as Haptics from "expo-haptics";
 import { 
   Pressable, 
@@ -18,16 +18,96 @@ import Reanimated from "react-native-reanimated";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useTheme } from "@/contexts/ThemeContext";
 
+// Suppress Reanimated logger warnings
 configureReanimatedLogger({ strict: false });
+
+interface ListItemProps {
+  /**
+   * Unique identifier for the list item
+   */
+  listId: string;
+  /**
+   * Optional delete handler
+   */
+  onDelete?: (id: string) => void;
+  /**
+   * Optional press handler
+   */
+  onPress?: (id: string) => void;
+}
 
 /**
  * ListItem Component
- * Swipeable list item with delete action
+ * 
+ * Swipeable list item with delete action and smooth animations.
+ * 
+ * Features:
+ * - Swipe-to-delete with red background
+ * - Haptic feedback on delete
+ * - Theme-aware styling
+ * - Fade-in entrance animation
+ * - Optional press handler
+ * 
+ * @example
+ * ```tsx
+ * <ListItem 
+ *   listId="item-1"
+ *   onDelete={(id) => handleDelete(id)}
+ *   onPress={(id) => handlePress(id)}
+ * />
+ * ```
  */
-export default function ListItem({ listId }: { listId: string }) {
-  const { colors, isDark } = useTheme();
+export default function ListItem({ 
+  listId, 
+  onDelete,
+  onPress 
+}: ListItemProps) {
+  const { colors, shadows } = useTheme();
   
-  const RightAction = (
+  /**
+   * Handle delete with haptic feedback
+   */
+  const handleDelete = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
+    if (onDelete) {
+      onDelete(listId);
+    } else if (__DEV__) {
+      console.log('Delete pressed for:', listId);
+    }
+  }, [listId, onDelete]);
+
+  /**
+   * Handle item press with haptic feedback
+   */
+  const handlePress = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
+    if (onPress) {
+      onPress(listId);
+    }
+  }, [listId, onPress]);
+  
+  /**
+   * Render right swipe action (delete)
+   */
+  const RightAction = useCallback((
     prog: SharedValue<number>,
     drag: SharedValue<number>
   ) => {
@@ -37,28 +117,21 @@ export default function ListItem({ listId }: { listId: string }) {
     
     return (
       <Pressable
-        onPress={() => {
-          if (Platform.OS !== 'web') {
-            try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            } catch (error) {
-              if (__DEV__) {
-                console.log('Haptics error:', error);
-              }
-            }
-          }
-          console.log("delete");
-        }}
+        onPress={handleDelete}
+        style={{ flex: 1 }}
+        accessibilityLabel="Delete item"
+        accessibilityRole="button"
       >
         <Reanimated.View style={[styleAnimation, styles.rightAction]}>
           <MaterialIcons name="delete" size={24} color="white" />
+          <Text style={styles.deleteText}>Delete</Text>
         </Reanimated.View>
       </Pressable>
     );
-  };
+  }, [handleDelete]);
   
   return (
-    <Animated.View entering={FadeIn}>
+    <Animated.View entering={FadeIn.duration(400)}>
       <ReanimatedSwipeable
         key={listId}
         friction={2}
@@ -67,44 +140,84 @@ export default function ListItem({ listId }: { listId: string }) {
         renderRightActions={RightAction}
         overshootRight={false}
       >
-        <View 
-          style={[
+        <Pressable
+          onPress={onPress ? handlePress : undefined}
+          style={({ pressed }) => [
             styles.listItemContainer,
             {
               borderBottomColor: colors.secondary + '40',
-              backgroundColor: colors.card,
+              backgroundColor: pressed ? colors.highlight : colors.card,
+              ...shadows.small,
             }
           ]}
+          accessibilityLabel={`Item: ${listId}`}
+          accessibilityRole={onPress ? "button" : undefined}
         >
           <Text 
             style={[
               styles.listItemText, 
               { color: colors.text }
             ]}
+            numberOfLines={1}
           >
             {listId}
           </Text>
-        </View>
+        </Pressable>
       </ReanimatedSwipeable>
     </Animated.View>
   );
 }
 
+interface NicknameCircleProps {
+  /**
+   * Nickname to display (first letter will be shown)
+   */
+  nickname: string;
+  /**
+   * Background color for the circle
+   */
+  color: string;
+  /**
+   * Index in the list (for overlap positioning)
+   * @default 0
+   */
+  index?: number;
+  /**
+   * Show ellipsis instead of initial
+   * @default false
+   */
+  isEllipsis?: boolean;
+}
+
 /**
  * NicknameCircle Component
- * Displays initials in a colored circle
+ * 
+ * Displays initials or ellipsis in a colored circle.
+ * Useful for showing user avatars or item indicators.
+ * 
+ * Features:
+ * - Shows first letter of nickname in uppercase
+ * - Theme-aware border color
+ * - Overlap support for multiple circles
+ * - Ellipsis mode for overflow indicators
+ * 
+ * @example
+ * ```tsx
+ * <NicknameCircle nickname="John" color="#FF6B6B" />
+ * 
+ * <View style={{ flexDirection: 'row' }}>
+ *   <NicknameCircle nickname="Alice" color="#4ECDC4" index={0} />
+ *   <NicknameCircle nickname="Bob" color="#45B7D1" index={1} />
+ *   <NicknameCircle nickname="" color="#96CEB4" index={2} isEllipsis />
+ * </View>
+ * ```
  */
 export const NicknameCircle = ({
   nickname,
   color,
   index = 0,
   isEllipsis = false,
-}: {
-  nickname: string;
-  color: string;
-  index?: number;
-  isEllipsis?: boolean;
-}) => {
+}: NicknameCircleProps) => {
   const { isDark } = useTheme();
   
   return (
@@ -116,10 +229,12 @@ export const NicknameCircle = ({
           backgroundColor: color,
           borderColor: isDark ? "#000000" : "#ffffff",
           marginLeft: index > 0 ? -6 : 0,
+          zIndex: 1000 - index, // Ensures proper stacking
         },
       ]}
+      accessibilityLabel={isEllipsis ? "More users" : `User ${nickname}`}
     >
-      {isEllipsis ? "..." : nickname[0].toUpperCase()}
+      {isEllipsis ? "..." : nickname[0]?.toUpperCase() || "?"}
     </Text>
   );
 };
@@ -128,31 +243,42 @@ const styles = StyleSheet.create({
   listItemContainer: {
     padding: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    minHeight: 56,
+    justifyContent: 'center',
   },
   listItemText: {
     fontSize: 16,
     fontWeight: '500',
+    lineHeight: 24,
   },
   rightAction: {
     width: 200,
-    height: 65,
     backgroundColor: '#DC2626',
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 20,
+    gap: 4,
+  },
+  deleteText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   nicknameCircle: {
     fontSize: 12,
     color: "white",
-    borderWidth: 1,
+    fontWeight: '700',
+    borderWidth: 2,
     borderRadius: 16,
-    padding: 1,
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: Platform.select({ ios: 24, android: 26, default: 24 }),
+    overflow: 'hidden',
   },
   ellipsisCircle: {
-    lineHeight: 0,
-    marginLeft: -6,
+    lineHeight: Platform.select({ ios: 0, android: 2, default: 0 }),
   },
 });

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +7,9 @@ import {
   ScrollView,
   TextInput,
   Platform,
+  Modal,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -16,39 +18,84 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { AppFooter } from '@/components/AppFooter';
 import { glossaryData, GlossaryTerm } from '@/data/glossaryData';
 import { findItemById } from '@/utils/findItemById';
+import Animated, { FadeIn, FadeInDown, SlideInUp } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
+/**
+ * Glossary Screen Component
+ * Searchable dictionary of civic terms with definitions and related topics
+ */
 export default function GlossaryScreen() {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const { getTextSizeMultiplier } = useTextSize();
   const router = useRouter();
   const textMultiplier = getTextSizeMultiplier();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTerm, setSelectedTerm] = useState<GlossaryTerm | null>(null);
 
-  const filteredTerms = searchQuery.trim()
-    ? glossaryData.filter(
-        (term) =>
-          term.term.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          term.definition.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : glossaryData;
+  /**
+   * Filter terms based on search query
+   * Memoized for performance
+   */
+  const filteredTerms = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return glossaryData;
+    
+    return glossaryData.filter(
+      (term) =>
+        term.term.toLowerCase().includes(query) ||
+        term.definition.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
-  const groupedTerms = filteredTerms.reduce((acc, term) => {
-    const firstLetter = term.term[0].toUpperCase();
-    if (!acc[firstLetter]) {
-      acc[firstLetter] = [];
+  /**
+   * Group terms alphabetically
+   * Memoized for performance
+   */
+  const groupedTerms = useMemo(() => {
+    return filteredTerms.reduce((acc, term) => {
+      const firstLetter = term.term[0].toUpperCase();
+      if (!acc[firstLetter]) {
+        acc[firstLetter] = [];
+      }
+      acc[firstLetter].push(term);
+      return acc;
+    }, {} as Record<string, GlossaryTerm[]>);
+  }, [filteredTerms]);
+
+  const letters = useMemo(() => Object.keys(groupedTerms).sort(), [groupedTerms]);
+
+  /**
+   * Handle term press with haptic feedback
+   */
+  const handleTermPress = useCallback((term: GlossaryTerm) => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
     }
-    acc[firstLetter].push(term);
-    return acc;
-  }, {} as Record<string, GlossaryTerm[]>);
-
-  const letters = Object.keys(groupedTerms).sort();
-
-  const handleTermPress = (term: GlossaryTerm) => {
+    Keyboard.dismiss();
     setSelectedTerm(term);
-  };
+  }, []);
 
-  const handleRelatedPress = (id: string, title: string) => {
+  /**
+   * Navigate to related topic
+   */
+  const handleRelatedPress = useCallback((id: string, title: string) => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    
     setSelectedTerm(null);
     const result = findItemById(id);
     if (result) {
@@ -61,13 +108,44 @@ export default function GlossaryScreen() {
         console.log('Item not found:', id);
       }
     }
-  };
+  }, [router]);
 
-  const handleCloseModal = () => {
+  /**
+   * Close modal with haptic feedback
+   */
+  const handleCloseModal = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
     setSelectedTerm(null);
-  };
+  }, []);
 
-  const getRelatedTopics = (relatedIds?: string[]) => {
+  /**
+   * Clear search with haptic feedback
+   */
+  const handleClearSearch = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    setSearchQuery('');
+  }, []);
+
+  /**
+   * Get related topics with error handling
+   */
+  const getRelatedTopics = useCallback((relatedIds?: string[]) => {
     if (!relatedIds || relatedIds.length === 0) return [];
     
     return relatedIds
@@ -82,7 +160,7 @@ export default function GlossaryScreen() {
         return null;
       })
       .filter(Boolean) as { id: string; title: string }[];
-  };
+  }, []);
 
   return (
     <>
@@ -92,10 +170,25 @@ export default function GlossaryScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.text,
+          headerShadowVisible: false,
         }}
       />
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.primary + "20" }]}>
+      <KeyboardAvoidingView 
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {/* Search Bar */}
+        <Animated.View 
+          entering={FadeInDown.delay(50).springify()}
+          style={[
+            styles.searchBar, 
+            { 
+              backgroundColor: colors.card, 
+              borderColor: colors.primary + "20",
+              ...shadows.small 
+            }
+          ]}
+        >
           <IconSymbol
             ios_icon_name="magnifyingglass"
             android_material_icon_name="search"
@@ -110,12 +203,15 @@ export default function GlossaryScreen() {
             onChangeText={setSearchQuery}
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="search"
+            clearButtonMode="never"
             accessibilityLabel="Search glossary terms"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
-              onPress={() => setSearchQuery('')}
+              onPress={handleClearSearch}
               style={styles.clearButton}
+              activeOpacity={0.6}
               accessibilityLabel="Clear search"
               accessibilityRole="button"
             >
@@ -127,14 +223,19 @@ export default function GlossaryScreen() {
               />
             </TouchableOpacity>
           )}
-        </View>
+        </Animated.View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {letters.length === 0 ? (
-            <View style={styles.emptyState}>
+            <Animated.View 
+              style={styles.emptyState}
+              entering={FadeIn.duration(400)}
+            >
               <IconSymbol
                 ios_icon_name="book.closed"
                 android_material_icon_name="menu_book"
@@ -144,37 +245,48 @@ export default function GlossaryScreen() {
               <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: 16 * textMultiplier }]}>
                 No terms match your search. Try a different word or clear the search box.
               </Text>
-            </View>
+            </Animated.View>
           ) : (
             <>
-              {letters.map((letter) => (
-                <React.Fragment key={letter}>
+              {letters.map((letter, letterIndex) => (
+                <Animated.View 
+                  key={letter}
+                  entering={FadeInDown.delay(100 + letterIndex * 30).springify()}
+                >
                   <View style={styles.letterSection}>
                     <Text style={[styles.letterHeader, { color: colors.primary }]}>
                       {letter}
                     </Text>
                     {groupedTerms[letter].map((term, index) => (
-                      <React.Fragment key={index}>
-                        <TouchableOpacity
-                          style={[styles.termCard, { backgroundColor: colors.card, borderColor: colors.primary + "10" }]}
-                          onPress={() => handleTermPress(term)}
-                          accessibilityLabel={`View definition of ${term.term}`}
-                          accessibilityRole="button"
+                      <TouchableOpacity
+                        key={`${letter}-${index}`}
+                        style={[
+                          styles.termCard, 
+                          { 
+                            backgroundColor: colors.card, 
+                            borderColor: colors.primary + "10",
+                            ...shadows.small 
+                          }
+                        ]}
+                        onPress={() => handleTermPress(term)}
+                        activeOpacity={0.7}
+                        accessibilityLabel={`View definition of ${term.term}`}
+                        accessibilityRole="button"
+                        accessibilityHint="Double tap to view full definition"
+                      >
+                        <Text style={[styles.termTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
+                          {term.term}
+                        </Text>
+                        <Text
+                          style={[styles.termDefinition, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}
+                          numberOfLines={2}
                         >
-                          <Text style={[styles.termTitle, { color: colors.text, fontSize: 17 * textMultiplier }]}>
-                            {term.term}
-                          </Text>
-                          <Text
-                            style={[styles.termDefinition, { color: colors.textSecondary, fontSize: 14 * textMultiplier }]}
-                            numberOfLines={2}
-                          >
-                            {term.definition}
-                          </Text>
-                        </TouchableOpacity>
-                      </React.Fragment>
+                          {term.definition}
+                        </Text>
+                      </TouchableOpacity>
                     ))}
                   </View>
-                </React.Fragment>
+                </Animated.View>
               ))}
             </>
           )}
@@ -182,16 +294,38 @@ export default function GlossaryScreen() {
           <AppFooter />
         </ScrollView>
 
-        {selectedTerm && (
-          <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+        {/* Term Detail Modal */}
+        <Modal
+          visible={selectedTerm !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCloseModal}
+        >
+          <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+            <Animated.View 
+              entering={SlideInUp.duration(300).springify()}
+              style={[
+                styles.modalContent, 
+                { 
+                  backgroundColor: colors.card,
+                  ...shadows.large 
+                }
+              ]}
+            >
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text, fontSize: 22 * textMultiplier }]}>
-                  {selectedTerm.term}
+                <Text 
+                  style={[
+                    styles.modalTitle, 
+                    { color: colors.text, fontSize: 22 * textMultiplier }
+                  ]}
+                  numberOfLines={2}
+                >
+                  {selectedTerm?.term}
                 </Text>
                 <TouchableOpacity
                   onPress={handleCloseModal}
                   style={styles.closeButton}
+                  activeOpacity={0.6}
                   accessibilityLabel="Close"
                   accessibilityRole="button"
                 >
@@ -204,49 +338,58 @@ export default function GlossaryScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={styles.modalScroll}>
+              <ScrollView 
+                style={styles.modalScroll}
+                showsVerticalScrollIndicator={false}
+              >
                 <Text style={[styles.modalDefinition, { color: colors.text, fontSize: 16 * textMultiplier }]}>
-                  {selectedTerm.definition}
+                  {selectedTerm?.definition}
                 </Text>
 
                 {(() => {
+                  if (!selectedTerm) return null;
                   const relatedTopics = getRelatedTopics(selectedTerm.relatedIds);
-                  if (relatedTopics.length > 0) {
-                    return (
-                      <View style={styles.relatedSection}>
-                        <Text style={[styles.relatedTitle, { color: colors.textSecondary }]}>
-                          Related Topics
-                        </Text>
-                        {relatedTopics.map((topic, index) => (
-                          <React.Fragment key={index}>
-                            <TouchableOpacity
-                              style={[styles.relatedButton, { borderColor: colors.primary, backgroundColor: colors.highlight }]}
-                              onPress={() => handleRelatedPress(topic.id, topic.title)}
-                              accessibilityLabel={`View ${topic.title}`}
-                              accessibilityRole="button"
-                            >
-                              <Text style={[styles.relatedButtonText, { color: colors.primary, fontSize: 15 * textMultiplier }]}>
-                                {topic.title}
-                              </Text>
-                              <IconSymbol
-                                ios_icon_name="arrow.right"
-                                android_material_icon_name="arrow_forward"
-                                size={16}
-                                color={colors.primary}
-                              />
-                            </TouchableOpacity>
-                          </React.Fragment>
-                        ))}
-                      </View>
-                    );
-                  }
-                  return null;
+                  if (relatedTopics.length === 0) return null;
+
+                  return (
+                    <View style={styles.relatedSection}>
+                      <Text style={[styles.relatedTitle, { color: colors.textSecondary }]}>
+                        Related Topics
+                      </Text>
+                      {relatedTopics.map((topic, index) => (
+                        <TouchableOpacity
+                          key={topic.id}
+                          style={[
+                            styles.relatedButton, 
+                            { 
+                              borderColor: colors.primary, 
+                              backgroundColor: colors.primary + '10' 
+                            }
+                          ]}
+                          onPress={() => handleRelatedPress(topic.id, topic.title)}
+                          activeOpacity={0.7}
+                          accessibilityLabel={`View ${topic.title}`}
+                          accessibilityRole="button"
+                        >
+                          <Text style={[styles.relatedButtonText, { color: colors.primary, fontSize: 15 * textMultiplier }]}>
+                            {topic.title}
+                          </Text>
+                          <IconSymbol
+                            ios_icon_name="arrow.right"
+                            android_material_icon_name="arrow_forward"
+                            size={16}
+                            color={colors.primary}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  );
                 })()}
               </ScrollView>
-            </View>
+            </Animated.View>
           </View>
-        )}
-      </View>
+        </Modal>
+      </KeyboardAvoidingView>
     </>
   );
 }
@@ -262,19 +405,14 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'android' ? 24 : 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    lineHeight: 23.2,
+    lineHeight: 24,
   },
   clearButton: {
     padding: 4,
@@ -294,31 +432,29 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   letterHeader: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
     marginBottom: 12,
-    lineHeight: 34.8,
+    lineHeight: 36,
+    letterSpacing: 0.5,
   },
   termCard: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   termTitle: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 6,
-    lineHeight: 24.65,
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   termDefinition: {
     fontSize: 14,
-    lineHeight: 20.3,
+    lineHeight: 21,
+    opacity: 0.85,
   },
   emptyState: {
     alignItems: 'center',
@@ -330,14 +466,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
-    lineHeight: 23.2,
+    lineHeight: 24,
   },
   modal: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -346,25 +478,22 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     maxHeight: '80%',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
+    borderRadius: 20,
+    padding: 24,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
+    gap: 12,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800',
     flex: 1,
-    lineHeight: 31.9,
+    lineHeight: 30,
+    letterSpacing: 0.3,
   },
   closeButton: {
     padding: 8,
@@ -372,45 +501,43 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: -8,
+    marginRight: -8,
   },
   modalScroll: {
     maxHeight: 400,
   },
   modalDefinition: {
     fontSize: 16,
-    lineHeight: 23.2,
+    lineHeight: 24,
     marginBottom: 20,
   },
   relatedSection: {
     marginTop: 8,
   },
   relatedTitle: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
     marginBottom: 12,
-    lineHeight: 18.85,
+    lineHeight: 18,
   },
   relatedButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 14,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 8,
-    minHeight: 44,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    minHeight: 56,
   },
   relatedButtonText: {
     fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 21.75,
+    fontWeight: '700',
+    lineHeight: 22,
     flex: 1,
+    letterSpacing: 0.2,
   },
 });

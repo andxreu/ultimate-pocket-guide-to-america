@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -12,13 +12,36 @@ import Animated, {
 } from "react-native-reanimated";
 
 interface FavoriteToggleProps {
+  /**
+   * Unique identifier for the item to favorite
+   */
   itemId: string;
+  /**
+   * Size of the star icon in pixels
+   * @default 24
+   */
   size?: number;
 }
 
 /**
  * FavoriteToggle Component
- * Animated star button to toggle favorite status
+ * 
+ * Animated star button to toggle favorite status with:
+ * - Smooth scale animation on press
+ * - Haptic feedback (medium for add, light for remove)
+ * - Accessible button behavior
+ * - Theme-aware colors
+ * - Generous hit slop for easy tapping
+ * 
+ * @example
+ * ```tsx
+ * <FavoriteToggle itemId="constitution" />
+ * 
+ * <FavoriteToggle itemId="declaration" size={28} />
+ * ```
+ * 
+ * @param itemId - Unique identifier for the item
+ * @param size - Icon size in pixels (default: 24)
  */
 export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
   const { colors } = useTheme();
@@ -39,9 +62,14 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
 
   const isCurrentlyFavorite = isFavorite(itemId);
 
-  const toggleFavorite = () => {
+  /**
+   * Toggle favorite status with animation and haptic feedback
+   */
+  const toggleFavorite = useCallback(() => {
     try {
-      if (isCurrentlyFavorite) {
+      const wasAlreadyFavorite = isCurrentlyFavorite;
+
+      if (wasAlreadyFavorite) {
         removeFavorite(itemId);
       } else {
         addFavorite(itemId);
@@ -49,17 +77,18 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
 
       // Pulse animation
       scale.value = withSequence(
-        withSpring(1.3, { damping: 10 }),
-        withSpring(1, { damping: 10 })
+        withSpring(1.3, { damping: 10, stiffness: 200 }),
+        withSpring(1, { damping: 10, stiffness: 200 })
       );
 
       // Haptic feedback
       if (Platform.OS !== 'web') {
         try {
-          Haptics.impactAsync(
-            isCurrentlyFavorite 
-              ? Haptics.ImpactFeedbackStyle.Light 
-              : Haptics.ImpactFeedbackStyle.Medium
+          // Success haptic for adding, light for removing
+          Haptics.notificationAsync(
+            wasAlreadyFavorite 
+              ? Haptics.NotificationFeedbackType.Warning  // Subtle for remove
+              : Haptics.NotificationFeedbackType.Success   // Satisfying for add
           );
         } catch (error) {
           if (__DEV__) {
@@ -72,7 +101,7 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
         console.log('Error toggling favorite:', error);
       }
     }
-  };
+  }, [isCurrentlyFavorite, itemId, addFavorite, removeFavorite, scale]);
 
   return (
     <TouchableOpacity
@@ -82,6 +111,7 @@ export function FavoriteToggle({ itemId, size = 24 }: FavoriteToggleProps) {
         isCurrentlyFavorite ? "Remove from favorites" : "Add to favorites"
       }
       accessibilityRole="button"
+      accessibilityState={{ selected: isCurrentlyFavorite }}
       activeOpacity={0.7}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
@@ -101,5 +131,7 @@ const styles = StyleSheet.create({
     padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 44,
+    minHeight: 44,
   },
 });

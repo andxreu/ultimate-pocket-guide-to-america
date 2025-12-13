@@ -29,10 +29,51 @@ interface ButtonProps {
   children: React.ReactNode;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  /**
+   * Optional icon to display before text
+   */
+  icon?: React.ReactNode;
+  /**
+   * Optional icon to display after text
+   */
+  iconRight?: React.ReactNode;
+  /**
+   * Accessibility label for screen readers
+   */
+  accessibilityLabel?: string;
+  /**
+   * Accessibility hint for screen readers
+   */
+  accessibilityHint?: string;
 }
 
 /**
- * Premium Button Component with theme support and animations
+ * Premium Button Component
+ * 
+ * A versatile button component with multiple variants, sizes, and built-in features:
+ * - Four variants: filled, outline, ghost, gradient
+ * - Three sizes: sm, md, lg
+ * - Haptic feedback on press
+ * - Loading state with spinner
+ * - Smooth scale animation
+ * - Theme-aware styling
+ * - Icon support (left and right)
+ * - Accessibility support
+ * 
+ * @example
+ * ```tsx
+ * <Button variant="filled" size="md" onPress={handlePress}>
+ *   Click Me
+ * </Button>
+ * 
+ * <Button variant="gradient" loading={isLoading}>
+ *   Submit
+ * </Button>
+ * 
+ * <Button variant="outline" icon={<Icon name="star" />}>
+ *   Favorite
+ * </Button>
+ * ```
  */
 export const Button: React.FC<ButtonProps> = ({
   onPress,
@@ -43,6 +84,10 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   style,
   textStyle,
+  icon,
+  iconRight,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const { colors, isDark, shadows } = useTheme();
   const scale = useSharedValue(1);
@@ -65,6 +110,7 @@ export const Button: React.FC<ButtonProps> = ({
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
+      gap: 8,
     };
 
     switch (variant) {
@@ -129,10 +175,12 @@ export const Button: React.FC<ButtonProps> = ({
    * Handle press with haptic feedback
    */
   const handlePressIn = () => {
-    scale.value = withSpring(0.96, {
-      damping: 15,
-      stiffness: 200,
-    });
+    if (!disabled && !loading) {
+      scale.value = withSpring(0.96, {
+        damping: 15,
+        stiffness: 200,
+      });
+    }
   };
 
   const handlePressOut = () => {
@@ -163,20 +211,24 @@ export const Button: React.FC<ButtonProps> = ({
           size="small"
         />
       ) : (
-        <Text
-          style={[
-            {
-              fontSize: sizeStyles[size].fontSize,
-              color: getTextColor(),
-              textAlign: "center",
-              fontWeight: "700",
-              letterSpacing: 0.5,
-            },
-            textStyle,
-          ]}
-        >
-          {children}
-        </Text>
+        <>
+          {icon && icon}
+          <Text
+            style={[
+              {
+                fontSize: sizeStyles[size].fontSize,
+                color: getTextColor(),
+                textAlign: "center",
+                fontWeight: "700",
+                letterSpacing: 0.5,
+              },
+              textStyle,
+            ]}
+          >
+            {children}
+          </Text>
+          {iconRight && iconRight}
+        </>
       )}
     </>
   );
@@ -189,6 +241,10 @@ export const Button: React.FC<ButtonProps> = ({
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           disabled={disabled || loading}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel || (typeof children === 'string' ? children : undefined)}
+          accessibilityHint={accessibilityHint}
+          accessibilityState={{ disabled: disabled || loading, busy: loading }}
           style={[
             getVariantStyle(),
             {
@@ -222,6 +278,10 @@ export const Button: React.FC<ButtonProps> = ({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled || loading}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel || (typeof children === 'string' ? children : undefined)}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: disabled || loading, busy: loading }}
         style={[
           getVariantStyle(),
           {

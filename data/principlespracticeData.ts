@@ -1,28 +1,81 @@
+/**
+ * Principles in Practice Data
+ * 
+ * How American principles operate in real world systems and civic life.
+ * 
+ * This module explores the practical application of constitutional principles:
+ * - Rule of Law - Laws apply to everyone equally
+ * - Checks and Balances - Preventing concentration of power
+ * - Federalism - Division of power between national and state governments
+ * - Civil Liberties - Individual rights and freedoms
+ * 
+ * Total: 4 sections with 8 subsections
+ * 
+ * @module data/principlespracticeData
+ */
 
+/**
+ * Subsection - Individual content item
+ */
 export interface SubSection {
+  /** Unique identifier for the subsection */
   id: string;
+  /** Display title */
   title: string;
+  /** Main content text */
   content: string;
+  /** Optional full text content (for documents) */
   fullText?: string;
+  /** Optional context/background information */
   context?: string;
+  /** Optional image URL */
   imageUrl?: string;
 }
 
+/**
+ * Section - Group of related subsections
+ */
 export interface Section {
+  /** Unique identifier for the section */
   id: string;
+  /** Display title */
   title: string;
+  /** Section description */
   description: string;
+  /** Array of subsections within this section */
   subsections: SubSection[];
 }
 
+/**
+ * Main Section - Top-level content category
+ */
 export interface MainSection {
+  /** Unique identifier for the main section */
   id: string;
+  /** Display title */
   title: string;
+  /** Icon name for visual representation */
   icon: string;
+  /** Section description */
   description: string;
+  /** Array of sections within this main section */
   sections: Section[];
 }
 
+/**
+ * Principles in Practice Section Content
+ * 
+ * Examines how foundational American principles function in practice,
+ * from the rule of law to civil liberties and federalism.
+ * 
+ * Covers:
+ * - **Rule of Law** - Equal application of laws, courts and justice
+ * - **Checks and Balances** - System structure, gridlock and compromise
+ * - **Federalism** - State vs federal power, cooperation and tension
+ * - **Civil Liberties** - Individual rights and civic responsibility
+ * 
+ * @constant
+ */
 export const principlespracticeData: MainSection = {
   id: "principles-practice",
     title: "Principles in Practice",

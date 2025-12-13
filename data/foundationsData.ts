@@ -1,33 +1,96 @@
+/**
+ * Foundations Data
+ * 
+ * Core principles and ideologies that shape American democracy.
+ * 
+ * This module contains content about:
+ * - Principles and Ideologies (Democracy, Republicanism, Federalism)
+ * - Human Rights and Freedoms (Life, Liberty, Pursuit of Happiness, Speech, Religion)
+ * - Government and Systems (Separation of Powers, Checks and Balances, Rule of Law)
+ * 
+ * Content is structured as a MainSection with nested sections and subsections,
+ * following the content hierarchy defined in contentData.ts
+ * 
+ * @module data/foundationsData
+ */
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+/**
+ * Subsection - Individual content item
+ */
 export interface SubSection {
+  /** Unique identifier for the subsection */
   id: string;
+  /** Display title */
   title: string;
+  /** Main content text */
   content: string;
+  /** Optional full text content (for documents) */
   fullText?: string;
+  /** Optional context/background information */
   context?: string;
+  /** Optional image URL */
   imageUrl?: string;
 }
 
+/**
+ * Section - Group of related subsections
+ */
 export interface Section {
+  /** Unique identifier for the section */
   id: string;
+  /** Display title */
   title: string;
+  /** Section description */
   description: string;
+  /** Array of subsections within this section */
   subsections: SubSection[];
 }
 
+/**
+ * Main Section - Top-level content category
+ */
 export interface MainSection {
+  /** Unique identifier for the main section */
   id: string;
+  /** Display title */
   title: string;
+  /** Icon name for visual representation */
   icon: string;
+  /** Section description */
   description: string;
+  /** Array of sections within this main section */
   sections: Section[];
 }
 
+// ============================================================================
+// FOUNDATIONS CONTENT DATA
+// ============================================================================
+
+/**
+ * Foundations Section Content
+ * 
+ * Contains foundational American principles, rights, and governmental systems.
+ * 
+ * Sections:
+ * 1. **Principles and Ideologies** - Democracy, Republicanism, Federalism
+ * 2. **Human Rights and Freedoms** - Life, Liberty, Speech, Religion
+ * 3. **Government and Systems** - Separation of Powers, Checks and Balances, Rule of Law
+ * 
+ * @constant
+ */
 export const foundationsData: MainSection = {
   id: "foundations",
   title: "Foundations",
   icon: "book",
   description: "Core principles and ideologies that shape American democracy",
   sections: [
+    // ========================================================================
+    // SECTION 1: Principles and Ideologies
+    // ========================================================================
     {
       id: "principles-ideologies",
       title: "Principles and Ideologies",
@@ -53,6 +116,10 @@ export const foundationsData: MainSection = {
         },
       ],
     },
+    
+    // ========================================================================
+    // SECTION 2: Human Rights and Freedoms
+    // ========================================================================
     {
       id: "human-rights",
       title: "Human Rights and Freedoms",
@@ -78,6 +145,10 @@ export const foundationsData: MainSection = {
         },
       ],
     },
+    
+    // ========================================================================
+    // SECTION 3: Government and Systems
+    // ========================================================================
     {
       id: "government-systems",
       title: "Government and Systems",

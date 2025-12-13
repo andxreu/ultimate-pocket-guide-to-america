@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -12,20 +12,42 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withSequence,
+  withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 /**
  * Daily Insight Card Component
- * Displays a random American insight with refresh capability
+ * 
+ * Displays a random American civics insight with:
+ * - Daily rotation (same insight per day)
+ * - Manual refresh capability with animation
+ * - Haptic feedback on interaction
+ * - Smooth fade transitions
+ * - Rotating refresh icon
+ * - Gradient accents
+ * 
+ * @example
+ * ```tsx
+ * <DailyInsightCard />
+ * ```
  */
 export default function DailyInsightCard() {
   const { colors, shadows } = useTheme();
   const [insight, setInsight] = useState<DailyInsight>(() => getInsightOfTheDay());
   const [key, setKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const rotateValue = useSharedValue(0);
+  const scaleValue = useSharedValue(1);
 
-  const handleRefresh = () => {
+  /**
+   * Handle refresh with haptic feedback and animations
+   */
+  const handleRefresh = useCallback(() => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -36,18 +58,32 @@ export default function DailyInsightCard() {
       }
     }
 
-    // Rotate animation
+    // Rotate animation for icon
     rotateValue.value = withSequence(
-      withSpring(360, { damping: 15 }),
-      withSpring(0, { damping: 15 })
+      withSpring(360, { damping: 12, stiffness: 100 }),
+      withTiming(0, { duration: 0 })
     );
 
-    setInsight(getRandomInsight());
-    setKey(prev => prev + 1);
-  };
+    // Scale animation for button press
+    scaleValue.value = withSequence(
+      withSpring(0.9, { damping: 12 }),
+      withSpring(1, { damping: 12 })
+    );
+
+    // Update insight after a brief delay for animation
+    setTimeout(() => {
+      setInsight(getRandomInsight());
+      setKey(prev => prev + 1);
+      setIsRefreshing(false);
+    }, 100);
+  }, [isRefreshing, rotateValue, scaleValue]);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotateValue.value}deg` }],
+  }));
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue.value }],
   }));
 
   return (
@@ -90,35 +126,43 @@ export default function DailyInsightCard() {
               color={colors.primary}
             />
           </LinearGradient>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <Text 
+            style={[styles.title, { color: colors.text }]}
+            numberOfLines={1}
+          >
             Daily American Insight
           </Text>
         </View>
         
-        <TouchableOpacity
-          onPress={handleRefresh}
-          style={[
-            styles.refreshButton,
-            { backgroundColor: colors.highlight },
-          ]}
-          accessibilityLabel="Get a new insight"
-          accessibilityRole="button"
-          activeOpacity={0.7}
-        >
-          <Animated.View style={animatedIconStyle}>
-            <MaterialIcons
-              name="refresh"
-              size={20}
-              color={colors.primary}
-            />
-          </Animated.View>
-        </TouchableOpacity>
+        <Animated.View style={animatedButtonStyle}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            disabled={isRefreshing}
+            style={[
+              styles.refreshButton,
+              { backgroundColor: colors.highlight },
+            ]}
+            accessibilityLabel="Get a new insight"
+            accessibilityRole="button"
+            accessibilityHint="Double tap to load a different insight"
+            accessibilityState={{ busy: isRefreshing }}
+            activeOpacity={0.7}
+          >
+            <Animated.View style={animatedIconStyle}>
+              <MaterialIcons
+                name="refresh"
+                size={20}
+                color={colors.primary}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
       {/* Insight Text */}
       <Animated.View
         key={key}
-        entering={FadeIn.duration(400)}
+        entering={FadeIn.duration(400).delay(100)}
         exiting={FadeOut.duration(200)}
       >
         <Text style={[styles.insightText, { color: colors.text }]}>

@@ -1,13 +1,64 @@
 
+/**
+ * Quiz Data
+ * 
+ * Civic education quiz questions covering American government, history, and civics.
+ * 
+ * Features:
+ * - 30 quiz questions on various civics topics
+ * - Question randomization
+ * - Option shuffling to prevent memorization
+ * - Explanations for each answer
+ * 
+ * Topics covered:
+ * - Branches of Government
+ * - Constitution and Amendments
+ * - Rights and Freedoms
+ * - Electoral Process
+ * - American History
+ * - Civic Responsibilities
+ * 
+ * @module data/quizData
+ */
+
+/**
+ * Quiz Question interface
+ */
 export interface QuizQuestion {
+  /** Unique identifier for the question */
   id: string;
+  /** The question text */
   question: string;
+  /** Array of answer options (typically 4 choices) */
   options: string[];
+  /** Index of the correct answer in the options array */
   correctIndex: number;
+  /** Optional explanation of the correct answer */
   explanation?: string;
 }
 
-// Expanded quiz question pool
+/**
+ * Quiz Question Pool
+ * 
+ * Complete collection of 30 civics quiz questions covering core topics
+ * in American government, history, and citizenship.
+ * 
+ * Question categories:
+ * - **Government Structure** (Questions 1-14) - Branches, Congress, Courts
+ * - **Rights & Freedoms** (Questions 15-16, 19) - First Amendment, Bill of Rights
+ * - **Founding Documents** (Questions 17-18, 24, 29-30) - Declaration, Constitution
+ * - **Systems & Principles** (Questions 20-23) - Economy, rule of law, checks & balances
+ * - **Civic Duties** (Questions 25-28) - Responsibilities, voting, citizenship
+ * 
+ * Each question includes:
+ * - Unique ID for tracking
+ * - Clear question text
+ * - 4 multiple choice options
+ * - Correct answer index
+ * - Educational explanation
+ * 
+ * @constant
+ */
 export const quizQuestionPool: QuizQuestion[] = [
   {
     id: "q1",
@@ -347,7 +398,27 @@ export const quizQuestionPool: QuizQuestion[] = [
 ];
 
 /**
- * Generates a randomized quiz with a specified number of questions
+ * Generates a randomized quiz with shuffled questions and options
+ * 
+ * This function creates a quiz by:
+ * 1. Randomly selecting questions from the pool
+ * 2. Shuffling the answer options for each question
+ * 3. Updating the correct answer index after shuffling
+ * 
+ * @param numQuestions - Number of questions to include (default: 10, max: 30)
+ * @returns Array of randomized quiz questions with shuffled options
+ * 
+ * @example
+ * ```typescript
+ * // Generate a 10-question quiz
+ * const quiz = generateRandomQuiz(10);
+ * 
+ * // Generate a full 30-question quiz
+ * const fullQuiz = generateRandomQuiz(30);
+ * 
+ * // Generate a 5-question quick quiz
+ * const quickQuiz = generateRandomQuiz(5);
+ * ```
  */
 export function generateRandomQuiz(numQuestions: number = 10): QuizQuestion[] {
   // Shuffle the question pool
@@ -370,5 +441,14 @@ export function generateRandomQuiz(numQuestions: number = 10): QuizQuestion[] {
   });
 }
 
-// For backwards compatibility, export a default quiz
+/**
+ * Default Quiz Data
+ * 
+ * Pre-generated 25-question quiz for backwards compatibility.
+ * Uses randomized selection and shuffled options.
+ * 
+ * For custom quiz lengths, use `generateRandomQuiz(numQuestions)` instead.
+ * 
+ * @constant
+ */
 export const quizData = generateRandomQuiz(25);

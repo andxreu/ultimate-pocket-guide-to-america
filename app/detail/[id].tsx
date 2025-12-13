@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { contentData } from "@/data/contentData";
@@ -15,6 +16,8 @@ import { useTextSize } from "@/contexts/TextSizeContext";
 import { useReadingHistory } from "@/contexts/ReadingHistoryContext";
 import { IconSymbol } from "@/components/IconSymbol";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
 const BORDER_WIDTH = 3;
 const HORIZONTAL_PADDING = 16;
@@ -22,10 +25,14 @@ const HORIZONTAL_PADDING = 16;
 const IMAGE_SIZE =
   Dimensions.get("window").width - HORIZONTAL_PADDING * 2 - BORDER_WIDTH * 2;
 
+/**
+ * Detail Screen Component
+ * Displays detailed information about a specific topic, including founding documents
+ */
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const { getTextSizeMultiplier } = useTextSize();
   const { addToHistory } = useReadingHistory();
   const textMultiplier = getTextSizeMultiplier();
@@ -34,6 +41,7 @@ export default function DetailScreen() {
   let foundSection = "";
   let foundMainSection = "";
 
+  // Find the item in content data
   try {
     for (const main of contentData) {
       if (!main || !main.sections) continue;
@@ -57,6 +65,9 @@ export default function DetailScreen() {
     }
   }
 
+  /**
+   * Add to reading history when item is viewed
+   */
   useEffect(() => {
     if (foundItem && foundMainSection) {
       addToHistory({
@@ -67,6 +78,25 @@ export default function DetailScreen() {
     }
   }, [foundItem, foundMainSection, addToHistory]);
 
+  /**
+   * Handle back button press with haptic feedback
+   */
+  const handleBackPress = () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    router.back();
+  };
+
+  /**
+   * Render error state if item not found
+   */
   if (!foundItem) {
     return (
       <>
@@ -75,14 +105,19 @@ export default function DetailScreen() {
             headerShown: true,
             title: "Details",
             headerBackTitle: "Back",
-            headerBackTitleVisible: true,
+            headerBackTitleVisible: Platform.OS === 'ios',
             headerTintColor: colors.text,
             headerStyle: { backgroundColor: colors.card },
+            headerShadowVisible: false,
           }}
         />
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <View style={styles.errorContainer}>
+          <Animated.View 
+            style={styles.errorContainer}
+            entering={FadeIn.duration(400)}
+          >
             <IconSymbol
+              ios_icon_name="exclamationmark.triangle.fill"
               android_material_icon_name="error"
               size={64}
               color={colors.textSecondary}
@@ -91,17 +126,27 @@ export default function DetailScreen() {
               Item not found
             </Text>
             <TouchableOpacity
-              onPress={() => router.back()}
-              style={[styles.backButton, { backgroundColor: colors.primary }]}
+              onPress={handleBackPress}
+              style={[
+                styles.backButton, 
+                { 
+                  backgroundColor: colors.primary,
+                  ...shadows.small,
+                }
+              ]}
+              activeOpacity={0.8}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
             >
               <Text style={styles.backButtonText}>Go Back</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </View>
       </>
     );
   }
 
+  // Parse content sections
   const fullContent = foundItem.content || "";
   const firstPeriod = fullContent.indexOf(".");
   const summary =
@@ -123,11 +168,12 @@ export default function DetailScreen() {
           headerShown: true,
           title: foundItem.title || "Details",
           headerBackTitle: "Back",
-          headerBackTitleVisible: true,
+          headerBackTitleVisible: Platform.OS === 'ios',
           headerTintColor: colors.text,
           headerStyle: { backgroundColor: colors.card },
+          headerShadowVisible: false,
           headerRight: () => (
-            <View style={{ marginRight: 8 }}>
+            <View style={styles.headerRight}>
               <FavoriteToggle itemId={id} size={22} />
             </View>
           ),
@@ -137,8 +183,13 @@ export default function DetailScreen() {
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        {/* Header Section */}
+        <Animated.View 
+          style={styles.header}
+          entering={FadeInDown.delay(50).springify()}
+        >
           <Text style={[styles.breadcrumb, { color: colors.textSecondary }]}>
             {foundMainSection} › {foundSection}
           </Text>
@@ -157,6 +208,7 @@ export default function DetailScreen() {
               ]}
             >
               <IconSymbol
+                ios_icon_name="doc.text.fill"
                 android_material_icon_name="description"
                 size={12}
                 color={colors.primary}
@@ -166,104 +218,203 @@ export default function DetailScreen() {
               </Text>
             </View>
           )}
-        </View>
+        </Animated.View>
 
+        {/* Hero Image */}
         {foundItem.imageUrl && (
-          <View style={styles.heroImageContainer}>
+          <Animated.View 
+            style={styles.heroImageContainer}
+            entering={FadeInDown.delay(100).springify()}
+          >
             <Image
               source={{ uri: foundItem.imageUrl }}
               style={styles.heroImage}
               resizeMode="cover"
             />
-          </View>
+          </Animated.View>
         )}
 
+        {/* Content Sections */}
         {isFoundingDoc ? (
           <>
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text
-                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+            {/* Overview */}
+            <Animated.View entering={FadeInDown.delay(150).springify()}>
+              <View 
+                style={[
+                  styles.card, 
+                  { 
+                    backgroundColor: colors.card,
+                    ...shadows.small,
+                  }
+                ]}
               >
-                Overview
-              </Text>
-              <Text style={[styles.bodyText, { color: colors.text, fontSize: 15 * textMultiplier, lineHeight: 24 * textMultiplier }]}>
-                {fullContent}
-              </Text>
-            </View>
+                <Text
+                  style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                >
+                  Overview
+                </Text>
+                <Text 
+                  style={[
+                    styles.bodyText, 
+                    { 
+                      color: colors.text, 
+                      fontSize: 15 * textMultiplier, 
+                      lineHeight: 24 * textMultiplier 
+                    }
+                  ]}
+                >
+                  {fullContent}
+                </Text>
+              </View>
+            </Animated.View>
 
+            {/* Full Text */}
             {hasFullText && (
               <>
-                <View style={[styles.divider]} />
-                <View
-                  style={[styles.card, { backgroundColor: colors.card }]}
-                >
-                  <Text
+                <View style={[styles.divider, { backgroundColor: colors.secondary + '20' }]} />
+                <Animated.View entering={FadeInDown.delay(200).springify()}>
+                  <View
                     style={[
-                      styles.sectionLabel,
-                      { color: colors.textSecondary },
+                      styles.card, 
+                      { 
+                        backgroundColor: colors.card,
+                        ...shadows.small,
+                      }
                     ]}
                   >
-                    Full Text
-                  </Text>
-                  <Text style={[styles.bodyText, { color: colors.text, fontSize: 15 * textMultiplier, lineHeight: 24 * textMultiplier }]}>
-                    {foundItem.fullText}
-                  </Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.sectionLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Full Text
+                    </Text>
+                    <Text 
+                      style={[
+                        styles.bodyText, 
+                        { 
+                          color: colors.text, 
+                          fontSize: 15 * textMultiplier, 
+                          lineHeight: 24 * textMultiplier 
+                        }
+                      ]}
+                    >
+                      {foundItem.fullText}
+                    </Text>
+                  </View>
+                </Animated.View>
               </>
             )}
 
+            {/* Historical Context */}
             {hasContext && (
               <>
-                <View style={[styles.divider]} />
-                <View
-                  style={[styles.card, { backgroundColor: colors.card }]}
-                >
-                  <Text
+                <View style={[styles.divider, { backgroundColor: colors.secondary + '20' }]} />
+                <Animated.View entering={FadeInDown.delay(250).springify()}>
+                  <View
                     style={[
-                      styles.sectionLabel,
-                      { color: colors.textSecondary },
+                      styles.card, 
+                      { 
+                        backgroundColor: colors.card,
+                        ...shadows.small,
+                      }
                     ]}
                   >
-                    Historical Context
-                  </Text>
-                  <Text style={[styles.bodyText, { color: colors.text, fontSize: 15 * textMultiplier, lineHeight: 24 * textMultiplier }]}>
-                    {foundItem.context}
-                  </Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.sectionLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Historical Context
+                    </Text>
+                    <Text 
+                      style={[
+                        styles.bodyText, 
+                        { 
+                          color: colors.text, 
+                          fontSize: 15 * textMultiplier, 
+                          lineHeight: 24 * textMultiplier 
+                        }
+                      ]}
+                    >
+                      {foundItem.context}
+                    </Text>
+                  </View>
+                </Animated.View>
               </>
             )}
           </>
         ) : (
           <>
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text
-                style={[styles.sectionLabel, { color: colors.textSecondary }]}
+            {/* Description */}
+            <Animated.View entering={FadeInDown.delay(150).springify()}>
+              <View 
+                style={[
+                  styles.card, 
+                  { 
+                    backgroundColor: colors.card,
+                    ...shadows.small,
+                  }
+                ]}
               >
-                Description
-              </Text>
-              <Text style={[styles.bodyText, { color: colors.text, fontSize: 15 * textMultiplier, lineHeight: 24 * textMultiplier }]}>
-                {summary}
-              </Text>
-            </View>
+                <Text
+                  style={[styles.sectionLabel, { color: colors.textSecondary }]}
+                >
+                  Description
+                </Text>
+                <Text 
+                  style={[
+                    styles.bodyText, 
+                    { 
+                      color: colors.text, 
+                      fontSize: 15 * textMultiplier, 
+                      lineHeight: 24 * textMultiplier 
+                    }
+                  ]}
+                >
+                  {summary}
+                </Text>
+              </View>
+            </Animated.View>
 
+            {/* Additional Information */}
             {hasExtra && (
               <>
-                <View style={styles.divider} />
-                <View
-                  style={[styles.card, { backgroundColor: colors.card }]}
-                >
-                  <Text
+                <View style={[styles.divider, { backgroundColor: colors.secondary + '20' }]} />
+                <Animated.View entering={FadeInDown.delay(200).springify()}>
+                  <View
                     style={[
-                      styles.sectionLabel,
-                      { color: colors.textSecondary },
+                      styles.card, 
+                      { 
+                        backgroundColor: colors.card,
+                        ...shadows.small,
+                      }
                     ]}
                   >
-                    Additional Information
-                  </Text>
-                  <Text style={[styles.bodyText, { color: colors.text, fontSize: 15 * textMultiplier, lineHeight: 24 * textMultiplier }]}>
-                    {details}
-                  </Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.sectionLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Additional Information
+                    </Text>
+                    <Text 
+                      style={[
+                        styles.bodyText, 
+                        { 
+                          color: colors.text, 
+                          fontSize: 15 * textMultiplier, 
+                          lineHeight: 24 * textMultiplier 
+                        }
+                      ]}
+                    >
+                      {details}
+                    </Text>
+                  </View>
+                </Animated.View>
               </>
             )}
           </>
@@ -288,13 +439,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 8,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    fontWeight: '700',
+    opacity: 0.8,
   },
   title: {
     fontSize: 28,
-    fontWeight: "700",
+    fontWeight: "800",
     marginBottom: 12,
     lineHeight: 36,
+    letterSpacing: 0.3,
   },
   badge: {
     flexDirection: "row",
@@ -309,9 +463,9 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   heroImageContainer: {
     width: IMAGE_SIZE,
@@ -329,15 +483,15 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     marginBottom: 16,
   },
   sectionLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.5,
     marginBottom: 12,
   },
   bodyText: {
@@ -346,8 +500,10 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
     marginVertical: 8,
+  },
+  headerRight: {
+    marginRight: 8,
   },
   errorContainer: {
     flex: 1,
@@ -357,18 +513,23 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     marginTop: 16,
     marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 26,
+    letterSpacing: 0.3,
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
+    minHeight: 48,
   },
   backButtonText: {
-    color: "#1F2937",
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

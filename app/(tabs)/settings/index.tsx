@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View,
@@ -8,6 +9,7 @@ import {
   Platform,
   Linking,
   Switch,
+  Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -24,6 +26,7 @@ import Animated, {
   withSpring,
   withSequence,
   FadeInDown,
+  ZoomIn,
 } from 'react-native-reanimated';
 
 type TextSize = 'small' | 'default' | 'large' | 'extra-large';
@@ -44,7 +47,6 @@ export default function SettingsScreen() {
   const { textSize, setTextSize } = useTextSize();
   const { clearAllFavorites, getFavoritesCount } = useFavorites();
   const { clearHistory } = useReadingHistory();
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const handleThemeToggle = async () => {
     try {
@@ -108,6 +110,80 @@ export default function SettingsScreen() {
       if (__DEV__) {
         console.log('Error opening URL:', error);
       }
+    }
+  };
+
+  const handleOpenPrivacyPolicy = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    try {
+      await Linking.openURL('https://stormlightfoundry.com/pocket-guide-to-america/privacy-policy-pocket-guide-to-america/');
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Error opening URL:', error);
+      }
+    }
+  };
+
+  const handleOpenChangelog = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+    try {
+      await Linking.openURL('https://stormlightfoundry.com/pocket-guide-to-america/changelog-pocket-guide-to-america/');
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Error opening URL:', error);
+      }
+    }
+  };
+
+  const handleClearDataPress = () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('Haptics error:', error);
+      }
+    }
+
+    const favCount = getFavoritesCount();
+    
+    if (Platform.OS === 'web') {
+      if (confirm(`This will clear all favorites (${favCount}) and reading history. This action cannot be undone. Continue?`)) {
+        handleClearData();
+      }
+    } else {
+      Alert.alert(
+        'Clear All Data',
+        `This will clear all favorites (${favCount}) and reading history. This action cannot be undone.`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Clear Data',
+            style: 'destructive',
+            onPress: handleClearData,
+          },
+        ]
+      );
     }
   };
 
@@ -302,12 +378,12 @@ export default function SettingsScreen() {
 
               {/* Clear Data Button */}
               <TouchableOpacity
-                onPress={handleClearData}
+                onPress={handleClearDataPress}
                 style={[
                   styles.clearButton,
                   {
-                    backgroundColor: colors.primary + '15',
-                    borderColor: colors.primary + '30',
+                    backgroundColor: colors.accent + '15',
+                    borderColor: colors.accent + '40',
                   },
                 ]}
                 activeOpacity={0.7}
@@ -317,9 +393,9 @@ export default function SettingsScreen() {
                 <MaterialIcons
                   name="delete-outline"
                   size={20}
-                  color={colors.primary}
+                  color={colors.accent}
                 />
-                <Text style={[styles.clearButtonText, { color: colors.primary }]}>
+                <Text style={[styles.clearButtonText, { color: colors.accent }]}>
                   Clear All Data
                 </Text>
               </TouchableOpacity>
@@ -371,7 +447,10 @@ export default function SettingsScreen() {
             
             <SettingCard delay={450} colors={colors} shadows={shadows}>
               {/* App Description */}
-              <View style={styles.aboutHeader}>
+              <Animated.View 
+                style={styles.aboutHeader}
+                entering={ZoomIn.delay(500).springify()}
+              >
                 <LinearGradient
                   colors={[
                     colors.primary + '25',
@@ -390,7 +469,7 @@ export default function SettingsScreen() {
                 <Text style={[styles.appName, { color: colors.text }]}>
                   Pocket Guide to America
                 </Text>
-              </View>
+              </Animated.View>
 
               <Text style={[styles.aboutBlurb, { color: colors.textSecondary }]}>
                 Your civic companion for understanding how the United States works. Explore founding documents, core principles, key eras of history, and practical tools for better citizenship.
@@ -421,6 +500,44 @@ export default function SettingsScreen() {
                     <Text style={[styles.infoValue, { color: colors.primary }]}>
                       StormLight Foundry
                     </Text>
+                    <MaterialIcons
+                      name="arrow-forward"
+                      size={16}
+                      color={colors.primary}
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleOpenPrivacyPolicy}
+                  style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Open Privacy Policy"
+                  accessibilityRole="button"
+                >
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                    Privacy Policy
+                  </Text>
+                  <View style={styles.developerLink}>
+                    <MaterialIcons
+                      name="arrow-forward"
+                      size={16}
+                      color={colors.primary}
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleOpenChangelog}
+                  style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Open Changelog"
+                  accessibilityRole="button"
+                >
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                    Changelog
+                  </Text>
+                  <View style={styles.developerLink}>
                     <MaterialIcons
                       name="arrow-forward"
                       size={16}
@@ -540,6 +657,7 @@ function TextSizeButton({ option, isSelected, sizeMultiplier, colors, isDark, on
       style={styles.textSizeButtonWrapper}
       accessibilityLabel={`Set text size to ${option.label}`}
       accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
     >
       <Animated.View
         style={[
