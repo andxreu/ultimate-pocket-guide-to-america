@@ -26,6 +26,45 @@ const IMAGE_SIZE =
   Dimensions.get("window").width - HORIZONTAL_PADDING * 2 - BORDER_WIDTH * 2;
 
 /**
+ * RN requires static `require()` for bundled images.
+ * These civic-literacy items currently store imageUrl as a filename string,
+ * so we map known filenames to static requires.
+ *
+ * NOTE: Liberty Bell has been seen in the wild with two filename variants.
+ * We support both to avoid blank/missing images.
+ */
+const LOCAL_IMAGE_MAP: Record<string, any> = {
+  // US Flag
+  "1b18cc72-3bbe-43bf-afae-225d1e78ad1d.png": require("@/assets/images/1b18cc72-3bbe-43bf-afae-225d1e78ad1d.png"),
+
+  // Liberty Bell (support both variants; both point to the real asset)
+  "2e3ae459-a1fd-4386-8e95-620659542ac1.png": require("@/assets/images/2e3ae459-a1fd-4386-8e95-620659542ac1.png"),
+  "2e3ae459-a1fd-4386-8e95-6206596542ac1.png": require("@/assets/images/2e3ae459-a1fd-4386-8e95-620659542ac1.png"),
+
+  // Great Seal
+  "59caabeb-9945-4ef8-828e-e82c1be074f2.png": require("@/assets/images/59caabeb-9945-4ef8-828e-e82c1be074f2.png"),
+
+  // Statue of Liberty
+  "693ab1a5-b598-478a-b111-3556ab568104.png": require("@/assets/images/693ab1a5-b598-478a-b111-3556ab568104.png"),
+
+  // Bald Eagle
+  "806a55b5-d460-4b36-9895-d6b2a5d5e181.png": require("@/assets/images/806a55b5-d460-4b36-9895-d6b2a5d5e181.png"),
+};
+
+function resolveImageSource(imageUrl?: string) {
+  const cleaned = imageUrl?.trim();
+  if (!cleaned) return undefined;
+
+  // Remote URL? Use uri.
+  if (/^https?:\/\//i.test(cleaned)) {
+    return { uri: cleaned };
+  }
+
+  // Local bundled image filename? Use static require map.
+  return LOCAL_IMAGE_MAP[cleaned];
+}
+
+/**
  * Detail Screen Component
  * Displays detailed information about a specific topic, including founding documents
  */
@@ -61,7 +100,7 @@ export default function DetailScreen() {
     }
   } catch (error) {
     if (__DEV__) {
-      console.log('Error finding item:', error);
+      console.log("Error finding item:", error);
     }
   }
 
@@ -83,12 +122,12 @@ export default function DetailScreen() {
    */
   const handleBackPress = () => {
     try {
-      if (Platform.OS !== 'web') {
+      if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
       if (__DEV__) {
-        console.log('Haptics error:', error);
+        console.log("Haptics error:", error);
       }
     }
     router.back();
@@ -105,14 +144,14 @@ export default function DetailScreen() {
             headerShown: true,
             title: "Details",
             headerBackTitle: "Back",
-            headerBackTitleVisible: Platform.OS === 'ios',
+            headerBackTitleVisible: Platform.OS === "ios",
             headerTintColor: colors.text,
             headerStyle: { backgroundColor: colors.card },
             headerShadowVisible: false,
           }}
         />
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <Animated.View 
+          <Animated.View
             style={styles.errorContainer}
             entering={FadeIn.duration(400)}
           >
@@ -128,11 +167,11 @@ export default function DetailScreen() {
             <TouchableOpacity
               onPress={handleBackPress}
               style={[
-                styles.backButton, 
-                { 
+                styles.backButton,
+                {
                   backgroundColor: colors.primary,
                   ...shadows.small,
-                }
+                },
               ]}
               activeOpacity={0.8}
               accessibilityLabel="Go back"
@@ -161,6 +200,8 @@ export default function DetailScreen() {
   const hasContext = foundItem.context?.trim()?.length > 0;
   const isFoundingDoc = hasFullText || hasContext;
 
+  const imageSource = resolveImageSource(foundItem.imageUrl);
+
   return (
     <>
       <Stack.Screen
@@ -168,7 +209,7 @@ export default function DetailScreen() {
           headerShown: true,
           title: foundItem.title || "Details",
           headerBackTitle: "Back",
-          headerBackTitleVisible: Platform.OS === 'ios',
+          headerBackTitleVisible: Platform.OS === "ios",
           headerTintColor: colors.text,
           headerStyle: { backgroundColor: colors.card },
           headerShadowVisible: false,
@@ -186,7 +227,7 @@ export default function DetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header Section */}
-        <Animated.View 
+        <Animated.View
           style={styles.header}
           entering={FadeInDown.delay(50).springify()}
         >
@@ -221,15 +262,24 @@ export default function DetailScreen() {
         </Animated.View>
 
         {/* Hero Image */}
-        {foundItem.imageUrl && (
-          <Animated.View 
+        {!!imageSource && (
+          <Animated.View
             style={styles.heroImageContainer}
             entering={FadeInDown.delay(100).springify()}
           >
             <Image
-              source={{ uri: foundItem.imageUrl }}
+              source={imageSource}
               style={styles.heroImage}
               resizeMode="cover"
+              onError={(e) => {
+                if (__DEV__) {
+                  console.log(
+                    "Image load failed:",
+                    foundItem?.imageUrl,
+                    e?.nativeEvent
+                  );
+                }
+              }}
             />
           </Animated.View>
         )}
@@ -239,13 +289,13 @@ export default function DetailScreen() {
           <>
             {/* Overview */}
             <Animated.View entering={FadeInDown.delay(150).springify()}>
-              <View 
+              <View
                 style={[
-                  styles.card, 
-                  { 
+                  styles.card,
+                  {
                     backgroundColor: colors.card,
                     ...shadows.small,
-                  }
+                  },
                 ]}
               >
                 <Text
@@ -253,14 +303,14 @@ export default function DetailScreen() {
                 >
                   Overview
                 </Text>
-                <Text 
+                <Text
                   style={[
-                    styles.bodyText, 
-                    { 
-                      color: colors.text, 
-                      fontSize: 15 * textMultiplier, 
-                      lineHeight: 24 * textMultiplier 
-                    }
+                    styles.bodyText,
+                    {
+                      color: colors.text,
+                      fontSize: 15 * textMultiplier,
+                      lineHeight: 24 * textMultiplier,
+                    },
                   ]}
                 >
                   {fullContent}
@@ -271,15 +321,20 @@ export default function DetailScreen() {
             {/* Full Text */}
             {hasFullText && (
               <>
-                <View style={[styles.divider, { backgroundColor: colors.secondary + '20' }]} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.secondary + "20" },
+                  ]}
+                />
                 <Animated.View entering={FadeInDown.delay(200).springify()}>
                   <View
                     style={[
-                      styles.card, 
-                      { 
+                      styles.card,
+                      {
                         backgroundColor: colors.card,
                         ...shadows.small,
-                      }
+                      },
                     ]}
                   >
                     <Text
@@ -290,14 +345,14 @@ export default function DetailScreen() {
                     >
                       Full Text
                     </Text>
-                    <Text 
+                    <Text
                       style={[
-                        styles.bodyText, 
-                        { 
-                          color: colors.text, 
-                          fontSize: 15 * textMultiplier, 
-                          lineHeight: 24 * textMultiplier 
-                        }
+                        styles.bodyText,
+                        {
+                          color: colors.text,
+                          fontSize: 15 * textMultiplier,
+                          lineHeight: 24 * textMultiplier,
+                        },
                       ]}
                     >
                       {foundItem.fullText}
@@ -310,15 +365,20 @@ export default function DetailScreen() {
             {/* Historical Context */}
             {hasContext && (
               <>
-                <View style={[styles.divider, { backgroundColor: colors.secondary + '20' }]} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.secondary + "20" },
+                  ]}
+                />
                 <Animated.View entering={FadeInDown.delay(250).springify()}>
                   <View
                     style={[
-                      styles.card, 
-                      { 
+                      styles.card,
+                      {
                         backgroundColor: colors.card,
                         ...shadows.small,
-                      }
+                      },
                     ]}
                   >
                     <Text
@@ -329,14 +389,14 @@ export default function DetailScreen() {
                     >
                       Historical Context
                     </Text>
-                    <Text 
+                    <Text
                       style={[
-                        styles.bodyText, 
-                        { 
-                          color: colors.text, 
-                          fontSize: 15 * textMultiplier, 
-                          lineHeight: 24 * textMultiplier 
-                        }
+                        styles.bodyText,
+                        {
+                          color: colors.text,
+                          fontSize: 15 * textMultiplier,
+                          lineHeight: 24 * textMultiplier,
+                        },
                       ]}
                     >
                       {foundItem.context}
@@ -350,13 +410,13 @@ export default function DetailScreen() {
           <>
             {/* Description */}
             <Animated.View entering={FadeInDown.delay(150).springify()}>
-              <View 
+              <View
                 style={[
-                  styles.card, 
-                  { 
+                  styles.card,
+                  {
                     backgroundColor: colors.card,
                     ...shadows.small,
-                  }
+                  },
                 ]}
               >
                 <Text
@@ -364,14 +424,14 @@ export default function DetailScreen() {
                 >
                   Description
                 </Text>
-                <Text 
+                <Text
                   style={[
-                    styles.bodyText, 
-                    { 
-                      color: colors.text, 
-                      fontSize: 15 * textMultiplier, 
-                      lineHeight: 24 * textMultiplier 
-                    }
+                    styles.bodyText,
+                    {
+                      color: colors.text,
+                      fontSize: 15 * textMultiplier,
+                      lineHeight: 24 * textMultiplier,
+                    },
                   ]}
                 >
                   {summary}
@@ -382,15 +442,20 @@ export default function DetailScreen() {
             {/* Additional Information */}
             {hasExtra && (
               <>
-                <View style={[styles.divider, { backgroundColor: colors.secondary + '20' }]} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.secondary + "20" },
+                  ]}
+                />
                 <Animated.View entering={FadeInDown.delay(200).springify()}>
                   <View
                     style={[
-                      styles.card, 
-                      { 
+                      styles.card,
+                      {
                         backgroundColor: colors.card,
                         ...shadows.small,
-                      }
+                      },
                     ]}
                   >
                     <Text
@@ -401,14 +466,14 @@ export default function DetailScreen() {
                     >
                       Additional Information
                     </Text>
-                    <Text 
+                    <Text
                       style={[
-                        styles.bodyText, 
-                        { 
-                          color: colors.text, 
-                          fontSize: 15 * textMultiplier, 
-                          lineHeight: 24 * textMultiplier 
-                        }
+                        styles.bodyText,
+                        {
+                          color: colors.text,
+                          fontSize: 15 * textMultiplier,
+                          lineHeight: 24 * textMultiplier,
+                        },
                       ]}
                     >
                       {details}
@@ -440,7 +505,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 1.2,
-    fontWeight: '700',
+    fontWeight: "700",
     opacity: 0.8,
   },
   title: {
@@ -516,7 +581,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 16,
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 26,
     letterSpacing: 0.3,
   },

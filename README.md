@@ -1,115 +1,83 @@
 # Pocket Guide to America 🇺🇸
 
-**Pocket Guide to America** is a modern, offline-friendly educational app designed to help users understand the foundations, principles, history, and symbols of the United States in a clear, accessible way.
+**Pocket Guide to America** is a thoughtfully designed educational reference app that helps users understand the foundations, structure, history, and civic principles of the United States — all in one clean, modern, and easy-to-navigate experience.
 
-Rather than focusing on news cycles or partisan commentary, the app emphasizes **civic literacy**—how American government works, why its founding ideas matter, and what it means to participate in a constitutional republic.
-
----
-
-## ✨ Purpose & Vision
-
-Pocket Guide to America exists to answer a simple question:
-
-> *What should an informed American actually know?*
-
-The app is built to be:
-- **Educational, not political**
-- **Accessible, not academic**
-- **Timeless, not trend-driven**
-
-It’s meant to be a reference you can return to—whether you’re a student, a lifelong learner, or someone looking to reconnect with the principles that shaped the country.
+Built for curious minds, students, lifelong learners, and anyone who wants a clearer picture of how America works.
 
 ---
 
-## 📚 What’s Inside the App
+## ✨ What’s Inside
 
-The app is organized into clearly structured sections, including:
+Pocket Guide to America brings together essential knowledge across multiple domains:
 
-- **Foundations**  
-  Core ideas behind American government and civic structure
+- **Foundations of America**  
+  Core documents, principles, and ideas that shaped the nation.
 
 - **Civic Literacy**  
-  Branches of government, founding documents, citizenship, media literacy
+  How government functions, branches of power, rights, responsibilities, and democratic processes.
 
 - **American History**  
-  Major eras and turning points that shaped the nation
+  Key eras, events, and turning points that shaped the country over time.
 
-- **National Symbols & Identity**  
-  The flag, the eagle, the Great Seal, the Liberty Bell, national hymns, and more
-
-- **Principles & Practice**  
-  How ideals like liberty, self-government, and unity function in real life
+- **Political Landscape**  
+  Non-partisan explanations of systems, structures, and civic mechanics.
 
 - **Land & Life**  
-  Geography, culture, and the lived American experience
-
-Each section is written to be readable, thoughtful, and grounded in historical context.
+  Geography, culture, and the lived American experience.
 
 ---
 
-## 🔍 Key Features
+## 🚀 Key Features
 
-- 📖 **Structured, long-form educational content**
-- 🔎 **Search and glossary for quick reference**
-- ⭐ **Favorites & recently viewed topics**
-- 💡 **Daily American Insight**
-- 📴 **Offline-friendly by design**
-- 🎨 **Custom UI built for clarity and focus**
+- 📚 **Clean, distraction-free reading experience**
+- 🔍 **Quick navigation across topics**
+- 🕘 **Recently Viewed** — jump back to what you were reading
+- ▶️ **Continue Where You Left Off** — seamless reading flow
+- 🔠 **Adjustable Text Size** for comfortable reading
+- 🗓️ **Daily American Insight** — something new to learn every day
+- ⚙️ **Simple, intuitive settings**
+- 📴 **No ads. No tracking. No data collection.**
 
-No ads.  
-No tracking.  
-No data harvesting.
+This app is designed to respect your time, attention, and privacy.
+
+---
+
+## 🎨 Design Philosophy
+
+Pocket Guide to America prioritizes clarity, readability, and longevity.  
+The interface is modern, restrained, and built to feel timeless — not trendy.
+
+It’s meant to be a reference you come back to, not an app you uninstall after one use.
 
 ---
 
 ## 🛠 Built With
 
-- **[Natively.dev](https://natively.dev)** — AI-assisted platform for building mobile apps  
-- **React Native + Expo**
-- **TypeScript**
-- **Custom theming and UI components**
-
-The app is designed as a single, cohesive codebase with modular data files for long-term maintainability and expansion.
+- [Natively.dev](https://natively.dev) — AI-assisted mobile app platform
+- React Native / Expo under the hood
 
 ---
 
-## 🏛 Philosophy
+## 🏛 About the Studio
 
-Pocket Guide to America is not about telling users *what* to think.
+Created by **StormLight Foundry**, an independent app and design studio focused on building thoughtful, useful, and enduring digital tools.
 
-It’s about giving people the tools to:
-- understand systems
-- recognize foundational ideas
-- ask better questions
-- engage thoughtfully with civic life
+🌐 Website: https://stormlightfoundry.com
 
-An informed citizenry is not guaranteed. It’s built—one reader at a time.
+All apps are crafted with care, intention, and a long-term vision — not quick trends.
 
 ---
 
-## 🧑‍💻 Creator & Studio
+## 📄 Privacy
 
-**Created by StormLight Foundry**  
-An independent design and app studio focused on educational, reference, and knowledge-based applications.
+Pocket Guide to America does **not** collect personal data, track users, or display ads.  
+Your learning stays yours.
 
-- 🌐 Website: https://stormlightfoundry.com  
-- © 2025 StormLight Foundry. All rights reserved.
-
----
-
-## 📜 License & Usage
-
-This project is proprietary software.  
-All content, design, and code are protected under applicable copyright laws.
-
-Unauthorized redistribution or reuse of content is not permitted.
+A full Privacy Policy is available within the app and on the companion website.
 
 ---
 
-## ❤️ Final Note
+## © Copyright
 
-Pocket Guide to America was built with care, curiosity, and respect for the complexity of the American experiment.
-
-If it helps someone understand the country a little better—  
-or think a little more clearly—  
-then it’s doing its job.
+© 2025 StormLight Foundry  
+All rights reserved.
