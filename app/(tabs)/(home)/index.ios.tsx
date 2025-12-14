@@ -7,7 +7,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ImageBackground,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -168,14 +168,13 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <View style={[styles.flagBorder, { borderColor: colors.primary }]}>
-              <ImageBackground
-                source={HERO_IMAGE}
-                style={styles.heroCard}
-                imageStyle={styles.heroImage}
-                resizeMode="contain"
-              />
-            </View>
+            <Image
+              source={HERO_IMAGE}
+              style={styles.heroImage}
+              resizeMode="contain"
+              accessible={true}
+              accessibilityLabel="American flag representing the Pocket Guide to America"
+            />
           </View>
 
           <View
@@ -236,21 +235,11 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 16,
-  },
-  flagBorder: {
-    borderWidth: 2,
-    borderRadius: 16,
-    padding: 0,
-  },
-  heroCard: {
-    width: "100%",
-    aspectRatio: 1,
-    borderRadius: 14,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-    backgroundColor: '#FFFFFF',
+    alignItems: "center",
   },
   heroImage: {
+    width: "100%",
+    height: 280,
   },
   factCard: {
     marginBottom: 20,
