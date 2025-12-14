@@ -9,9 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/final_quest_240x240.png",
+      "image": "./assets/images/d4ded13e-953f-43c6-b97c-4fe496414321.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,15 +21,15 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/final_quest_240x240.png",
-        "backgroundColor": "#000000"
+        "foregroundImage": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
+        "backgroundColor": "#00000000"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "versionCode": 2
     },
     "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
+      "favicon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
       "bundler": "metro"
     },
     "plugins": [
