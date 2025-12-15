@@ -1,10 +1,11 @@
+
 {
   "expo": {
     "name": "Pocket Guide to America",
     "slug": "Pocket Guide to America",
     "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
+    "icon": "./assets/images/d2592480-144d-4008-b52f-f92acea6b8bb.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -16,12 +17,12 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "buildNumber": "2",
-      "icon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
+      "icon": "./assets/images/d2592480-144d-4008-b52f-f92acea6b8bb.png",
       "backgroundColor": "#FFFFFF"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
+        "foregroundImage": "./assets/images/d2592480-144d-4008-b52f-f92acea6b8bb.png",
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
@@ -29,7 +30,7 @@
       "versionCode": 2
     },
     "web": {
-      "favicon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
+      "favicon": "./assets/images/d2592480-144d-4008-b52f-f92acea6b8bb.png",
       "bundler": "metro"
     },
     "plugins": [
