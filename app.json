@@ -17,12 +17,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.amateurxhuman.ultimatepocketguidetoamerica",
       "buildNumber": "2",
-      "icon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png"
+      "icon": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
+      "backgroundColor": "#FFFFFF"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/88eeda07-e0be-44e8-afb5-236934d1b9b7.png",
-        "backgroundColor": "#00000000"
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.amateurxhuman.ultimatepocketguidetoamerica",

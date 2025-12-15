@@ -11,7 +11,6 @@ import {
   Switch,
   Alert,
 } from 'react-native';
-import { Stack } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTextSize } from '@/contexts/TextSizeContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
@@ -224,345 +223,337 @@ export default function SettingsScreen() {
   const favoritesCount = getFavoritesCount();
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: 'Settings',
-          headerShown: false,
-        }}
-      />
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* APPEARANCE SECTION */}
+        <Animated.View 
+          style={styles.section}
+          entering={FadeInDown.delay(0).springify()}
         >
-          {/* APPEARANCE SECTION */}
-          <Animated.View 
-            style={styles.section}
-            entering={FadeInDown.delay(0).springify()}
-          >
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="palette"
-                size={18}
-                color={colors.primary}
-              />
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                APPEARANCE
-              </Text>
-            </View>
-            
-            {/* Theme Toggle Card */}
-            <SettingCard delay={50} colors={colors} shadows={shadows}>
-              <View style={styles.settingRow}>
-                <View style={styles.settingLeft}>
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      { backgroundColor: colors.primary + '20' },
-                    ]}
-                  >
-                    <MaterialIcons
-                      name={isDark ? 'dark-mode' : 'light-mode'}
-                      size={22}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.settingTextContainer}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      Dark Mode
-                    </Text>
-                    <Text style={[styles.settingSubtext, { color: colors.textSecondary }]}>
-                      {isDark ? 'Enabled' : 'Disabled'}
-                    </Text>
-                  </View>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons
+              name="palette"
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              APPEARANCE
+            </Text>
+          </View>
+          
+          {/* Theme Toggle Card */}
+          <SettingCard delay={50} colors={colors} shadows={shadows}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLeft}>
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: colors.primary + '20' },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={isDark ? 'dark-mode' : 'light-mode'}
+                    size={22}
+                    color={colors.primary}
+                  />
                 </View>
-                
-                <AnimatedSwitch
-                  value={isDark}
-                  onValueChange={handleThemeToggle}
-                  colors={colors}
-                />
-              </View>
-            </SettingCard>
-          </Animated.View>
-
-          {/* TEXT SIZE SECTION */}
-          <Animated.View 
-            style={styles.section}
-            entering={FadeInDown.delay(100).springify()}
-          >
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="format-size"
-                size={18}
-                color={colors.primary}
-              />
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                TEXT SIZE
-              </Text>
-            </View>
-            
-            <SettingCard delay={150} colors={colors} shadows={shadows}>
-              <View style={styles.textSizeGrid}>
-                {TEXT_SIZE_OPTIONS.map((option, index) => {
-                  const isSelected = textSize === option.value;
-                  const sizeMultiplier = ['small', 'default', 'large', 'extra-large'].indexOf(option.value) * 0.15 + 0.85;
-                  
-                  return (
-                    <TextSizeButton
-                      key={option.value}
-                      option={option}
-                      isSelected={isSelected}
-                      sizeMultiplier={sizeMultiplier}
-                      colors={colors}
-                      isDark={isDark}
-                      onPress={() => handleTextSizeChange(option.value)}
-                    />
-                  );
-                })}
+                <View style={styles.settingTextContainer}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    Dark Mode
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textSecondary }]}>
+                    {isDark ? 'Enabled' : 'Disabled'}
+                  </Text>
+                </View>
               </View>
               
-              <View style={[styles.previewContainer, { borderTopColor: colors.secondary + '30' }]}>
-                <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>
-                  Preview:
-                </Text>
-                <Text
-                  style={[
-                    styles.previewText,
-                    {
-                      color: colors.text,
-                      fontSize: 16 * (textSize === 'small' ? 0.85 : textSize === 'large' ? 1.15 : textSize === 'extra-large' ? 1.3 : 1.0),
-                    },
-                  ]}
-                >
-                  The quick brown fox jumps over the lazy dog
-                </Text>
-              </View>
-            </SettingCard>
-          </Animated.View>
-
-          {/* DATA & PRIVACY SECTION */}
-          <Animated.View 
-            style={styles.section}
-            entering={FadeInDown.delay(200).springify()}
-          >
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="storage"
-                size={18}
-                color={colors.primary}
+              <AnimatedSwitch
+                value={isDark}
+                onValueChange={handleThemeToggle}
+                colors={colors}
               />
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                DATA & PRIVACY
-              </Text>
+            </View>
+          </SettingCard>
+        </Animated.View>
+
+        {/* TEXT SIZE SECTION */}
+        <Animated.View 
+          style={styles.section}
+          entering={FadeInDown.delay(100).springify()}
+        >
+          <View style={styles.sectionHeader}>
+            <MaterialIcons
+              name="format-size"
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              TEXT SIZE
+            </Text>
+          </View>
+          
+          <SettingCard delay={150} colors={colors} shadows={shadows}>
+            <View style={styles.textSizeGrid}>
+              {TEXT_SIZE_OPTIONS.map((option, index) => {
+                const isSelected = textSize === option.value;
+                const sizeMultiplier = ['small', 'default', 'large', 'extra-large'].indexOf(option.value) * 0.15 + 0.85;
+                
+                return (
+                  <TextSizeButton
+                    key={option.value}
+                    option={option}
+                    isSelected={isSelected}
+                    sizeMultiplier={sizeMultiplier}
+                    colors={colors}
+                    isDark={isDark}
+                    onPress={() => handleTextSizeChange(option.value)}
+                  />
+                );
+              })}
             </View>
             
-            <SettingCard delay={250} colors={colors} shadows={shadows}>
-              {/* Favorites Count */}
-              <View style={styles.dataRow}>
-                <View style={styles.dataLeft}>
-                  <MaterialIcons
-                    name="star"
-                    size={20}
-                    color={colors.primary}
-                  />
-                  <Text style={[styles.dataLabel, { color: colors.text }]}>
-                    Favorites
-                  </Text>
-                </View>
-                <Text style={[styles.dataValue, { color: colors.textSecondary }]}>
-                  {favoritesCount} {favoritesCount === 1 ? 'item' : 'items'}
-                </Text>
-              </View>
-
-              {/* Clear Data Button */}
-              <TouchableOpacity
-                onPress={handleClearDataPress}
+            <View style={[styles.previewContainer, { borderTopColor: colors.secondary + '30' }]}>
+              <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>
+                Preview:
+              </Text>
+              <Text
                 style={[
-                  styles.clearButton,
+                  styles.previewText,
                   {
-                    backgroundColor: colors.accent + '15',
-                    borderColor: colors.accent + '40',
+                    color: colors.text,
+                    fontSize: 16 * (textSize === 'small' ? 0.85 : textSize === 'large' ? 1.15 : textSize === 'extra-large' ? 1.3 : 1.0),
                   },
                 ]}
-                activeOpacity={0.7}
-                accessibilityLabel="Clear all app data"
-                accessibilityRole="button"
+              >
+                The quick brown fox jumps over the lazy dog
+              </Text>
+            </View>
+          </SettingCard>
+        </Animated.View>
+
+        {/* DATA & PRIVACY SECTION */}
+        <Animated.View 
+          style={styles.section}
+          entering={FadeInDown.delay(200).springify()}
+        >
+          <View style={styles.sectionHeader}>
+            <MaterialIcons
+              name="storage"
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              DATA & PRIVACY
+            </Text>
+          </View>
+          
+          <SettingCard delay={250} colors={colors} shadows={shadows}>
+            {/* Favorites Count */}
+            <View style={styles.dataRow}>
+              <View style={styles.dataLeft}>
+                <MaterialIcons
+                  name="star"
+                  size={20}
+                  color={colors.primary}
+                />
+                <Text style={[styles.dataLabel, { color: colors.text }]}>
+                  Favorites
+                </Text>
+              </View>
+              <Text style={[styles.dataValue, { color: colors.textSecondary }]}>
+                {favoritesCount} {favoritesCount === 1 ? 'item' : 'items'}
+              </Text>
+            </View>
+
+            {/* Clear Data Button */}
+            <TouchableOpacity
+              onPress={handleClearDataPress}
+              style={[
+                styles.clearButton,
+                {
+                  backgroundColor: colors.accent + '15',
+                  borderColor: colors.accent + '40',
+                },
+              ]}
+              activeOpacity={0.7}
+              accessibilityLabel="Clear all app data"
+              accessibilityRole="button"
+            >
+              <MaterialIcons
+                name="delete-outline"
+                size={20}
+                color={colors.accent}
+              />
+              <Text style={[styles.clearButtonText, { color: colors.accent }]}>
+                Clear All Data
+              </Text>
+            </TouchableOpacity>
+          </SettingCard>
+        </Animated.View>
+
+        {/* RESOURCES SECTION */}
+        <Animated.View 
+          style={styles.section}
+          entering={FadeInDown.delay(300).springify()}
+        >
+          <View style={styles.sectionHeader}>
+            <MaterialIcons
+              name="link"
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              RESOURCES
+            </Text>
+          </View>
+          
+          <LinkCard
+            delay={350}
+            icon="public"
+            title="Companion Website"
+            subtitle="thehumanconservative.com"
+            onPress={handleOpenWebsite}
+            colors={colors}
+            shadows={shadows}
+          />
+        </Animated.View>
+
+        {/* ABOUT SECTION */}
+        <Animated.View 
+          style={styles.section}
+          entering={FadeInDown.delay(400).springify()}
+        >
+          <View style={styles.sectionHeader}>
+            <MaterialIcons
+              name="info-outline"
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              ABOUT
+            </Text>
+          </View>
+          
+          <SettingCard delay={450} colors={colors} shadows={shadows}>
+            {/* App Description */}
+            <Animated.View 
+              style={styles.aboutHeader}
+              entering={ZoomIn.delay(500).springify()}
+            >
+              <LinearGradient
+                colors={[
+                  colors.primary + '25',
+                  colors.highlight,
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.appIconContainer}
               >
                 <MaterialIcons
-                  name="delete-outline"
-                  size={20}
-                  color={colors.accent}
+                  name="flag"
+                  size={32}
+                  color={colors.primary}
                 />
-                <Text style={[styles.clearButtonText, { color: colors.accent }]}>
-                  Clear All Data
+              </LinearGradient>
+              <Text style={[styles.appName, { color: colors.text }]}>
+                Pocket Guide to America
+              </Text>
+            </Animated.View>
+
+            <Text style={[styles.aboutBlurb, { color: colors.textSecondary }]}>
+              Your civic companion for understanding how the United States works. Explore founding documents, core principles, key eras of history, and practical tools for better citizenship.
+            </Text>
+
+            {/* Info Rows */}
+            <View style={styles.infoRows}>
+              <View style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  Version
                 </Text>
-              </TouchableOpacity>
-            </SettingCard>
-          </Animated.View>
+                <Text style={[styles.infoValue, { color: colors.text }]}>
+                  {appVersion}
+                </Text>
+              </View>
 
-          {/* RESOURCES SECTION */}
-          <Animated.View 
-            style={styles.section}
-            entering={FadeInDown.delay(300).springify()}
-          >
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="link"
-                size={18}
-                color={colors.primary}
-              />
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                RESOURCES
-              </Text>
-            </View>
-            
-            <LinkCard
-              delay={350}
-              icon="public"
-              title="Companion Website"
-              subtitle="thehumanconservative.com"
-              onPress={handleOpenWebsite}
-              colors={colors}
-              shadows={shadows}
-            />
-          </Animated.View>
-
-          {/* ABOUT SECTION */}
-          <Animated.View 
-            style={styles.section}
-            entering={FadeInDown.delay(400).springify()}
-          >
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="info-outline"
-                size={18}
-                color={colors.primary}
-              />
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                ABOUT
-              </Text>
-            </View>
-            
-            <SettingCard delay={450} colors={colors} shadows={shadows}>
-              {/* App Description */}
-              <Animated.View 
-                style={styles.aboutHeader}
-                entering={ZoomIn.delay(500).springify()}
+              <TouchableOpacity
+                onPress={handleOpenDeveloperSite}
+                style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
+                activeOpacity={0.7}
+                accessibilityLabel="Open StormLight Foundry website"
+                accessibilityRole="button"
               >
-                <LinearGradient
-                  colors={[
-                    colors.primary + '25',
-                    colors.highlight,
-                  ]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.appIconContainer}
-                >
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  Developer
+                </Text>
+                <View style={styles.developerLink}>
+                  <Text style={[styles.infoValue, { color: colors.primary }]}>
+                    StormLight Foundry
+                  </Text>
                   <MaterialIcons
-                    name="flag"
-                    size={32}
+                    name="arrow-forward"
+                    size={16}
                     color={colors.primary}
                   />
-                </LinearGradient>
-                <Text style={[styles.appName, { color: colors.text }]}>
-                  Pocket Guide to America
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleOpenPrivacyPolicy}
+                style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
+                activeOpacity={0.7}
+                accessibilityLabel="Open Privacy Policy"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  Privacy Policy
                 </Text>
-              </Animated.View>
-
-              <Text style={[styles.aboutBlurb, { color: colors.textSecondary }]}>
-                Your civic companion for understanding how the United States works. Explore founding documents, core principles, key eras of history, and practical tools for better citizenship.
-              </Text>
-
-              {/* Info Rows */}
-              <View style={styles.infoRows}>
-                <View style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                    Version
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    {appVersion}
-                  </Text>
+                <View style={styles.developerLink}>
+                  <MaterialIcons
+                    name="arrow-forward"
+                    size={16}
+                    color={colors.primary}
+                  />
                 </View>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={handleOpenDeveloperSite}
-                  style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Open StormLight Foundry website"
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                    Developer
-                  </Text>
-                  <View style={styles.developerLink}>
-                    <Text style={[styles.infoValue, { color: colors.primary }]}>
-                      StormLight Foundry
-                    </Text>
-                    <MaterialIcons
-                      name="arrow-forward"
-                      size={16}
-                      color={colors.primary}
-                    />
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleOpenPrivacyPolicy}
-                  style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Open Privacy Policy"
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                    Privacy Policy
-                  </Text>
-                  <View style={styles.developerLink}>
-                    <MaterialIcons
-                      name="arrow-forward"
-                      size={16}
-                      color={colors.primary}
-                    />
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleOpenChangelog}
-                  style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Open Changelog"
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                    Changelog
-                  </Text>
-                  <View style={styles.developerLink}>
-                    <MaterialIcons
-                      name="arrow-forward"
-                      size={16}
-                      color={colors.primary}
-                    />
-                  </View>
-                </TouchableOpacity>
-
-                <View style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                    Copyright
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    © 2025 StormLight Foundry
-                  </Text>
+              <TouchableOpacity
+                onPress={handleOpenChangelog}
+                style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}
+                activeOpacity={0.7}
+                accessibilityLabel="Open Changelog"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  Changelog
+                </Text>
+                <View style={styles.developerLink}>
+                  <MaterialIcons
+                    name="arrow-forward"
+                    size={16}
+                    color={colors.primary}
+                  />
                 </View>
+              </TouchableOpacity>
+
+              <View style={[styles.infoRow, { borderTopColor: colors.secondary + '20' }]}>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  Copyright
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>
+                  © 2025 StormLight Foundry
+                </Text>
               </View>
-            </SettingCard>
-          </Animated.View>
+            </View>
+          </SettingCard>
+        </Animated.View>
 
-          {/* Footer Spacing */}
-          <View style={styles.footerSpacer} />
-        </ScrollView>
-      </View>
-    </>
+        {/* Footer Spacing */}
+        <View style={styles.footerSpacer} />
+      </ScrollView>
+    </View>
   );
 }
 

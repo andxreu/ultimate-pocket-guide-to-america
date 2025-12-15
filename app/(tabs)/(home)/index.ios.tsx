@@ -1,6 +1,5 @@
 
 import React, { useMemo, useCallback } from "react";
-import { Stack } from "expo-router";
 import {
   ScrollView,
   StyleSheet,
@@ -155,72 +154,64 @@ export default function HomeScreen() {
   }, [colors, navigateToSection]);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Home",
-          headerShown: false,
-        }}
-      />
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Image
-              source={HERO_IMAGE}
-              style={styles.heroImage}
-              resizeMode="contain"
-              accessible={true}
-              accessibilityLabel="American flag representing the Pocket Guide to America"
-            />
-          </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Image
+            source={HERO_IMAGE}
+            style={styles.heroImage}
+            resizeMode="contain"
+            accessible={true}
+            accessibilityLabel="American flag representing the Pocket Guide to America"
+          />
+        </View>
 
-          <View
+        <View
+          style={[
+            styles.factCard,
+            { backgroundColor: colors.card, borderColor: colors.primary + "20" },
+          ]}
+        >
+          <View style={styles.factHeader}>
+            <Text style={[styles.factLabel, { color: colors.textSecondary }]}>
+              Did you know?
+            </Text>
+            <TouchableOpacity
+              onPress={shuffleFact}
+              style={styles.shuffleButton}
+              accessibilityLabel="Get a new fact"
+              accessibilityRole="button"
+            >
+              <IconSymbol
+                ios_icon_name="arrow.clockwise"
+                android_material_icon_name="refresh"
+                size={16}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          <Text style={[styles.factText, { color: colors.text }]}>{fact}</Text>
+        </View>
+
+        <View style={styles.sectionsHeaderRow}>
+          <Text
             style={[
-              styles.factCard,
-              { backgroundColor: colors.card, borderColor: colors.primary + "20" },
+              styles.sectionsHeaderText,
+              { color: colors.textSecondary },
             ]}
           >
-            <View style={styles.factHeader}>
-              <Text style={[styles.factLabel, { color: colors.textSecondary }]}>
-                Did you know?
-              </Text>
-              <TouchableOpacity
-                onPress={shuffleFact}
-                style={styles.shuffleButton}
-                accessibilityLabel="Get a new fact"
-                accessibilityRole="button"
-              >
-                <IconSymbol
-                  ios_icon_name="arrow.clockwise"
-                  android_material_icon_name="refresh"
-                  size={16}
-                  color={colors.primary}
-                />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.factText, { color: colors.text }]}>{fact}</Text>
-          </View>
+            Explore the guide
+          </Text>
+        </View>
 
-          <View style={styles.sectionsHeaderRow}>
-            <Text
-              style={[
-                styles.sectionsHeaderText,
-                { color: colors.textSecondary },
-              ]}
-            >
-              Explore the guide
-            </Text>
-          </View>
+        <View style={styles.sectionsContainer}>{sectionCards}</View>
 
-          <View style={styles.sectionsContainer}>{sectionCards}</View>
-
-          <QuickAccessGrid />
-        </ScrollView>
-      </View>
-    </>
+        <QuickAccessGrid />
+      </ScrollView>
+    </View>
   );
 }
 
