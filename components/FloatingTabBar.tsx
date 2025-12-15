@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo } from 'react';
 import {
   View,
@@ -46,10 +47,10 @@ interface FloatingTabBarProps {
  * - Micro-interactions on press
  * - Accessibility support
  * - **FIXED: Home button always works, even from nested screens**
+ * - **FIXED: Tab bar is now truly docked to the bottom with no gaps on iOS**
  *
- * FIXED (iOS): Tab bar is now truly docked to the bottom.
- * We use safe-area insets as internal padding so the glass background
- * fills to the screen edge while icons sit above the home indicator.
+ * The tab bar extends all the way to the bottom edge of the screen,
+ * with content positioned above the safe area (home indicator).
  */
 export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   const router = useRouter();
@@ -182,18 +183,18 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   // Base bar height + safe area
   const BAR_HEIGHT = 64;
   const bottomInset = Math.max(insets.bottom, 0);
+  const totalHeight = BAR_HEIGHT + bottomInset;
 
   return (
     <View pointerEvents="box-none" style={styles.wrapper}>
-      {/* Glassmorphism container */}
+      {/* Glassmorphism container - extends to screen bottom */}
       <BlurView
         intensity={isDark ? 80 : 60}
         tint={isDark ? 'dark' : 'light'}
         style={[
           styles.blurContainer,
           {
-            // ✅ Fill all the way to bottom edge while keeping content above home indicator
-            paddingBottom: bottomInset,
+            height: totalHeight,
           },
         ]}
       >
@@ -206,8 +207,7 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
           style={[
             styles.gradientContainer,
             {
-              // Ensure gradient includes inset area
-              height: BAR_HEIGHT + bottomInset,
+              height: totalHeight,
             },
           ]}
         >
@@ -247,8 +247,6 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
               styles.tabsContainer,
               {
                 height: BAR_HEIGHT,
-                // Keep buttons/icons above the home indicator area
-                paddingBottom: 0,
               },
             ]}
           >
@@ -267,6 +265,11 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
               );
             })}
           </View>
+
+          {/* Safe area spacer - pushes content above home indicator */}
+          {bottomInset > 0 && (
+            <View style={{ height: bottomInset }} />
+          )}
         </LinearGradient>
       </BlurView>
     </View>
@@ -343,11 +346,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0, // ✅ hard dock
+    bottom: 0,
     zIndex: 1000,
   },
   blurContainer: {
     overflow: 'hidden',
+    width: '100%',
   },
   gradientContainer: {
     width: '100%',
