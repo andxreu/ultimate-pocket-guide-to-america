@@ -1,12 +1,36 @@
-
 import React, { useState, useCallback } from "react";
 import { Stack, useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
-import { TouchableOpacity, Platform, Modal, Pressable, ScrollView, View, Text, StyleSheet } from "react-native";
+import {
+  TouchableOpacity,
+  Platform,
+  Modal,
+  Pressable,
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+} from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { IconSymbol } from "@/components/IconSymbol";
 import Animated, { FadeIn, SlideInLeft } from "react-native-reanimated";
+
+/**
+ * IMPORTANT:
+ * This Home layout previously implemented its own header + hamburger + drawer menu.
+ * Your global app/(tabs)/_layout.tsx ALSO implements a header + hamburger + drawer menu.
+ * That creates the "two hamburger menus" problem.
+ *
+ * Fix strategy:
+ * - Keep this file intact (minimal surgery)
+ * - Disable the nested header and nested drawer menu here by default
+ * - Let app/(tabs)/_layout.tsx own the header/menu globally
+ *
+ * If you ever intentionally want a Home-only menu again, flip this flag to true,
+ * BUT only if the global menu is removed/disabled (otherwise you'll get duplicates again).
+ */
+const ENABLE_HOME_LOCAL_MENU = false;
 
 /**
  * Menu configuration
@@ -50,8 +74,9 @@ function HamburgerMenu({
       statusBarTranslucent
     >
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Animated.View 
-          entering={SlideInLeft.duration(300).damping(20)}
+        <Animated.View
+          // Fix: SlideInLeft doesn't support .damping() unless springified.
+          entering={SlideInLeft.springify().damping(20)}
           style={styles.menuWrapper}
         >
           <Pressable
@@ -59,7 +84,7 @@ function HamburgerMenu({
               styles.menuContainer,
               {
                 backgroundColor: colors.background,
-                ...shadows.large,
+                ...(shadows?.large ?? {}),
               },
             ]}
             onPress={(e) => e.stopPropagation()}
@@ -67,22 +92,16 @@ function HamburgerMenu({
             <View
               style={[
                 styles.menuHeader,
-                { 
-                  borderBottomColor: colors.secondary + '30',
+                {
+                  borderBottomColor: colors.secondary + "30",
                   backgroundColor: colors.card,
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.menuTitle,
-                  {
-                    color: colors.text,
-                  },
-                ]}
-              >
+              <Text style={[styles.menuTitle, { color: colors.text }]}>
                 Navigation
               </Text>
+
               <TouchableOpacity
                 onPress={onClose}
                 style={styles.closeButton}
@@ -116,12 +135,7 @@ function HamburgerMenu({
                     onPress={() => onNavigate(item.route)}
                     activeOpacity={0.7}
                   >
-                    <Text
-                      style={[
-                        styles.menuItemText,
-                        { color: colors.text },
-                      ]}
-                    >
+                    <Text style={[styles.menuItemText, { color: colors.text }]}>
                       {item.label}
                     </Text>
                   </TouchableOpacity>
@@ -137,22 +151,22 @@ function HamburgerMenu({
 
 /**
  * Home Layout Component
- * Handles the navigation stack for the home section
- * Integrates with theme context for consistent styling
- * Provides hamburger menu for navigation
  */
 export default function HomeLayout() {
   const { colors } = useTheme();
   const router = useRouter();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  
+
   const openMenu = useCallback(() => {
+    if (!ENABLE_HOME_LOCAL_MENU) return;
+
     try {
-      if (Platform.OS !== 'web') {
+      if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      if (__DEV__) {
+      // __DEV__ is global in RN; safe to keep guard light
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
         console.log("Haptics error:", error);
       }
     }
@@ -160,63 +174,82 @@ export default function HomeLayout() {
   }, []);
 
   const closeMenu = useCallback(() => {
+    if (!ENABLE_HOME_LOCAL_MENU) return;
+
     try {
-      if (Platform.OS !== 'web') {
+      if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      if (__DEV__) {
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
         console.log("Haptics error:", error);
       }
     }
     setIsMenuVisible(false);
   }, []);
 
-  const navigateTo = useCallback((route: string) => {
-    try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const navigateTo = useCallback(
+    (route: string) => {
+      if (!ENABLE_HOME_LOCAL_MENU) return;
+
+      try {
+        if (Platform.OS !== "web") {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+      } catch (error) {
+        if (typeof __DEV__ !== "undefined" && __DEV__) {
+          console.log("Haptics error:", error);
+        }
       }
-    } catch (error) {
-      if (__DEV__) {
-        console.log("Haptics error:", error);
-      }
-    }
-    setIsMenuVisible(false);
-    setTimeout(() => {
-      router.push(route as any);
-    }, 100);
-  }, [router]);
-  
+
+      setIsMenuVisible(false);
+      setTimeout(() => {
+        router.push(route as any);
+      }, 100);
+    },
+    [router]
+  );
+
   return (
     <>
       <Stack
         screenOptions={{
-          headerShown: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={openMenu}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ padding: 4, marginLeft: 8 }}
-            >
-              <MaterialIcons name="menu" size={28} color={colors.text} />
-            </TouchableOpacity>
-          ),
+          /**
+           * KEY FIX:
+           * Default: hide this nested header entirely so you don't get a second hamburger.
+           * If you ever re-enable local Home menu, header/menu can come back together.
+           */
+          headerShown: ENABLE_HOME_LOCAL_MENU,
+
+          headerLeft: () =>
+            ENABLE_HOME_LOCAL_MENU ? (
+              <TouchableOpacity
+                onPress={openMenu}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ padding: 4, marginLeft: 8 }}
+              >
+                <MaterialIcons name="menu" size={28} color={colors.text} />
+              </TouchableOpacity>
+            ) : null,
+
           headerTitle: "Home",
           headerTitleAlign: "center",
+
           headerStyle: {
             backgroundColor: colors.card,
           },
           headerTintColor: colors.text,
           headerShadowVisible: false,
-          contentStyle: { 
-            backgroundColor: colors.background 
+
+          contentStyle: {
+            backgroundColor: colors.background,
           },
-          animation: 'fade',
+
+          animation: "fade",
           animationDuration: 200,
         }}
       >
-        <Stack.Screen 
+        <Stack.Screen
           name="index"
           options={{
             title: "Home",
@@ -225,11 +258,13 @@ export default function HomeLayout() {
         />
       </Stack>
 
-      <HamburgerMenu
-        visible={isMenuVisible}
-        onClose={closeMenu}
-        onNavigate={navigateTo}
-      />
+      {ENABLE_HOME_LOCAL_MENU && (
+        <HamburgerMenu
+          visible={isMenuVisible}
+          onClose={closeMenu}
+          onNavigate={navigateTo}
+        />
+      )}
     </>
   );
 }
