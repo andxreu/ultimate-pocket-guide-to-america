@@ -24,7 +24,7 @@ import Animated, { FadeIn, SlideInLeft } from "react-native-reanimated";
  *
  * Fix strategy:
  * - Keep this file intact (minimal surgery)
- * - Disable the nested header and nested drawer menu here
+ * - Disable the nested header and nested drawer menu here by default
  * - Let app/(tabs)/_layout.tsx own the header/menu globally
  *
  * If you ever intentionally want a Home-only menu again, flip this flag to true,
@@ -75,7 +75,8 @@ function HamburgerMenu({
     >
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Animated.View
-          entering={SlideInLeft.duration(300).damping(20)}
+          // Fix: SlideInLeft doesn't support .damping() unless springified.
+          entering={SlideInLeft.springify().damping(20)}
           style={styles.menuWrapper}
         >
           <Pressable
@@ -83,7 +84,7 @@ function HamburgerMenu({
               styles.menuContainer,
               {
                 backgroundColor: colors.background,
-                ...shadows.large,
+                ...(shadows?.large ?? {}),
               },
             ]}
             onPress={(e) => e.stopPropagation()}
@@ -97,16 +98,10 @@ function HamburgerMenu({
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.menuTitle,
-                  {
-                    color: colors.text,
-                  },
-                ]}
-              >
+              <Text style={[styles.menuTitle, { color: colors.text }]}>
                 Navigation
               </Text>
+
               <TouchableOpacity
                 onPress={onClose}
                 style={styles.closeButton}
@@ -170,7 +165,8 @@ export default function HomeLayout() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      if (__DEV__) {
+      // __DEV__ is global in RN; safe to keep guard light
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
         console.log("Haptics error:", error);
       }
     }
@@ -185,7 +181,7 @@ export default function HomeLayout() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      if (__DEV__) {
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
         console.log("Haptics error:", error);
       }
     }
@@ -201,10 +197,11 @@ export default function HomeLayout() {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
       } catch (error) {
-        if (__DEV__) {
+        if (typeof __DEV__ !== "undefined" && __DEV__) {
           console.log("Haptics error:", error);
         }
       }
+
       setIsMenuVisible(false);
       setTimeout(() => {
         router.push(route as any);
@@ -219,10 +216,30 @@ export default function HomeLayout() {
         screenOptions={{
           /**
            * KEY FIX:
-           * Disable the nested Home header entirely so you don't get a second hamburger.
-           * The global header in app/(tabs)/_layout.tsx will render instead.
+           * Default: hide this nested header entirely so you don't get a second hamburger.
+           * If you ever re-enable local Home menu, header/menu can come back together.
            */
-          headerShown: false,
+          headerShown: ENABLE_HOME_LOCAL_MENU,
+
+          headerLeft: () =>
+            ENABLE_HOME_LOCAL_MENU ? (
+              <TouchableOpacity
+                onPress={openMenu}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ padding: 4, marginLeft: 8 }}
+              >
+                <MaterialIcons name="menu" size={28} color={colors.text} />
+              </TouchableOpacity>
+            ) : null,
+
+          headerTitle: "Home",
+          headerTitleAlign: "center",
+
+          headerStyle: {
+            backgroundColor: colors.card,
+          },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
 
           contentStyle: {
             backgroundColor: colors.background,
@@ -235,6 +252,7 @@ export default function HomeLayout() {
         <Stack.Screen
           name="index"
           options={{
+            title: "Home",
             lazy: true,
           }}
         />
